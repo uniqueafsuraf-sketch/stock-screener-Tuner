@@ -50,11 +50,19 @@
 
         <p class="nav-section-label">Premium</p>
 
-        <a href="/gold-war-room" class="nav-item nav-link nav-premium active">
+        <a href="/gold-war-room" class="nav-item nav-link nav-premium active" data-war-view="desk" id="nav-war-desk">
 
-          <span>Gold AI War Room</span>
+          <span>War Room Dashboard</span>
 
           <span class="nav-tag">LIVE</span>
+
+        </a>
+
+        <a href="/gold-war-room#operations" class="nav-item nav-link nav-ops" data-war-view="ops" id="nav-war-ops">
+
+          <span>Agent Operations</span>
+
+          <span class="nav-tag nav-tag-ops">DESK</span>
 
         </a>
 
@@ -71,6 +79,54 @@
 
 
     <main class="main war-room-main">
+
+      <div id="view-ops" class="war-view war-view-ops" hidden>
+
+        <header class="topbar ops-topbar">
+
+          <div class="topbar-left">
+
+            <h1>Agent Operations Center</h1>
+
+            <p class="meta" id="ops-meta">Live trading floor · XAUUSD desk</p>
+
+          </div>
+
+          <div class="topbar-actions">
+
+            <span id="ops-floor-status-chip" class="war-chip ops-status-chip">Floor status</span>
+
+            <button type="button" id="btn-ops-refresh" class="btn btn-primary">
+
+              <span class="btn-label">Refresh floor</span>
+
+            </button>
+
+          </div>
+
+        </header>
+
+        <p class="war-muted ops-intro" id="stations-subtitle">{% if initial and initial.agent_stations %}{{ initial.agent_stations.subtitle }}{% else %}Each agent works at their own station{% endif %}</p>
+
+        <section class="ops-command-deck" aria-label="Command overseers">
+
+          <div id="ops-overseers" class="ops-overseer-row"></div>
+
+        </section>
+
+        <section class="ops-trading-floor-wrap" aria-label="Analyst stations">
+
+          <h2 class="ops-floor-title">Analyst stations <span id="stations-headline" class="war-chip">{% if initial and initial.agent_stations %}{{ initial.agent_stations.headline }}{% else %}7 online{% endif %}</span></h2>
+
+          <div id="ops-floor-grid" class="ops-trading-floor"></div>
+
+        </section>
+
+      </div>
+
+
+
+      <div id="view-desk" class="war-view war-view-desk">
 
       <header class="topbar">
 
@@ -241,24 +297,6 @@
 
 
 
-        <section class="war-panel war-panel-wide war-panel-stations" id="panel-stations">
-
-          <div class="war-panel-head">
-
-            <h2 class="war-panel-title">Agent Operations Center</h2>
-
-            <span id="stations-headline" class="war-chip">{% if initial and initial.agent_stations %}{{ initial.agent_stations.headline }}{% else %}7 desks online{% endif %}</span>
-
-          </div>
-
-          <p class="war-muted" id="stations-subtitle">{% if initial and initial.agent_stations %}{{ initial.agent_stations.subtitle }}{% else %}Monitor each agent station and live task{% endif %}</p>
-
-          <div id="agent-stations-grid" class="agent-stations-grid"></div>
-
-        </section>
-
-
-
         <section class="war-panel war-panel-wide" id="panel-consensus">
 
           <h2 class="war-panel-title">Agent Consensus <span id="consensus-headline" class="war-chip">{% if initial and initial.agent_consensus %}{{ initial.agent_consensus.headline }}{% endif %}</span></h2>
@@ -402,6 +440,8 @@
         </section>
 
       </div>
+
+      </div><!-- /view-desk -->
 
     </main>
 

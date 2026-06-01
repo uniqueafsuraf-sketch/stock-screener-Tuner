@@ -1,4 +1,4 @@
-"""Agent operations center — station status and current work per agent."""
+"""Agent operations center — visual floor, overseers, live task labels."""
 
 from __future__ import annotations
 
@@ -8,37 +8,79 @@ STATION_META: dict[str, dict] = {
     "macro": {
         "station": "Global Macro Desk",
         "role": "Fed, yields, USD, geopolitical gold drivers",
-        "icon": "MACRO",
+        "desk_code": "MACRO",
+        "character": "Agent Atlas",
+        "avatar": "🌍",
+        "accent": "macro",
     },
     "technical": {
         "station": "Chart Structure Lab",
         "role": "Multi-timeframe structure, RSI, key levels",
-        "icon": "TECH",
+        "desk_code": "TECH",
+        "character": "Agent Pixel",
+        "avatar": "📊",
+        "accent": "technical",
     },
     "order_flow": {
         "station": "Order Flow Terminal",
         "role": "Volume delta, liquidity pools, intraday flow",
-        "icon": "FLOW",
+        "desk_code": "FLOW",
+        "character": "Agent Pulse",
+        "avatar": "📡",
+        "accent": "flow",
     },
     "sentiment": {
         "station": "News & Sentiment Wire",
         "role": "Headlines, market mood, narrative risk",
-        "icon": "NEWS",
+        "desk_code": "NEWS",
+        "character": "Agent Echo",
+        "avatar": "📰",
+        "accent": "sentiment",
     },
     "quant": {
         "station": "Quant Research Pod",
         "role": "Historical stats, up-day rate, expected range",
-        "icon": "QUANT",
+        "desk_code": "QUANT",
+        "character": "Agent Sigma",
+        "avatar": "🔢",
+        "accent": "quant",
     },
     "risk": {
         "station": "Risk Control Tower",
         "role": "Volatility, agent disagreement, conviction cut",
-        "icon": "RISK",
+        "desk_code": "RISK",
+        "character": "Agent Shield",
+        "avatar": "🛡️",
+        "accent": "risk",
     },
     "trap": {
         "station": "Trap Detection Unit",
         "role": "Liquidity sweeps, stop hunts, fake breakouts",
-        "icon": "TRAP",
+        "desk_code": "TRAP",
+        "character": "Agent Snare",
+        "avatar": "🎯",
+        "accent": "trap",
+    },
+}
+
+OVERSEER_META = {
+    "boss": {
+        "id": "boss",
+        "station": "Command Bridge",
+        "character": "Commander Vega",
+        "avatar": "👑",
+        "title": "Head Boss · Master Commander",
+        "role": "Synthesizes all agent reports into one desk bias and trade plan",
+        "accent": "boss",
+    },
+    "ops": {
+        "id": "ops",
+        "station": "Systems Control Room",
+        "character": "Director Chen",
+        "avatar": "⚙️",
+        "title": "Operations Overseer",
+        "role": "Keeps every agent online, evolving logic, and fixing issues",
+        "accent": "ops",
     },
 }
 
@@ -54,50 +96,159 @@ def _status_from_agent(agent: dict) -> str:
     return "idle"
 
 
+def _task_label(agent_id: str, agent: dict, data: GoldMarketData, trap: dict, risk: dict) -> str:
+    """Short label on the character — what they are doing right now."""
+    if agent.get("error"):
+        return "Fixing connection…"
+    labels = {
+        "macro": "Reading macro feeds",
+        "technical": "Drawing key levels",
+        "order_flow": "Watching live tape",
+        "sentiment": "Scanning headlines",
+        "quant": "Crunching stats",
+        "risk": "Stress-testing desk",
+        "trap": "Hunting liquidity traps",
+    }
+    return labels.get(agent_id, "Analyzing gold")
+
+
 def _working_on(agent_id: str, agent: dict, data: GoldMarketData, trap: dict, risk: dict) -> str:
     if agent.get("error"):
-        return f"Recovering — {agent.get('error', 'unknown error')[:80]}"
+        return f"Recovering — {agent.get('error', 'unknown error')[:100]}"
     if agent_id == "macro":
         parts = []
         if data.macro.get("dxy_chg") is not None:
             parts.append(f"USD {data.macro['dxy_chg']:+.2f}%")
         if data.macro.get("tnx_chg") is not None:
             parts.append(f"10Y {data.macro['tnx_chg']:+.2f}%")
-        return "Tracking " + (", ".join(parts) if parts else "macro feeds (cloud mode)") + f" · {len(data.news)} headlines"
+        return "Tracking " + (", ".join(parts) if parts else "macro feeds") + f" · {len(data.news)} headlines queued"
     if agent_id == "technical":
         lv = agent.get("key_levels") or {}
         sup = lv.get("support") or []
         res = lv.get("resistance") or []
-        return f"Mapping structure @ ${data.price:,.0f} · support {sup[0] if sup else '—'} / res {res[0] if res else '—'}"
+        return f"Mapping XAU @ ${data.price:,.2f} · support {sup[0] if sup else '—'} · resistance {res[0] if res else '—'}"
     if agent_id == "order_flow":
         liq = agent.get("liquidity_levels") or []
-        return f"Scanning 15M/1H tape · liquidity nodes {liq[0] if liq else '—'} / {liq[1] if len(liq) > 1 else '—'}"
+        return f"Reading 15M + 1H volume · pools at {liq[0] if liq else '—'} and {liq[1] if len(liq) > 1 else '—'}"
     if agent_id == "sentiment":
-        return f"Parsing {len(data.news)} gold headlines · mood: {agent.get('market_mood', 'scanning')}"
+        return f"Reading {len(data.news)} stories · mood = {agent.get('market_mood', 'scanning')}"
     if agent_id == "quant":
-        return f"Running 60-day stats · expected range {agent.get('expected_move_range', '—')}"
+        return f"60-day model · expected move {agent.get('expected_move_range', '—')}"
     if agent_id == "risk":
         w = agent.get("warnings") or []
-        return w[0] if w else f"Cross-checking 5 primary agents · risk score {agent.get('risk_score', 50)}"
+        return w[0] if w else f"Checking 5 agents agree · risk score {agent.get('risk_score', 50)}"
     if agent_id == "trap":
         return (
-            f"Sweep up {trap.get('liquidity_sweep_up_prob', 0):.0f}% · "
-            f"sweep down {trap.get('liquidity_sweep_down_prob', 0):.0f}% · "
-            f"manip {trap.get('manipulation_risk_score', 0):.0f}%"
+            f"Sweep risk up {trap.get('liquidity_sweep_up_prob', 0):.0f}% · "
+            f"down {trap.get('liquidity_sweep_down_prob', 0):.0f}% · "
+            f"manipulation {trap.get('manipulation_risk_score', 0):.0f}%"
         )
-    return agent.get("summary", "Analyzing gold market…")[:120]
+    return (agent.get("summary") or "Analyzing gold…")[:140]
 
 
 def _metrics_line(agent_id: str, agent: dict) -> str:
     if agent_id == "risk":
-        return f"Risk {agent.get('risk_score', '—')} · Δ confidence {agent.get('confidence_reduction', 0)}"
+        return f"Risk {agent.get('risk_score', '—')} · confidence cut {agent.get('confidence_reduction', 0)}"
     if agent_id == "trap":
         return f"Manip {agent.get('manipulation_risk_score', '—')}% · reversal {agent.get('reversal_prob', '—')}%"
     if agent.get("bull_probability") is not None:
-        return f"Bull {agent.get('bull_probability')}% · Bear {agent.get('bear_probability')}%"
+        return f"Up {agent.get('bull_probability')}% · down {agent.get('bear_probability')}%"
     if agent.get("bullish_score") is not None:
-        return f"Bull {agent.get('bullish_score')} · Bear {agent.get('bearish_score')}"
+        return f"Bull score {agent.get('bullish_score')} · bear {agent.get('bearish_score')}"
     return ""
+
+
+def _desk_health(agents: dict, trap: dict, risk: dict) -> dict:
+    errors = [k for k, a in agents.items() if a.get("error")]
+    warnings = [
+        k for k, a in {**agents, "trap": trap, "risk": risk}.items()
+        if _status_from_agent(a) in ("warning", "error")
+    ]
+    online = 7 - len(errors)
+    return {
+        "online": online,
+        "total": 7,
+        "errors": errors,
+        "warnings": warnings,
+        "all_ok": online == 7 and not errors,
+    }
+
+
+def _build_boss(master: dict | None, data: GoldMarketData, health: dict) -> dict:
+    meta = OVERSEER_META["boss"]
+    m = master or {}
+    bias = m.get("market_bias", "Neutral")
+    conf = m.get("confidence_score", 0)
+    bull = m.get("bullish_agents", 0)
+    bear = m.get("bearish_agents", 0)
+    trade = m.get("trade") or {}
+    if trade.get("status") == "HIGH_CONVICTION":
+        working = f"Approving {trade.get('direction', '')} plan · entry ${data.price:,.0f} · RR {trade.get('risk_reward', '—')}"
+        output = trade.get("why", "High-conviction setup cleared for desk.")
+    else:
+        working = f"Reviewing {bull} bullish vs {bear} bearish votes · final bias = {bias}"
+        output = trade.get("why", f"Desk bias {bias} at {conf:.0f}% confidence — waiting for alignment.")
+    status = "active" if conf >= 55 else "idle"
+    if not health["all_ok"]:
+        status = "warning"
+    return {
+        **meta,
+        "name": meta["character"],
+        "status": status,
+        "stance": bias,
+        "task_label": "Commanding the desk",
+        "working_on": working,
+        "output": output[:220],
+        "metrics": f"Confidence {conf:.0f}% · {bull}/5 bull · {bear}/5 bear",
+        "is_overseer": True,
+        "tier": "command",
+    }
+
+
+def _build_ops(
+    agents: dict,
+    health: dict,
+    *,
+    scan_interval_sec: int,
+    live_scan: dict | None,
+) -> dict:
+    meta = OVERSEER_META["ops"]
+    ls = live_scan or {}
+    issues: list[str] = []
+    if health["errors"]:
+        issues.append(f"Recovering: {', '.join(health['errors'])}")
+    if health["warnings"]:
+        issues.append(f"Watching: {', '.join(health['warnings'])}")
+    if not ls.get("active"):
+        issues.append("Live scan loop idle — restarting cycle")
+
+    if issues:
+        working = " · ".join(issues)
+        output = "Patching agent pipelines and re-running failed modules until green."
+        status = "warning"
+        task_label = "Fixing desk issues"
+    else:
+        working = (
+            f"All {health['online']}/7 analyst stations online · "
+            f"auto-scan every {scan_interval_sec}s · evolving trap + risk rules"
+        )
+        output = "Health check passed — feeds synced, consensus fresh, scalping engine armed."
+        status = "active"
+        task_label = "Monitoring all systems"
+
+    return {
+        **meta,
+        "name": meta["character"],
+        "status": status,
+        "stance": "Operational" if health["all_ok"] else "Alert",
+        "task_label": task_label,
+        "working_on": working,
+        "output": output,
+        "metrics": f"Uptime OK · scan {scan_interval_sec}s · {ls.get('agents_running', 7)} agents",
+        "is_overseer": True,
+        "tier": "ops",
+        "health": health,
+    }
 
 
 def build_agent_stations(
@@ -106,6 +257,8 @@ def build_agent_stations(
     risk: dict,
     data: GoldMarketData,
     *,
+    master: dict | None = None,
+    live_scan: dict | None = None,
     scan_interval_sec: int = 45,
 ) -> dict:
     order = [
@@ -117,6 +270,10 @@ def build_agent_stations(
         ("risk", risk),
         ("trap", trap),
     ]
+    health = _desk_health(agents, trap, risk)
+    boss = _build_boss(master, data, health)
+    ops = _build_ops(agents, health, scan_interval_sec=scan_interval_sec, live_scan=live_scan)
+
     rows: list[dict] = []
     active_count = 0
     for agent_id, agent in order:
@@ -126,21 +283,37 @@ def build_agent_stations(
             active_count += 1
         rows.append({
             "id": agent_id,
-            "name": agent.get("name") or meta.get("station", agent_id),
+            "name": meta.get("character") or agent.get("name") or agent_id,
+            "character": meta.get("character", agent_id),
+            "avatar": meta.get("avatar", "🤖"),
+            "accent": meta.get("accent", "default"),
             "station": meta.get("station", agent_id),
-            "desk_code": meta.get("icon", "AGENT"),
+            "desk_code": meta.get("desk_code", "AGENT"),
             "role": meta.get("role", ""),
             "status": status,
             "stance": (agent.get("stance") or "neutral").title(),
+            "task_label": _task_label(agent_id, agent, data, trap, risk),
             "working_on": _working_on(agent_id, agent, data, trap, risk),
             "output": (agent.get("summary") or "")[:200],
             "metrics": _metrics_line(agent_id, agent),
             "has_error": bool(agent.get("error")),
+            "is_overseer": False,
+            "tier": "analyst",
         })
+
+    floor_status = (
+        "All agents running smoothly"
+        if health["all_ok"]
+        else f"{len(health['errors'])} agent(s) need attention · overseer active"
+    )
+
     return {
         "title": "Agent Operations Center",
-        "subtitle": f"{active_count}/7 stations actively biased · full desk refresh every {scan_interval_sec}s",
+        "subtitle": f"{active_count}/7 analysts on mission · Commander + Ops overseeing · refresh {scan_interval_sec}s",
         "scan_interval_sec": scan_interval_sec,
+        "floor_status": floor_status,
+        "health": health,
+        "overseers": [boss, ops],
         "stations": rows,
-        "headline": f"{active_count} agents on mission · 7 desks online",
+        "headline": f"Command bridge live · {active_count} analysts active",
     }

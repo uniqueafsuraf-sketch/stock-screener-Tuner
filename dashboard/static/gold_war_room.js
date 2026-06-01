@@ -95,41 +95,145 @@
     return "st-idle";
   }
 
+  function renderOverseerCard(st) {
+    const cls = stationStatusClass(st.status);
+    const tier = st.tier || "command";
+    return `
+      <article class="ops-booth ops-booth-overseer ops-booth-${tier} ${cls} ops-accent-${st.accent || tier}">
+        <div class="ops-booth-scene">
+          <div class="ops-character ops-character-boss" aria-hidden="true">
+            <span class="ops-avatar">${st.avatar || "👤"}</span>
+            <span class="ops-character-shadow"></span>
+          </div>
+          <div class="ops-desk">
+            <div class="ops-monitor ops-monitor-wide">
+              <span class="ops-monitor-label">LIVE TASK</span>
+              <p class="ops-monitor-task">${esc(st.task_label)}</p>
+              <p class="ops-monitor-detail">${esc(st.working_on)}</p>
+            </div>
+          </div>
+        </div>
+        <div class="ops-booth-info">
+          <span class="ops-status-pill ${cls}">${esc(st.status)}</span>
+          <h3 class="ops-character-name">${esc(st.character || st.name)}</h3>
+          <p class="ops-station-name">${esc(st.station)}</p>
+          <p class="ops-title">${esc(st.title || st.role)}</p>
+          <div class="ops-label-row">
+            <span class="ops-field-label">Right now</span>
+            <p class="ops-field-value">${esc(st.working_on)}</p>
+          </div>
+          <div class="ops-label-row">
+            <span class="ops-field-label">Report</span>
+            <p class="ops-field-value ops-report">${esc(st.output)}</p>
+          </div>
+          ${st.metrics ? `<p class="ops-metrics">${esc(st.metrics)}</p>` : ""}
+        </div>
+      </article>`;
+  }
+
+  function renderAnalystBooth(st) {
+    const cls = stationStatusClass(st.status);
+    const stance = (st.stance || "neutral").toLowerCase();
+    return `
+      <article class="ops-booth ops-booth-analyst ${cls} ops-accent-${st.accent || "default"}">
+        <div class="ops-booth-scene">
+          <div class="ops-character" aria-hidden="true">
+            <span class="ops-avatar">${st.avatar || "🤖"}</span>
+            <span class="ops-character-shadow"></span>
+          </div>
+          <div class="ops-desk">
+            <div class="ops-monitor">
+              <span class="ops-monitor-label">${esc(st.desk_code)}</span>
+              <p class="ops-monitor-task">${esc(st.task_label)}</p>
+              <p class="ops-monitor-detail">${esc(st.working_on)}</p>
+            </div>
+            <div class="ops-desk-plate">${esc(st.station)}</div>
+          </div>
+        </div>
+        <div class="ops-booth-info">
+          <span class="ops-status-pill ${cls}">${esc(st.status)}</span>
+          <span class="ops-stance ops-stance-${stance}">${esc(st.stance)}</span>
+          <h3 class="ops-character-name">${esc(st.character || st.name)}</h3>
+          <p class="ops-role">${esc(st.role)}</p>
+          <div class="ops-label-row">
+            <span class="ops-field-label">Doing exactly</span>
+            <p class="ops-field-value">${esc(st.working_on)}</p>
+          </div>
+          <div class="ops-label-row">
+            <span class="ops-field-label">Just said</span>
+            <p class="ops-field-value ops-report">${esc(st.output)}</p>
+          </div>
+          ${st.metrics ? `<p class="ops-metrics">${esc(st.metrics)}</p>` : ""}
+        </div>
+      </article>`;
+  }
+
   function renderAgentStations(ops) {
     const sub = $("stations-subtitle");
     const head = $("stations-headline");
-    const grid = $("agent-stations-grid");
-    if (!grid) return;
-    if (!ops?.stations?.length) {
-      grid.innerHTML = "<p class='war-muted'>Stations loading…</p>";
+    const floor = $("ops-floor-grid");
+    const overseers = $("ops-overseers");
+    const chip = $("ops-floor-status-chip");
+    const meta = $("ops-meta");
+
+    if (!ops?.stations?.length && !ops?.overseers?.length) {
+      if (floor) floor.innerHTML = "<p class='war-muted'>Stations loading…</p>";
       return;
     }
     if (sub) sub.textContent = ops.subtitle || "";
     if (head) head.textContent = ops.headline || "";
-    grid.innerHTML = ops.stations.map((st) => `
-      <article class="station-card ${stationStatusClass(st.status)}">
-        <header class="station-header">
-          <span class="station-code">${esc(st.desk_code)}</span>
-          <span class="station-status-dot" title="${esc(st.status)}"></span>
-        </header>
-        <h3 class="station-name">${esc(st.station)}</h3>
-        <p class="station-agent">${esc(st.name)}</p>
-        <p class="station-role">${esc(st.role)}</p>
-        <div class="station-stance-row">
-          <span class="station-label">Stance</span>
-          <span class="station-stance ${st.stance.toLowerCase()}">${esc(st.stance)}</span>
-        </div>
-        <div class="station-work">
-          <span class="station-label">Working on</span>
-          <p>${esc(st.working_on)}</p>
-        </div>
-        <div class="station-output">
-          <span class="station-label">Latest output</span>
-          <p>${esc(st.output)}</p>
-        </div>
-        ${st.metrics ? `<p class="station-metrics">${esc(st.metrics)}</p>` : ""}
-      </article>
-    `).join("");
+    if (chip) chip.textContent = ops.floor_status || "Floor status";
+    if (meta) meta.textContent = `Updated ${document.querySelector("#war-meta")?.textContent?.split("Updated")[1] || "live"}`.trim();
+
+    const overseerList = ops.overseers || [];
+    if (overseers) {
+      overseers.innerHTML = overseerList.map((st) => renderOverseerCard(st)).join("");
+    }
+    if (floor) {
+      floor.innerHTML = (ops.stations || []).map((st) => renderAnalystBooth(st)).join("");
+    }
+  }
+
+  function setWarView(view) {
+    const desk = $("view-desk");
+    const ops = $("view-ops");
+    const navDesk = $("nav-war-desk");
+    const navOps = $("nav-war-ops");
+    const isOps = view === "ops";
+    if (desk) desk.hidden = isOps;
+    if (ops) ops.hidden = !isOps;
+    navDesk?.classList.toggle("active", !isOps);
+    navOps?.classList.toggle("active", isOps);
+    if (isOps) {
+      document.title = "Agent Operations — Gold War Room";
+    } else {
+      document.title = "Gold AI War Room";
+    }
+    try {
+      localStorage.setItem("warRoomView", view);
+    } catch { /* ignore */ }
+    const wantHash = isOps ? "#operations" : "";
+    if (location.hash !== wantHash) {
+      history.replaceState(null, "", location.pathname + wantHash);
+    }
+  }
+
+  function initWarNavigation() {
+    document.querySelectorAll("[data-war-view]").forEach((el) => {
+      el.addEventListener("click", (e) => {
+        const view = el.getAttribute("data-war-view");
+        if (!view) return;
+        if (el.tagName === "A") e.preventDefault();
+        setWarView(view);
+      });
+    });
+    $("btn-ops-refresh")?.addEventListener("click", () => load(true));
+    const saved = localStorage.getItem("warRoomView");
+    const hashOps = location.hash === "#operations";
+    setWarView(hashOps || saved === "ops" ? "ops" : "desk");
+    window.addEventListener("hashchange", () => {
+      setWarView(location.hash === "#operations" ? "ops" : "desk");
+    });
   }
 
   function renderAgents(agents) {
@@ -621,6 +725,7 @@
   }
 
   $("btn-war-refresh")?.addEventListener("click", () => load(true));
+  initWarNavigation();
   load(false);
   refreshLiveSpot();
   setInterval(refreshLiveSpot, 15000);

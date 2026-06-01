@@ -1,17 +1,17 @@
 {
 "ok": true,
 "symbol": "XAUUSD",
-"price": 4485.45,
-"change_pct": -0.03,
+"price": 4488.17,
+"change_pct": 0.03,
 "price_symbol": "XAUUSD spot",
-"price_display": "$4,485.45",
+"price_display": "$4,488.17",
 "live_spot": {
 "ok": true,
-"price": 4485.45,
-"change_pct": -0.03,
+"price": 4488.17,
+"change_pct": 0.03,
 "symbol": "XAUUSD spot",
-"comex_price": 4515.1,
-"spread_vs_comex": 29.65,
+"comex_price": 4517.7,
+"spread_vs_comex": 29.53,
 "source": "consensus",
 "source_count": 3,
 "sources": [
@@ -19,69 +19,69 @@
 "source": "stooq",
 "symbol": "XAUUSD",
 "kind": "spot",
-"price": 4485.45,
-"change_pct": -0.03
+"price": 4488.17,
+"change_pct": 0.03
 },
 {
 "source": "yahoo_chart_implied",
 "symbol": "IAU\u2192XAU",
 "kind": "spot",
-"price": 4485.45,
+"price": 4488.17,
 "change_pct": -0.38
 },
 {
 "source": "yahoo_chart_implied",
 "symbol": "GLD\u2192XAU",
 "kind": "spot",
-"price": 4485.45,
+"price": 4488.17,
 "change_pct": -0.37
 },
 {
 "source": "stooq",
 "symbol": "GC=F",
 "kind": "comex",
-"price": 4515.37,
-"change_pct": 0.04
+"price": 4518.05,
+"change_pct": 0.1
 },
 {
 "source": "yahoo_chart",
 "symbol": "GC=F",
 "kind": "comex",
-"price": 4515.1,
-"change_pct": 0.2
+"price": 4517.7,
+"change_pct": 0.25
 },
 {
 "source": "yahoo_chart",
 "symbol": "MGC=F",
 "kind": "comex",
-"price": 4515.1,
-"change_pct": 0.2
+"price": 4517.7,
+"change_pct": 0.25
 }
 ],
-"display": "XAUUSD spot $4,485.45",
-"scalp_label": "XAUUSD spot $4,485.45"
+"display": "XAUUSD spot $4,488.17",
+"scalp_label": "XAUUSD spot $4,488.17"
 },
 "data_source": "live",
 "fetch_notes": [
-"Live XAU spot $4,485.45 (XAUUSD spot, consensus) \u2014 multi-feed median, aligns with chart.",
-"Live XAU spot $4,485.45 (XAUUSD spot, consensus) \u2014 multi-feed median, aligns with chart."
+"Live XAU spot $4,488.17 (XAUUSD spot, consensus) \u2014 multi-feed median, aligns with chart.",
+"Live XAU spot $4,488.17 (XAUUSD spot, consensus) \u2014 multi-feed median, aligns with chart."
 ],
-"updated_at": "2026-06-01 23:13:00 UTC",
+"updated_at": "2026-06-01 23:26:59 UTC",
 "market_bias": {
 "bias": "Neutral",
 "headline": "Gold looks NEUTRAL",
-"meaning": "Bull and bear signals are roughly balanced. Many traders wait for a clearer lean before adding size \u2014 range tactics and tight stops often fit best. Live XAU spot $4,485.45 (XAUUSD spot, consensus) \u2014 multi-feed median, aligns with chart. Live XAU spot $4,485.45 (XAUUSD spot, consensus) \u2014 multi-feed median, aligns with chart.",
-"confidence": 15.9,
+"meaning": "Bull and bear signals are roughly balanced. Many traders wait for a clearer lean before adding size \u2014 range tactics and tight stops often fit best. Live XAU spot $4,488.17 (XAUUSD spot, consensus) \u2014 multi-feed median, aligns with chart. Live XAU spot $4,488.17 (XAUUSD spot, consensus) \u2014 multi-feed median, aligns with chart.",
+"confidence": 33.1,
 "confidence_label": "Low conviction",
-"agents_summary": "3 bullish \u00b7 1 bearish among core agents",
-"probability_detail": "Model mix: 54% up \u00b7 46% down",
-"bull_probability": 53.6,
-"bear_probability": 46.4,
-"neutral_probability": 92.8,
-"why": "Bull and bear signals are roughly balanced. Many traders wait for a clearer lean before adding size \u2014 range tactics and tight stops often fit best. Live XAU spot $4,485.45 (XAUUSD spot, consensus) \u2014 multi-feed median, aligns with chart. Live XAU spot $4,485.45 (XAUUSD spot, consensus) \u2014 multi-feed median, aligns with chart."
+"agents_summary": "4 bullish \u00b7 0 bearish among core agents",
+"probability_detail": "Model mix: 55% up \u00b7 45% down",
+"bull_probability": 54.7,
+"bear_probability": 45.3,
+"neutral_probability": 90.6,
+"why": "Bull and bear signals are roughly balanced. Many traders wait for a clearer lean before adding size \u2014 range tactics and tight stops often fit best. Live XAU spot $4,488.17 (XAUUSD spot, consensus) \u2014 multi-feed median, aligns with chart. Live XAU spot $4,488.17 (XAUUSD spot, consensus) \u2014 multi-feed median, aligns with chart."
 },
 "confidence_meter": {
-"score": 15.9,
+"score": 33.1,
 "label": "Low conviction"
 },
 "agent_consensus": {
@@ -99,22 +99,22 @@
 {
 "agent": "Order Flow",
 "view": "Bullish",
-"detail": "Recent delta bias buying; liquidity near 4582.8 / 4375.9."
+"detail": "Recent delta bias buying; liquidity near 4585.5 / 4378.6."
 },
 {
 "agent": "Sentiment",
-"view": "Bearish",
+"view": "Bullish",
 "detail": "Mixed mood. Headlines scanned: 14 items."
 },
 {
 "agent": "Quant",
 "view": "Neutral",
-"detail": "60-day up-day rate 52% \u2014 expected 1\u03c3 range 4451.0-4518.3."
+"detail": "60-day up-day rate 52% \u2014 expected 1\u03c3 range 4453.7-4521.0."
 },
 {
 "agent": "Risk",
 "view": "Neutral",
-"detail": "Agents disagree \u2014 conviction reduced."
+"detail": "Black swan: geopolitical headline risk always present for gold."
 },
 {
 "agent": "Trap Detector",
@@ -122,108 +122,203 @@
 "detail": "No dominant trap pattern."
 }
 ],
-"bullish_count": 3,
+"bullish_count": 4,
 "total": 7,
-"headline": "3 / 7 Agents Bullish"
+"headline": "4 / 7 Agents Bullish"
 },
 "agent_stations": {
 "title": "Agent Operations Center",
-"subtitle": "4/7 stations actively biased \u00b7 full desk refresh every 45s",
+"subtitle": "4/7 analysts on mission \u00b7 Commander + Ops overseeing \u00b7 refresh 45s",
 "scan_interval_sec": 45,
+"floor_status": "All agents running smoothly",
+"health": {
+"online": 7,
+"total": 7,
+"errors": [],
+"warnings": [],
+"all_ok": true
+},
+"overseers": [
+{
+"id": "boss",
+"station": "Command Bridge",
+"character": "Commander Vega",
+"avatar": "\ud83d\udc51",
+"title": "Head Boss \u00b7 Master Commander",
+"role": "Synthesizes all agent reports into one desk bias and trade plan",
+"accent": "boss",
+"name": "Commander Vega",
+"status": "idle",
+"stance": "Neutral",
+"task_label": "Commanding the desk",
+"working_on": "Reviewing 4 bullish vs 0 bearish votes \u00b7 final bias = Neutral",
+"output": "Filters not met: confidence 33% (need >80), agent agreement 4/5 (need 4+), RR 0.28 (need >2.5), manipulation 48% (need <70).",
+"metrics": "Confidence 33% \u00b7 4/5 bull \u00b7 0/5 bear",
+"is_overseer": true,
+"tier": "command"
+},
+{
+"id": "ops",
+"station": "Systems Control Room",
+"character": "Director Chen",
+"avatar": "\u2699\ufe0f",
+"title": "Operations Overseer",
+"role": "Keeps every agent online, evolving logic, and fixing issues",
+"accent": "ops",
+"name": "Director Chen",
+"status": "active",
+"stance": "Operational",
+"task_label": "Monitoring all systems",
+"working_on": "All 7/7 analyst stations online \u00b7 auto-scan every 45s \u00b7 evolving trap + risk rules",
+"output": "Health check passed \u2014 feeds synced, consensus fresh, scalping engine armed.",
+"metrics": "Uptime OK \u00b7 scan 45s \u00b7 7 agents",
+"is_overseer": true,
+"tier": "ops",
+"health": {
+"online": 7,
+"total": 7,
+"errors": [],
+"warnings": [],
+"all_ok": true
+}
+}
+],
 "stations": [
 {
 "id": "macro",
-"name": "Macro Economist",
+"name": "Agent Atlas",
+"character": "Agent Atlas",
+"avatar": "\ud83c\udf0d",
+"accent": "macro",
 "station": "Global Macro Desk",
 "desk_code": "MACRO",
 "role": "Fed, yields, USD, geopolitical gold drivers",
 "status": "active",
 "stance": "Bullish",
-"working_on": "Tracking macro feeds (cloud mode) \u00b7 14 headlines",
+"task_label": "Reading macro feeds",
+"working_on": "Tracking macro feeds \u00b7 14 headlines queued",
 "output": "Macro mixed \u2014 monitor Fed, yields, and USD.",
-"metrics": "Bull 60.0 \u00b7 Bear 50.0",
-"has_error": false
+"metrics": "Bull score 60.0 \u00b7 bear 50.0",
+"has_error": false,
+"is_overseer": false,
+"tier": "analyst"
 },
 {
 "id": "technical",
-"name": "Technical Analyst",
+"name": "Agent Pixel",
+"character": "Agent Pixel",
+"avatar": "\ud83d\udcca",
+"accent": "technical",
 "station": "Chart Structure Lab",
 "desk_code": "TECH",
 "role": "Multi-timeframe structure, RSI, key levels",
 "status": "active",
 "stance": "Bullish",
-"working_on": "Mapping structure @ $4,485 \u00b7 support 4414.1 / res 4528.3",
+"task_label": "Drawing key levels",
+"working_on": "Mapping XAU @ $4,488.17 \u00b7 support 4416.8 \u00b7 resistance 4531.0",
 "output": "Price above mid-range \u2014 bullish structure bias.",
-"metrics": "Bull 82.87105 \u00b7 Bear 65.645",
-"has_error": false
+"metrics": "Bull score 82.87105 \u00b7 bear 65.645",
+"has_error": false,
+"is_overseer": false,
+"tier": "analyst"
 },
 {
 "id": "order_flow",
-"name": "Order Flow Analyst",
+"name": "Agent Pulse",
+"character": "Agent Pulse",
+"avatar": "\ud83d\udce1",
+"accent": "flow",
 "station": "Order Flow Terminal",
 "desk_code": "FLOW",
 "role": "Volume delta, liquidity pools, intraday flow",
 "status": "active",
 "stance": "Bullish",
-"working_on": "Scanning 15M/1H tape \u00b7 liquidity nodes 4582.8 / 4375.9",
-"output": "Recent delta bias buying; liquidity near 4582.8 / 4375.9.",
-"metrics": "Bull 72.0 \u00b7 Bear 50.0",
-"has_error": false
+"task_label": "Watching live tape",
+"working_on": "Reading 15M + 1H volume \u00b7 pools at 4585.5 and 4378.6",
+"output": "Recent delta bias buying; liquidity near 4585.5 / 4378.6.",
+"metrics": "Bull score 72.0 \u00b7 bear 50.0",
+"has_error": false,
+"is_overseer": false,
+"tier": "analyst"
 },
 {
 "id": "sentiment",
-"name": "Sentiment Analyst",
+"name": "Agent Echo",
+"character": "Agent Echo",
+"avatar": "\ud83d\udcf0",
+"accent": "sentiment",
 "station": "News & Sentiment Wire",
 "desk_code": "NEWS",
 "role": "Headlines, market mood, narrative risk",
 "status": "active",
-"stance": "Bearish",
-"working_on": "Parsing 14 gold headlines \u00b7 mood: Mixed mood",
+"stance": "Bullish",
+"task_label": "Scanning headlines",
+"working_on": "Reading 14 stories \u00b7 mood = Mixed mood",
 "output": "Mixed mood. Headlines scanned: 14 items.",
-"metrics": "Bull 60.0 \u00b7 Bear 70.0",
-"has_error": false
+"metrics": "Bull score 70.0 \u00b7 bear 60.0",
+"has_error": false,
+"is_overseer": false,
+"tier": "analyst"
 },
 {
 "id": "quant",
-"name": "Quant Analyst",
+"name": "Agent Sigma",
+"character": "Agent Sigma",
+"avatar": "\ud83d\udd22",
+"accent": "quant",
 "station": "Quant Research Pod",
 "desk_code": "QUANT",
 "role": "Historical stats, up-day rate, expected range",
 "status": "idle",
 "stance": "Neutral",
-"working_on": "Running 60-day stats \u00b7 expected range 4451.0 \u2013 4518.3",
-"output": "60-day up-day rate 52% \u2014 expected 1\u03c3 range 4451.0-4518.3.",
-"metrics": "Bull 51.66666666666667% \u00b7 Bear 48.33333333333333%",
-"has_error": false
+"task_label": "Crunching stats",
+"working_on": "60-day model \u00b7 expected move 4453.7 \u2013 4521.0",
+"output": "60-day up-day rate 52% \u2014 expected 1\u03c3 range 4453.7-4521.0.",
+"metrics": "Up 51.66666666666667% \u00b7 down 48.33333333333333%",
+"has_error": false,
+"is_overseer": false,
+"tier": "analyst"
 },
 {
 "id": "risk",
-"name": "Risk Manager",
+"name": "Agent Shield",
+"character": "Agent Shield",
+"avatar": "\ud83d\udee1\ufe0f",
+"accent": "risk",
 "station": "Risk Control Tower",
 "desk_code": "RISK",
 "role": "Volatility, agent disagreement, conviction cut",
 "status": "idle",
 "stance": "Neutral",
-"working_on": "Agents disagree \u2014 conviction reduced.",
-"output": "Agents disagree \u2014 conviction reduced.",
-"metrics": "Risk 55.0 \u00b7 \u0394 confidence 13.8",
-"has_error": false
+"task_label": "Stress-testing desk",
+"working_on": "Black swan: geopolitical headline risk always present for gold.",
+"output": "Black swan: geopolitical headline risk always present for gold.",
+"metrics": "Risk 35.0 \u00b7 confidence cut 8.8",
+"has_error": false,
+"is_overseer": false,
+"tier": "analyst"
 },
 {
 "id": "trap",
-"name": "Institutional Trap Detector",
+"name": "Agent Snare",
+"character": "Agent Snare",
+"avatar": "\ud83c\udfaf",
+"accent": "trap",
 "station": "Trap Detection Unit",
 "desk_code": "TRAP",
 "role": "Liquidity sweeps, stop hunts, fake breakouts",
 "status": "idle",
 "stance": "Safe",
-"working_on": "Sweep up 52% \u00b7 sweep down 48% \u00b7 manip 48%",
+"task_label": "Hunting liquidity traps",
+"working_on": "Sweep risk up 52% \u00b7 down 48% \u00b7 manipulation 48%",
 "output": "No dominant trap pattern.",
 "metrics": "Manip 48.0% \u00b7 reversal 40.0%",
-"has_error": false
+"has_error": false,
+"is_overseer": false,
+"tier": "analyst"
 }
 ],
-"headline": "4 agents on mission \u00b7 7 desks online"
+"headline": "Command bridge live \u00b7 4 analysts active"
 },
 "agents": {
 "macro": {
@@ -242,85 +337,85 @@
 "stance": "bullish",
 "key_levels": {
 "resistance": [
-4528.3,
-4526.3,
-4526.0,
-4513.7
+4531.0,
+4529.0,
+4528.7,
+4516.4
 ],
 "support": [
-4414.1,
-4457.1,
-4462.4,
-4469.9
+4416.8,
+4459.8,
+4465.1,
+4472.6
 ]
 },
 "levels_by_tf": {
 "1D": {
 "resistance": [
-4528.3,
-4526.3,
-4526.0,
-4513.7
+4531.0,
+4529.0,
+4528.7,
+4516.4
 ],
 "support": [
-4414.1,
-4457.1,
-4462.4,
-4469.9
+4416.8,
+4459.8,
+4465.1,
+4472.6
 ]
 },
 "1H": {
 "resistance": [
+4501.8,
 4499.1,
-4496.3,
-4496.2,
-4482.1
+4498.9,
+4484.8
 ],
 "support": [
-4421.6,
-4426.4,
-4426.8,
-4433.5
+4424.3,
+4429.1,
+4429.4,
+4436.2
 ]
 },
 "15M": {
 "resistance": [
-4517.0,
-4458.6,
-4440.3,
-4425.8
+4519.7,
+4461.3,
+4443.0,
+4428.4
 ],
 "support": [
-4296.2,
-4375.9,
-4391.4,
-4398.9
+4298.8,
+4378.6,
+4394.1,
+4401.5
 ]
 },
 "4H": {
 "resistance": [
+4501.8,
 4499.1,
-4496.3,
-4496.2,
-4482.1
+4498.9,
+4484.8
 ],
 "support": [
-4421.6,
-4426.4,
-4426.8,
-4433.5
+4424.3,
+4429.1,
+4429.4,
+4436.2
 ]
 },
 "1W": {
 "resistance": [
-4526.0,
-4508.1,
-4467.9
+4528.7,
+4510.9,
+4470.6
 ],
 "support": [
-4394.1,
-4400.8,
-4442.9
+4396.8,
+4403.5,
+4445.6
 ]
 }
 },
@@ -333,17 +428,17 @@
 "bearish_score": 50.0,
 "stance": "bullish",
 "liquidity_levels": [
-4582.8,
-4375.9
+4585.5,
+4378.6
 ],
-"summary": "Recent delta bias buying; liquidity near 4582.8 / 4375.9."
+"summary": "Recent delta bias buying; liquidity near 4585.5 / 4378.6."
 },
 "sentiment": {
 "id": "sentiment",
 "name": "Sentiment Analyst",
-"bullish_score": 60.0,
-"bearish_score": 70.0,
-"stance": "bearish",
+"bullish_score": 70.0,
+"bearish_score": 60.0,
+"stance": "bullish",
 "market_mood": "Mixed mood",
 "summary": "Mixed mood. Headlines scanned: 14 items."
 },
@@ -354,21 +449,20 @@
 "bearish_score": 48.33333333333333,
 "bull_probability": 51.66666666666667,
 "bear_probability": 48.33333333333333,
-"expected_move_range": "4451.0 \u2013 4518.3",
+"expected_move_range": "4453.7 \u2013 4521.0",
 "stance": "neutral",
-"summary": "60-day up-day rate 52% \u2014 expected 1\u03c3 range 4451.0-4518.3."
+"summary": "60-day up-day rate 52% \u2014 expected 1\u03c3 range 4453.7-4521.0."
 },
 "risk": {
 "id": "risk",
 "name": "Risk Manager",
-"risk_score": 55.0,
+"risk_score": 35.0,
 "warnings": [
-"Agents disagree \u2014 conviction reduced.",
 "Black swan: geopolitical headline risk always present for gold."
 ],
-"confidence_reduction": 13.8,
+"confidence_reduction": 8.8,
 "stance": "neutral",
-"summary": "Agents disagree \u2014 conviction reduced."
+"summary": "Black swan: geopolitical headline risk always present for gold."
 },
 "trap": {
 "id": "trap",
@@ -395,12 +489,12 @@
 {
 "label": "Upside Liquidity Sweep",
 "probability": 52.0,
-"why": "Target zone 4528 \u2013 4535 \u2014 cluster above recent highs."
+"why": "Target zone 4531 \u2013 4538 \u2014 cluster above recent highs."
 },
 {
 "label": "Downside Stop Hunt",
 "probability": 48.0,
-"why": "Target zone 4407 \u2013 4414 \u2014 liquidity under lows."
+"why": "Target zone 4410 \u2013 4417 \u2014 liquidity under lows."
 },
 {
 "label": "Trend Continuation",
@@ -416,7 +510,7 @@
 },
 "liquidity_sweep": {
 "direction": "Upside Sweep Likely",
-"target_zone": "4528 \u2013 4535",
+"target_zone": "4531 \u2013 4538",
 "probability": 52.0,
 "explanation": "No dominant trap pattern."
 },
@@ -432,7 +526,7 @@
 },
 "reversal": {
 "probability": 40.0,
-"reversal_zone": "4414 \u2013 4528",
+"reversal_zone": "4417 \u2013 4531",
 "confidence": 34.0,
 "explanation": "Reversal more likely after liquidity grab at range extremes."
 },
@@ -454,15 +548,15 @@
 "target_2": null,
 "target_3": null,
 "risk_reward": null,
-"invalidation": 4414.1,
-"why": "Filters not met: confidence 16% (need >80), agent agreement 3/5 (need 4+), RR 0.28 (need >2.5), manipulation 48% (need <70)."
+"invalidation": 4416.8,
+"why": "Filters not met: confidence 33% (need >80), agent agreement 4/5 (need 4+), RR 0.28 (need >2.5), manipulation 48% (need <70)."
 },
 "master": {
 "market_bias": "Neutral",
-"confidence_score": 15.9,
-"bull_probability": 53.6,
-"bear_probability": 46.4,
-"neutral_probability": 92.8,
+"confidence_score": 33.1,
+"bull_probability": 54.7,
+"bear_probability": 45.3,
+"neutral_probability": 90.6,
 "trade": {
 "status": "NO_HIGH_CONVICTION_TRADE",
 "direction": null,
@@ -472,11 +566,11 @@
 "target_2": null,
 "target_3": null,
 "risk_reward": null,
-"invalidation": 4414.1,
-"why": "Filters not met: confidence 16% (need >80), agent agreement 3/5 (need 4+), RR 0.28 (need >2.5), manipulation 48% (need <70)."
+"invalidation": 4416.8,
+"why": "Filters not met: confidence 33% (need >80), agent agreement 4/5 (need 4+), RR 0.28 (need >2.5), manipulation 48% (need <70)."
 },
-"bullish_agents": 3,
-"bearish_agents": 1
+"bullish_agents": 4,
+"bearish_agents": 0
 },
 "alerts": [],
 "performance": {
@@ -485,21 +579,49 @@
 "win_rate": 0,
 "loss_rate": 0,
 "average_rr": 0,
-"total_scans_logged": 6,
-"total_scalps_logged": 5,
-"open_scalps": 2,
+"total_scans_logged": 8,
+"total_scalps_logged": 6,
+"open_scalps": 1,
 "scalp_wins": 2,
-"scalp_losses": 0,
-"scalp_win_rate": 100.0,
-"agent_scalp_accuracy": 100.0,
+"scalp_losses": 2,
+"scalp_win_rate": 50.0,
+"agent_scalp_accuracy": 50.0,
 "bias_call_accuracy": 0,
 "average_scalp_rr": 2.8,
-"last_scan_at": "2026-06-01 23:12:12 UTC",
+"last_scan_at": "2026-06-01 23:15:55 UTC",
 "accuracy_by_agent": {},
 "accuracy_by_condition": {},
 "accuracy_by_session": {},
 "recent": [],
 "recent_scalps": [
+{
+"ts": 1780355580.0879426,
+"logged_at": "2026-06-01 23:13:00 UTC",
+"market_price": 4485.45,
+"type": "scalp",
+"direction": "LONG",
+"entry": 4485.45,
+"stop": 4473.93,
+"target": 4517.71,
+"target_2": 4537.07,
+"risk_reward": 2.8,
+"confidence": 67.2,
+"leverage": 30,
+"risk_profile": "HIGH",
+"gain_at_target_pct": 21.6,
+"loss_at_stop_pct": 7.7,
+"agent_votes": 3,
+"agents_aligned": [
+"Macro",
+"Technical",
+"Order Flow"
+],
+"status": "ACTIVE",
+"thesis": "High-RR long \u2014 flow/sweep \u00b7 live anchor",
+"outcome": "open",
+"agent_verdict": "open",
+"agents_correct": null
+},
 {
 "ts": 1780355532.194789,
 "logged_at": "2026-06-01 23:12:12 UTC",
@@ -525,9 +647,13 @@
 ],
 "status": "ACTIVE",
 "thesis": "High-RR long \u2014 flow/sweep \u00b7 live anchor",
-"outcome": "open",
+"outcome": "loss",
 "agent_verdict": "open",
-"agents_correct": null
+"agents_correct": false,
+"resolved_at": "2026-06-01 23:13:00 UTC",
+"resolved_price": 4485.45,
+"pnl_pts": -28.6,
+"agents_wrong": true
 },
 {
 "ts": 1780354585.4435823,
@@ -551,7 +677,12 @@
 ],
 "status": "ACTIVE",
 "thesis": "Bullish flow / sweep \u2014 scalp from live price",
-"outcome": "open"
+"outcome": "loss",
+"resolved_at": "2026-06-01 23:13:00 UTC",
+"resolved_price": 4485.45,
+"pnl_pts": -26.15,
+"agents_correct": false,
+"agents_wrong": true
 },
 {
 "ts": 1780353635.429233,
@@ -643,6 +774,32 @@
 ],
 "recent_scans": [
 {
+"ts": 1780355755.5239353,
+"logged_at": "2026-06-01 23:15:55 UTC",
+"price": 4487.29,
+"change_pct": 0.01,
+"data_source": "live",
+"bias": "Neutral",
+"confidence": 15.9,
+"scalps_found": 1,
+"consensus": "3 / 7 Agents Bullish",
+"agent_verdict": "open"
+},
+{
+"ts": 1780355580.0878892,
+"logged_at": "2026-06-01 23:13:00 UTC",
+"price": 4485.45,
+"change_pct": -0.03,
+"data_source": "live",
+"bias": "Neutral",
+"confidence": 15.9,
+"scalps_found": 1,
+"consensus": "3 / 7 Agents Bullish",
+"agent_verdict": "neutral",
+"verdict_price": 4487.29,
+"price_delta_pct": 0.041
+},
+{
 "ts": 1780355532.1947346,
 "logged_at": "2026-06-01 23:12:12 UTC",
 "price": 4514.05,
@@ -652,7 +809,9 @@
 "confidence": 33.1,
 "scalps_found": 1,
 "consensus": "4 / 7 Agents Bullish",
-"agent_verdict": "open"
+"agent_verdict": "neutral",
+"verdict_price": 4487.29,
+"price_delta_pct": -0.593
 },
 {
 "ts": 1780354868.4313977,
@@ -817,402 +976,402 @@
 "symbol": "XAUUSD",
 "tv_symbol": "OANDA:XAUUSD",
 "interval": "1H",
-"last": 4485.45,
+"last": 4488.17,
 "candles": [
 {
 "t": "0",
-"o": 4484.66,
-"h": 4493.23,
-"l": 4468.53,
-"c": 4482.94,
+"o": 4487.38,
+"h": 4495.95,
+"l": 4471.24,
+"c": 4485.65,
 "v": 5406
 },
 {
 "t": "1",
-"o": 4482.94,
-"h": 4495.69,
-"l": 4466.98,
-"c": 4472.76,
+"o": 4485.65,
+"h": 4498.41,
+"l": 4469.69,
+"c": 4475.48,
 "v": 7163
 },
 {
 "t": "2",
-"o": 4472.76,
-"h": 4503.33,
-"l": 4472.69,
-"c": 4495.4,
+"o": 4475.48,
+"h": 4506.06,
+"l": 4475.4,
+"c": 4498.13,
 "v": 7959
 },
 {
 "t": "3",
-"o": 4495.4,
-"h": 4504.19,
-"l": 4481.71,
-"c": 4496.45,
+"o": 4498.13,
+"h": 4506.92,
+"l": 4484.43,
+"c": 4499.17,
 "v": 6077
 },
 {
 "t": "4",
-"o": 4496.45,
-"h": 4498.16,
-"l": 4474.6,
-"c": 4482.45,
+"o": 4499.17,
+"h": 4500.88,
+"l": 4477.32,
+"c": 4485.17,
 "v": 7765
 },
 {
 "t": "5",
-"o": 4482.45,
-"h": 4512.07,
-"l": 4469.92,
-"c": 4494.91,
+"o": 4485.17,
+"h": 4514.81,
+"l": 4472.63,
+"c": 4497.63,
 "v": 6125
 },
 {
 "t": "6",
-"o": 4494.91,
-"h": 4499.29,
-"l": 4480.82,
-"c": 4486.13,
+"o": 4497.63,
+"h": 4502.02,
+"l": 4483.54,
+"c": 4488.86,
 "v": 6727
 },
 {
 "t": "7",
-"o": 4486.13,
-"h": 4494.24,
-"l": 4483.71,
-"c": 4486.79,
+"o": 4488.86,
+"h": 4496.97,
+"l": 4486.43,
+"c": 4489.51,
 "v": 5100
 },
 {
 "t": "8",
-"o": 4486.79,
-"h": 4494.93,
-"l": 4478.4,
-"c": 4483.57,
+"o": 4489.51,
+"h": 4497.66,
+"l": 4481.12,
+"c": 4486.29,
 "v": 6510
 },
 {
 "t": "9",
-"o": 4483.57,
-"h": 4499.09,
-"l": 4482.68,
-"c": 4490.31,
+"o": 4486.29,
+"h": 4501.82,
+"l": 4485.4,
+"c": 4493.03,
 "v": 6502
 },
 {
 "t": "10",
-"o": 4490.31,
-"h": 4495.19,
-"l": 4461.9,
-"c": 4467.82,
+"o": 4493.03,
+"h": 4497.91,
+"l": 4464.61,
+"c": 4470.53,
 "v": 6141
 },
 {
 "t": "11",
-"o": 4467.82,
-"h": 4483.95,
-"l": 4443.08,
-"c": 4457.59,
+"o": 4470.53,
+"h": 4486.67,
+"l": 4445.77,
+"c": 4460.29,
 "v": 5096
 },
 {
 "t": "12",
-"o": 4457.59,
-"h": 4469.13,
-"l": 4451.9,
-"c": 4461.06,
+"o": 4460.29,
+"h": 4471.84,
+"l": 4454.6,
+"c": 4463.77,
 "v": 8323
 },
 {
 "t": "13",
-"o": 4461.06,
-"h": 4471.87,
-"l": 4454.36,
-"c": 4460.18,
+"o": 4463.77,
+"h": 4474.58,
+"l": 4457.07,
+"c": 4462.88,
 "v": 5094
 },
 {
 "t": "14",
-"o": 4460.18,
-"h": 4463.61,
-"l": 4439.71,
-"c": 4448.67,
+"o": 4462.88,
+"h": 4466.32,
+"l": 4442.41,
+"c": 4451.36,
 "v": 6153
 },
 {
 "t": "15",
-"o": 4448.67,
-"h": 4469.9,
-"l": 4443.95,
-"c": 4459.82,
+"o": 4451.36,
+"h": 4472.61,
+"l": 4446.65,
+"c": 4462.52,
 "v": 7883
 },
 {
 "t": "16",
-"o": 4459.82,
-"h": 4466.93,
-"l": 4421.64,
-"c": 4426.75,
+"o": 4462.52,
+"h": 4469.64,
+"l": 4424.32,
+"c": 4429.43,
 "v": 5406
 },
 {
 "t": "17",
-"o": 4426.75,
-"h": 4437.03,
-"l": 4425.98,
-"c": 4431.68,
+"o": 4429.43,
+"h": 4439.72,
+"l": 4428.67,
+"c": 4434.37,
 "v": 5311
 },
 {
 "t": "18",
-"o": 4431.68,
-"h": 4449.47,
-"l": 4428.69,
-"c": 4447.2,
+"o": 4434.37,
+"h": 4452.17,
+"l": 4431.37,
+"c": 4449.9,
 "v": 5823
 },
 {
 "t": "19",
-"o": 4447.2,
-"h": 4451.05,
-"l": 4437.2,
-"c": 4440.7,
+"o": 4449.9,
+"h": 4453.75,
+"l": 4439.89,
+"c": 4443.39,
 "v": 5841
 },
 {
 "t": "20",
-"o": 4440.7,
-"h": 4463.01,
-"l": 4432.96,
-"c": 4444.56,
+"o": 4443.39,
+"h": 4465.71,
+"l": 4435.65,
+"c": 4447.26,
 "v": 5652
 },
 {
 "t": "21",
-"o": 4444.56,
-"h": 4464.22,
-"l": 4426.44,
-"c": 4460.58,
+"o": 4447.26,
+"h": 4466.92,
+"l": 4429.13,
+"c": 4463.28,
 "v": 7016
 },
 {
 "t": "22",
-"o": 4460.58,
-"h": 4463.71,
-"l": 4435.38,
-"c": 4435.54,
+"o": 4463.28,
+"h": 4466.42,
+"l": 4438.07,
+"c": 4438.23,
 "v": 8352
 },
 {
 "t": "23",
-"o": 4435.54,
-"h": 4441.84,
-"l": 4428.18,
-"c": 4439.89,
+"o": 4438.23,
+"h": 4444.53,
+"l": 4430.87,
+"c": 4442.58,
 "v": 9422
 },
 {
 "t": "24",
-"o": 4439.89,
-"h": 4449.88,
-"l": 4426.76,
-"c": 4443.03,
+"o": 4442.58,
+"h": 4452.58,
+"l": 4429.45,
+"c": 4445.72,
 "v": 7287
 },
 {
 "t": "25",
-"o": 4443.03,
-"h": 4451.24,
-"l": 4437.41,
-"c": 4447.54,
+"o": 4445.72,
+"h": 4453.94,
+"l": 4440.1,
+"c": 4450.24,
 "v": 9541
 },
 {
 "t": "26",
-"o": 4447.54,
-"h": 4452.18,
-"l": 4443.46,
-"c": 4449.97,
+"o": 4450.24,
+"h": 4454.88,
+"l": 4446.15,
+"c": 4452.67,
 "v": 6699
 },
 {
 "t": "27",
-"o": 4449.97,
-"h": 4468.69,
-"l": 4449.33,
-"c": 4461.05,
+"o": 4452.67,
+"h": 4471.4,
+"l": 4452.03,
+"c": 4463.76,
 "v": 5955
 },
 {
 "t": "28",
-"o": 4461.05,
-"h": 4470.45,
-"l": 4451.8,
-"c": 4467.46,
+"o": 4463.76,
+"h": 4473.16,
+"l": 4454.5,
+"c": 4470.17,
 "v": 6020
 },
 {
 "t": "29",
-"o": 4467.46,
-"h": 4476.21,
-"l": 4459.88,
-"c": 4463.85,
+"o": 4470.17,
+"h": 4478.92,
+"l": 4462.59,
+"c": 4466.55,
 "v": 5754
 },
 {
 "t": "30",
-"o": 4463.85,
-"h": 4482.24,
-"l": 4456.08,
-"c": 4473.98,
+"o": 4466.55,
+"h": 4484.95,
+"l": 4458.79,
+"c": 4476.7,
 "v": 7711
 },
 {
 "t": "31",
-"o": 4473.98,
-"h": 4496.35,
-"l": 4467.06,
-"c": 4479.53,
+"o": 4476.7,
+"h": 4499.07,
+"l": 4469.77,
+"c": 4482.25,
 "v": 7489
 },
 {
 "t": "32",
-"o": 4479.53,
-"h": 4492.94,
-"l": 4449.8,
-"c": 4455.63,
+"o": 4482.25,
+"h": 4495.66,
+"l": 4452.5,
+"c": 4458.33,
 "v": 5111
 },
 {
 "t": "33",
-"o": 4455.63,
-"h": 4469.41,
-"l": 4433.84,
-"c": 4459.37,
+"o": 4458.33,
+"h": 4472.12,
+"l": 4436.52,
+"c": 4462.08,
 "v": 5258
 },
 {
 "t": "34",
-"o": 4459.37,
-"h": 4467.31,
-"l": 4455.08,
-"c": 4460.84,
+"o": 4462.08,
+"h": 4470.02,
+"l": 4457.78,
+"c": 4463.54,
 "v": 5447
 },
 {
 "t": "35",
-"o": 4460.84,
-"h": 4465.04,
-"l": 4433.51,
-"c": 4450.26,
+"o": 4463.54,
+"h": 4467.75,
+"l": 4436.19,
+"c": 4452.96,
 "v": 7690
 },
 {
 "t": "36",
-"o": 4450.26,
-"h": 4476.1,
-"l": 4441.45,
-"c": 4471.53,
+"o": 4452.96,
+"h": 4478.81,
+"l": 4444.14,
+"c": 4474.24,
 "v": 5251
 },
 {
 "t": "37",
-"o": 4471.53,
-"h": 4482.06,
-"l": 4456.39,
-"c": 4472.28,
+"o": 4474.24,
+"h": 4484.78,
+"l": 4459.09,
+"c": 4474.99,
 "v": 8059
 },
 {
 "t": "38",
-"o": 4472.28,
-"h": 4476.09,
-"l": 4461.11,
-"c": 4470.16,
+"o": 4474.99,
+"h": 4478.81,
+"l": 4463.81,
+"c": 4472.87,
 "v": 8309
 },
 {
 "t": "39",
-"o": 4470.16,
-"h": 4481.85,
-"l": 4458.62,
-"c": 4481.19,
+"o": 4472.87,
+"h": 4484.57,
+"l": 4461.33,
+"c": 4483.91,
 "v": 7590
 },
 {
 "t": "40",
-"o": 4481.19,
-"h": 4496.15,
-"l": 4474.36,
-"c": 4476.68,
+"o": 4483.91,
+"h": 4498.88,
+"l": 4477.07,
+"c": 4479.39,
 "v": 8006
 },
 {
 "t": "41",
-"o": 4476.68,
-"h": 4479.12,
-"l": 4449.25,
-"c": 4473.38,
+"o": 4479.39,
+"h": 4481.84,
+"l": 4451.95,
+"c": 4476.09,
 "v": 5108
 },
 {
 "t": "42",
-"o": 4473.38,
-"h": 4479.61,
-"l": 4453.75,
-"c": 4470.28,
+"o": 4476.09,
+"h": 4482.33,
+"l": 4456.45,
+"c": 4472.99,
 "v": 7253
 },
 {
 "t": "43",
-"o": 4470.28,
-"h": 4480.17,
-"l": 4443.69,
-"c": 4466.67,
+"o": 4472.99,
+"h": 4482.89,
+"l": 4446.38,
+"c": 4469.38,
 "v": 5118
 },
 {
 "t": "44",
-"o": 4466.67,
-"h": 4467.08,
-"l": 4464.91,
-"c": 4466.86,
+"o": 4469.38,
+"h": 4469.79,
+"l": 4467.61,
+"c": 4469.57,
 "v": 5288
 },
 {
 "t": "45",
-"o": 4466.86,
-"h": 4471.75,
-"l": 4458.88,
-"c": 4459.17,
+"o": 4469.57,
+"h": 4474.46,
+"l": 4461.59,
+"c": 4461.88,
 "v": 6086
 },
 {
 "t": "46",
-"o": 4459.17,
-"h": 4460.12,
-"l": 4447.37,
-"c": 4449.64,
+"o": 4461.88,
+"h": 4462.83,
+"l": 4450.07,
+"c": 4452.34,
 "v": 8007
 },
 {
 "t": "47",
-"o": 4449.64,
-"h": 4459.35,
-"l": 4403.25,
-"c": 4414.25,
+"o": 4452.34,
+"h": 4462.06,
+"l": 4405.92,
+"c": 4416.93,
 "v": 9146
 }
 ],
 "support": [
-4414.1,
-4457.1,
-4462.4
+4416.8,
+4459.8,
+4465.1
 ],
 "resistance": [
-4528.3,
-4526.3,
-4526.0
+4531.0,
+4529.0,
+4528.7
 ],
 "chart_links": {
 "tradingview": "https://www.tradingview.com/chart/?symbol=OANDA:XAUUSD"
@@ -1220,16 +1379,16 @@
 },
 "scalping": {
 "title": "Live Scalping \u00b7 High Risk / High Reward",
-"subtitle": "30x \u00b7 STANDARD \u00b7 XAUUSD spot $4,485.45 \u00b7 3 feeds \u00b7 45s scan",
-"reference_price": 4485.45,
+"subtitle": "30x \u00b7 STANDARD \u00b7 XAUUSD spot $4,488.17 \u00b7 3 feeds \u00b7 45s scan",
+"reference_price": 4488.17,
 "reference_label": "XAUUSD spot",
 "live_spot": {
 "ok": true,
-"price": 4485.45,
-"change_pct": -0.03,
+"price": 4488.17,
+"change_pct": 0.03,
 "symbol": "XAUUSD spot",
-"comex_price": 4515.1,
-"spread_vs_comex": 29.65,
+"comex_price": 4517.7,
+"spread_vs_comex": 29.53,
 "source": "consensus",
 "source_count": 3,
 "sources": [
@@ -1237,47 +1396,47 @@
 "source": "stooq",
 "symbol": "XAUUSD",
 "kind": "spot",
-"price": 4485.45,
-"change_pct": -0.03
+"price": 4488.17,
+"change_pct": 0.03
 },
 {
 "source": "yahoo_chart_implied",
 "symbol": "IAU\u2192XAU",
 "kind": "spot",
-"price": 4485.45,
+"price": 4488.17,
 "change_pct": -0.38
 },
 {
 "source": "yahoo_chart_implied",
 "symbol": "GLD\u2192XAU",
 "kind": "spot",
-"price": 4485.45,
+"price": 4488.17,
 "change_pct": -0.37
 },
 {
 "source": "stooq",
 "symbol": "GC=F",
 "kind": "comex",
-"price": 4515.37,
-"change_pct": 0.04
+"price": 4518.05,
+"change_pct": 0.1
 },
 {
 "source": "yahoo_chart",
 "symbol": "GC=F",
 "kind": "comex",
-"price": 4515.1,
-"change_pct": 0.2
+"price": 4517.7,
+"change_pct": 0.25
 },
 {
 "source": "yahoo_chart",
 "symbol": "MGC=F",
 "kind": "comex",
-"price": 4515.1,
-"change_pct": 0.2
+"price": 4517.7,
+"change_pct": 0.25
 }
 ],
-"display": "XAUUSD spot $4,485.45",
-"scalp_label": "XAUUSD spot $4,485.45"
+"display": "XAUUSD spot $4,488.17",
+"scalp_label": "XAUUSD spot $4,488.17"
 },
 "leverage": 30,
 "tier": "standard",
@@ -1286,56 +1445,58 @@
 "setups": [
 {
 "direction": "LONG",
-"market_price": 4485.45,
-"entry": 4485.45,
-"stop": 4473.93,
-"target": 4517.71,
-"target_2": 4537.07,
+"market_price": 4488.17,
+"entry": 4488.17,
+"stop": 4476.64,
+"target": 4520.45,
+"target_2": 4539.82,
 "risk_reward": 2.8,
-"confidence": 67.2,
-"agent_votes": 3,
+"confidence": 77.2,
+"agent_votes": 4,
 "agents_aligned": [
 "Macro",
 "Technical",
-"Order Flow"
+"Order Flow",
+"Sentiment"
 ],
 "leverage": 30,
 "risk_profile": "HIGH",
 "tier": "standard",
-"margin_at_risk_pct": 7.7,
+"margin_at_risk_pct": 7.71,
 "gain_at_target_pct": 21.6,
 "loss_at_stop_pct": 7.7,
 "timeframe": "15M / 1H",
 "thesis": "High-RR long \u2014 flow/sweep \u00b7 live anchor",
 "status": "ACTIVE",
-"price_note": "Tight stop 11.5 pts \u00b7 RR 2.8:1 @ $4485.45"
+"price_note": "Tight stop 11.5 pts \u00b7 RR 2.8:1 @ $4488.17"
 }
 ],
 "best": {
 "direction": "LONG",
-"market_price": 4485.45,
-"entry": 4485.45,
-"stop": 4473.93,
-"target": 4517.71,
-"target_2": 4537.07,
+"market_price": 4488.17,
+"entry": 4488.17,
+"stop": 4476.64,
+"target": 4520.45,
+"target_2": 4539.82,
 "risk_reward": 2.8,
-"confidence": 67.2,
-"agent_votes": 3,
+"confidence": 77.2,
+"agent_votes": 4,
 "agents_aligned": [
 "Macro",
 "Technical",
-"Order Flow"
+"Order Flow",
+"Sentiment"
 ],
 "leverage": 30,
 "risk_profile": "HIGH",
 "tier": "standard",
-"margin_at_risk_pct": 7.7,
+"margin_at_risk_pct": 7.71,
 "gain_at_target_pct": 21.6,
 "loss_at_stop_pct": 7.7,
 "timeframe": "15M / 1H",
 "thesis": "High-RR long \u2014 flow/sweep \u00b7 live anchor",
 "status": "ACTIVE",
-"price_note": "Tight stop 11.5 pts \u00b7 RR 2.8:1 @ $4485.45"
+"price_note": "Tight stop 11.5 pts \u00b7 RR 2.8:1 @ $4488.17"
 },
 "total_found": 1,
 "criteria": "RR \u22652 \u00b7 \u22652 agents"

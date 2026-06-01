@@ -116,7 +116,11 @@ def _build_response(
             "label": bias_copy["confidence_label"],
         },
         "agent_consensus": agent_consensus(agents, trap, risk),
-        "agent_stations": build_agent_stations(agents, trap, risk, data),
+        "agent_stations": build_agent_stations(
+            agents, trap, risk, data,
+            master=master,
+            live_scan={"active": True, "interval_sec": 45, "agents_running": 7},
+        ),
         "agents": agents,
         "smart_money": {
             "title": "What Smart Money Likely Wants Next",
