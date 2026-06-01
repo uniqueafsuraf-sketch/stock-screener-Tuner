@@ -115,6 +115,152 @@
     }).join("");
   }
 
+  let tvWidget = null;
+  let tvInterval = "60";
+
+  function initTradingViewChart(symbol = "OANDA:XAUUSD", interval = "60") {
+    const el = $("gold-tv-chart");
+    if (!el || typeof TradingView === "undefined") return false;
+    tvInterval = interval;
+    el.innerHTML = "";
+    tvWidget = new TradingView.widget({
+      autosize: true,
+      symbol,
+      interval,
+      timezone: "Etc/UTC",
+      theme: "dark",
+      style: "1",
+      locale: "en",
+      enable_publishing: false,
+      hide_top_toolbar: false,
+      hide_legend: false,
+      save_image: false,
+      container_id: "gold-tv-chart",
+      studies: ["Volume@tv-basicstudies"],
+      backgroundColor: "#0d1117",
+      gridColor: "rgba(255, 215, 0, 0.08)",
+    });
+    return true;
+  }
+
+  function waitForTradingView(symbol, interval, tries = 0) {
+    if (initTradingViewChart(symbol, interval)) return;
+    if (tries < 25) setTimeout(() => waitForTradingView(symbol, interval, tries + 1), 400);
+  }
+
+  function drawCanvasChart(chart) {
+    const canvas = $("gold-canvas-chart");
+    if (!canvas || !chart?.candles?.length) return;
+    const ctx = canvas.getContext("2d");
+    const dpr = window.devicePixelRatio || 1;
+    const w = canvas.clientWidth || 800;
+    const h = 140;
+    canvas.width = w * dpr;
+    canvas.height = h * dpr;
+    ctx.scale(dpr, dpr);
+    ctx.clearRect(0, 0, w, h);
+
+    const candles = chart.candles;
+    const closes = candles.map((c) => c.c);
+    const min = Math.min(...closes);
+    const max = Math.max(...closes);
+    const pad = (max - min) * 0.08 || 1;
+    const lo = min - pad;
+    const hi = max + pad;
+    const range = hi - lo || 1;
+
+    ctx.strokeStyle = "rgba(255, 215, 0, 0.15)";
+    for (let i = 0; i <= 4; i++) {
+      const y = (h * i) / 4;
+      ctx.beginPath();
+      ctx.moveTo(0, y);
+      ctx.lineTo(w, y);
+      ctx.stroke();
+    }
+
+    ctx.beginPath();
+    ctx.strokeStyle = "#ffd700";
+    ctx.lineWidth = 2;
+    candles.forEach((c, i) => {
+      const x = (i / Math.max(candles.length - 1, 1)) * (w - 8) + 4;
+      const y = h - ((c.c - lo) / range) * (h - 16) - 8;
+      if (i === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    });
+    ctx.stroke();
+
+    const last = chart.last ?? closes[closes.length - 1];
+    ctx.fillStyle = "#ffd700";
+    ctx.font = "600 12px JetBrains Mono, monospace";
+    ctx.fillText(`$${last} · ${chart.interval || "1H"} desk series`, 8, 16);
+
+    if (chart.support?.length) {
+      const sy = h - ((chart.support[0] - lo) / range) * (h - 16) - 8;
+      ctx.strokeStyle = "rgba(0, 255, 136, 0.5)";
+      ctx.setLineDash([4, 4]);
+      ctx.beginPath();
+      ctx.moveTo(0, sy);
+      ctx.lineTo(w, sy);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+    if (chart.resistance?.length) {
+      const ry = h - ((chart.resistance[0] - lo) / range) * (h - 16) - 8;
+      ctx.strokeStyle = "rgba(255, 68, 102, 0.5)";
+      ctx.setLineDash([4, 4]);
+      ctx.beginPath();
+      ctx.moveTo(0, ry);
+      ctx.lineTo(w, ry);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+  }
+
+  function renderChart(chart) {
+    if (!chart) return;
+    const cap = $("chart-caption");
+    if (cap) {
+      cap.textContent = `TradingView live · ${chart.tv_symbol || "OANDA:XAUUSD"} · desk ${chart.interval || "1H"} overlay`;
+    }
+    const links = $("chart-ext-links");
+    if (links && chart.chart_links) {
+      const L = chart.chart_links;
+      links.innerHTML = [
+        ["TradingView", L.tradingview],
+        ["Yahoo GC", L.yahoo],
+        ["GLD", L.finviz],
+      ]
+        .filter(([, u]) => u)
+        .map(([label, url]) =>
+          `<a href="${esc(url)}" target="_blank" rel="noopener">${esc(label)}</a>`
+        )
+        .join("");
+    }
+    drawCanvasChart(chart);
+    const map = { "15M": "15", "1H": "60", "4H": "240", "1D": "D" };
+    const iv = map[chart.interval] || tvInterval;
+    waitForTradingView(chart.tv_symbol || "OANDA:XAUUSD", iv);
+  }
+
+  function renderNews(items) {
+    const el = $("gold-news-list");
+    if (!el) return;
+    const list = items || [];
+    if (!list.length) {
+      el.innerHTML = "<li class='war-muted'>No headlines available — try Refresh.</li>";
+      return;
+    }
+    el.innerHTML = list.map((n) => {
+      const pub = n.publisher || "News";
+      const when = n.published ? `<span> · ${esc(String(n.published).slice(0, 22))}</span>` : "";
+      const href = n.link || "#";
+      return `<li>
+        <a href="${esc(href)}" target="_blank" rel="noopener">${esc(n.title)}</a>
+        <div class="gold-news-meta">${esc(pub)}${when}</div>
+      </li>`;
+    }).join("");
+  }
+
   function renderPerformance(p) {
     const el = $("performance-content");
     if (!el) return;
@@ -213,6 +359,8 @@
     renderTrade(data.trade_opportunity);
     renderAgents(data.agents);
     renderPerformance(data.performance);
+    renderNews(data.news);
+    renderChart(data.chart);
   }
 
   let warmPolls = 0;
@@ -255,6 +403,17 @@
       if (btn) btn.disabled = false;
     }
   }
+
+  document.querySelectorAll(".chart-tf").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".chart-tf").forEach((b) => b.classList.remove("active"));
+      btn.classList.add("active");
+      const iv = btn.getAttribute("data-interval") || "60";
+      initTradingViewChart("OANDA:XAUUSD", iv);
+    });
+  });
+
+  waitForTradingView("OANDA:XAUUSD", "60");
 
   $("btn-war-refresh")?.addEventListener("click", () => load(true));
   load(false);

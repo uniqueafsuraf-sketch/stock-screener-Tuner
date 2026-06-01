@@ -49,6 +49,33 @@
 
       <div id="war-alerts" class="war-alerts" hidden></div>
 
+      <div class="war-live-row">
+        <section class="war-panel war-panel-chart war-panel-gold" id="panel-chart">
+          <div class="war-panel-head">
+            <h2 class="war-panel-title">Live Gold Chart</h2>
+            <div class="chart-tf-btns" role="group" aria-label="Chart timeframe">
+              <button type="button" class="chart-tf active" data-interval="15">15m</button>
+              <button type="button" class="chart-tf" data-interval="60">1H</button>
+              <button type="button" class="chart-tf" data-interval="240">4H</button>
+              <button type="button" class="chart-tf" data-interval="D">1D</button>
+            </div>
+          </div>
+          <div class="war-chart-wrap">
+            <div id="gold-tv-chart" class="gold-tv-chart"></div>
+            <canvas id="gold-canvas-chart" class="gold-canvas-chart" width="800" height="200" aria-label="Gold price series"></canvas>
+          </div>
+          <p class="war-muted chart-caption" id="chart-caption">TradingView live · OANDA:XAUUSD</p>
+          <div class="chart-ext-links" id="chart-ext-links"></div>
+        </section>
+
+        <section class="war-panel war-panel-news" id="panel-news">
+          <h2 class="war-panel-title">Latest Gold News</h2>
+          <ul id="gold-news-list" class="gold-news-list">
+            <li class="war-muted">Loading headlines…</li>
+          </ul>
+        </section>
+      </div>
+
       <div class="war-grid">
         <section class="war-panel war-panel-hero" id="panel-bias">
           <h2 class="war-panel-title">Market Bias</h2>
@@ -117,6 +144,7 @@
       </div>
     </main>
   </div>
+  <script src="https://s3.tradingview.com/tv.js" async></script>
   <script src="/static/gold_war_room.js"></script>
 </body>
 </html>

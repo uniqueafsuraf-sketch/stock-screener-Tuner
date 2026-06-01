@@ -8,24 +8,24 @@
 "Cloud fast path \u2014 modelled gold data (Yahoo skipped on deploy host).",
 "Agents fully active; use Refresh after market hours for live quotes when available."
 ],
-"updated_at": "2026-06-01 21:14:51 UTC",
+"updated_at": "2026-06-01 21:20:31 UTC",
 "market_bias": {
 "bias": "Neutral",
-"confidence": 32.0,
-"bull_probability": 54.1,
-"bear_probability": 45.9,
-"neutral_probability": 91.7,
-"why": "Filters not met: confidence 32% (need >80), agent agreement 3/5 (need 4+), RR 1.19 (need >2.5), manipulation 48% (need <70). Data: cloud_fast. Cloud fast path \u2014 modelled gold data (Yahoo skipped on deploy host). Agents fully active; use Refresh after market hours for live quotes when available."
+"confidence": 35.0,
+"bull_probability": 55.6,
+"bear_probability": 44.4,
+"neutral_probability": 88.7,
+"why": "Filters not met: confidence 35% (need >80), agent agreement 4/5 (need 4+), RR 1.19 (need >2.5), manipulation 48% (need <70). Data: cloud_fast. Cloud fast path \u2014 modelled gold data (Yahoo skipped on deploy host). Agents fully active; use Refresh after market hours for live quotes when available."
 },
 "confidence_meter": {
-"score": 32.0,
+"score": 35.0,
 "label": "Low"
 },
 "agent_consensus": {
 "rows": [
 {
 "agent": "Macro",
-"view": "Neutral",
+"view": "Bullish",
 "detail": "Macro mixed \u2014 monitor Fed, yields, and USD."
 },
 {
@@ -41,7 +41,7 @@
 {
 "agent": "Sentiment",
 "view": "Bullish",
-"detail": "Mixed mood. Headlines scanned: 0 items."
+"detail": "Risk-on gold bid. Headlines scanned: 14 items."
 },
 {
 "agent": "Quant",
@@ -59,18 +59,18 @@
 "detail": "No dominant trap pattern."
 }
 ],
-"bullish_count": 3,
+"bullish_count": 4,
 "total": 7,
-"headline": "3 / 7 Agents Bullish"
+"headline": "4 / 7 Agents Bullish"
 },
 "agents": {
 "macro": {
 "id": "macro",
 "name": "Macro Economist",
-"bullish_score": 50.0,
+"bullish_score": 60.0,
 "bearish_score": 50.0,
 "summary": "Macro mixed \u2014 monitor Fed, yields, and USD.",
-"stance": "neutral"
+"stance": "bullish"
 },
 "technical": {
 "id": "technical",
@@ -179,11 +179,11 @@
 "sentiment": {
 "id": "sentiment",
 "name": "Sentiment Analyst",
-"bullish_score": 55.0,
+"bullish_score": 70.0,
 "bearish_score": 45.0,
 "stance": "bullish",
-"market_mood": "Mixed mood",
-"summary": "Mixed mood. Headlines scanned: 0 items."
+"market_mood": "Risk-on gold bid",
+"summary": "Risk-on gold bid. Headlines scanned: 14 items."
 },
 "quant": {
 "id": "quant",
@@ -277,6 +277,7 @@
 "probability": 42.0,
 "confidence": 37.800000000000004,
 "supporting_factors": [
+"Macro tailwind",
 "Technical trend alignment"
 ],
 "explanation": "Continuation favored when sweep already occurred and bias aligns."
@@ -291,14 +292,14 @@
 "target_3": null,
 "risk_reward": null,
 "invalidation": 2607.8,
-"why": "Filters not met: confidence 32% (need >80), agent agreement 3/5 (need 4+), RR 1.19 (need >2.5), manipulation 48% (need <70)."
+"why": "Filters not met: confidence 35% (need >80), agent agreement 4/5 (need 4+), RR 1.19 (need >2.5), manipulation 48% (need <70)."
 },
 "master": {
 "market_bias": "Neutral",
-"confidence_score": 32.0,
-"bull_probability": 54.1,
-"bear_probability": 45.9,
-"neutral_probability": 91.7,
+"confidence_score": 35.0,
+"bull_probability": 55.6,
+"bear_probability": 44.4,
+"neutral_probability": 88.7,
 "trade": {
 "status": "NO_HIGH_CONVICTION_TRADE",
 "direction": null,
@@ -309,9 +310,9 @@
 "target_3": null,
 "risk_reward": null,
 "invalidation": 2607.8,
-"why": "Filters not met: confidence 32% (need >80), agent agreement 3/5 (need 4+), RR 1.19 (need >2.5), manipulation 48% (need <70)."
+"why": "Filters not met: confidence 35% (need >80), agent agreement 4/5 (need 4+), RR 1.19 (need >2.5), manipulation 48% (need <70)."
 },
-"bullish_agents": 3,
+"bullish_agents": 4,
 "bearish_agents": 0
 },
 "alerts": [],
@@ -325,5 +326,499 @@
 "accuracy_by_condition": {},
 "accuracy_by_session": {},
 "recent": []
+},
+"news": [
+{
+"title": "Gold prices today, Monday, June 1: Gold prices moving lower this morning - Yahoo Finance",
+"publisher": "Yahoo Finance",
+"link": "https://news.google.com/rss/articles/CBMi3gFBVV95cUxPZnNMZ1Q4Tk5mLWhqODJfRjB5aGNjLVpFcndzN1h0YTBWSFF6TkpXNmZXWkVHWjU4SHEyM1RrN3Nsb092YVZYR2pmZFhvUWJYVjBDOUx0N1EwUF9ON2dwM0QtYVpkTjZNaVhDaGk2LWQ4SDlqS3hxTmNDcC03S2dHMGlwQm14ZGJ6cGFFa3pZRk9ZWW9EWmhvYUk2aWdQR1NmcGxYa0V5WlBvV1lWTExiZ1ZKc0l6Z1NNVUN6NHlJdmtMLVRUQXJLT25Yc2l6QjNIb1VJaU1BdEpIWE5lLWc?oc=5",
+"published": "Mon, 01 Jun 2026 12:01:53 GMT"
+},
+{
+"title": "Gold (XAU/USD) Price Forecast for Today, Tomorrow, Next Week, and the Next 30 Days - LiteFinance",
+"publisher": "LiteFinance",
+"link": "https://news.google.com/rss/articles/CBMioAFBVV95cUxOZ1BXeVdPR08tTmQ4MHdZMkloUzlsNjRjSE5VVmxyeVRrdDZqbDI3Tm5VVUdfYTdZM0dOYjkzVFBuMGhJUzZEM3E0RDBkc0RTUXd2VFdMdm5uenpPXzJobUNvRklvRkt0S0pfYkZ0UWRXaWRDc09MR1pBUkVDRXN2Y2FINkVmUDBlRkZHNGhzZkNyNk5LUzZrM2VUV1pVOV9N?oc=5",
+"published": "Mon, 01 Jun 2026 19:58:31 GMT"
+},
+{
+"title": "Gold Price Today on June 01, 2026 - USA Today",
+"publisher": "USA Today",
+"link": "https://news.google.com/rss/articles/CBMipgFBVV95cUxOUjdLbTUzY0Z0RG1BSEh2Zkl6V1A1UDBrU3k4ekk1T240NW9DVkprQ1NFd0pqWUprWVBiQmVBZ2hscVpVNHdDTHNGZ0diajFnVzJIcVFpdlJvU2lIZmY0TjNsYVZqbzlvNFRpMVpoYW9veXU4c3NRRmhNMWFnRHN6VU1weFZ1M2ltYmxiVUZVZmNzMnA4a0tVbUMzblIyaGphSV9TT3ln?oc=5",
+"published": "Mon, 01 Jun 2026 16:13:00 GMT"
+},
+{
+"title": "Current price of gold as of June 1, 2026 - Fortune",
+"publisher": "Fortune",
+"link": "https://news.google.com/rss/articles/CBMibkFVX3lxTE05ZklETU5rWUpMZzA1ODZnaDdtMHJKVXQzR1BrNWVFQjJjZVV0b3k1QzI1UGU5dDZnT1lFREpvWW1WWlF3NGx4QjlGb3VBVVVoekMxRzVsSkt4OHlPWXZqLS1XOHEtSzl6eUtrRUpn?oc=5",
+"published": "Mon, 01 Jun 2026 14:13:00 GMT"
+},
+{
+"title": "What is the price of gold today? - CBS News",
+"publisher": "CBS News",
+"link": "https://news.google.com/rss/articles/CBMibkFVX3lxTE5tZldOT0lPc1h6N1hVT1Bham1FYVp4MlNYdHp4d0ZuT3duam1IajZmY09EdlNjdVZhZTdJQmNQOVZqa2I3TDVKV1V4X2pXMWFGT0N0VlRMRGhvRXNYVElBRWt0QlBPbS1GaVRMMHhn?oc=5",
+"published": "Thu, 28 May 2026 13:40:28 GMT"
+},
+{
+"title": "Geopolitics or Monetary Policy: Which Matters More for the Evolution of Gold Prices? - Funds Society",
+"publisher": "Funds Society",
+"link": "https://news.google.com/rss/articles/CBMixwFBVV95cUxNTktfSm5faHJTQnk3MWV1VVI4LWZBczk4MTJDNkNIeENwYm9qOXNEVko2RHRBdWhUa19ESzVKUUJjbEhyQWVXcnRRdE9BM0ZvOU9WNldfTWxRSUF4ZF9pQTNaUDBXMlhnWHhHOHNCcFR5d1ZBRFZzYVZxaXQySlVod05EWnB5QUNvcVJXSlZ6eWkxV0dhVmdNQllFUVdrWnpjNno0Z0gycmlMc0VScTF5TDF1YUg2RHZYMEtQcU8yR21Hb3BRTi1z?oc=5",
+"published": "Mon, 01 Jun 2026 14:18:29 GMT"
+},
+{
+"title": "Gold Price Today: May 29, 2026 - Forbes",
+"publisher": "Forbes",
+"link": "https://news.google.com/rss/articles/CBMiYkFVX3lxTE1zX1NXTllPckpxeXBCVHlJc0I2dDBaRVRVdllsN19XQUhXYjBxWkx5TjNlVGF4NWx2RDFkSzA0V2FocXh4Z2lrUHMzZkV3a3ZnVXMwZjhZdU9LLWVQX3RyNVVn?oc=5",
+"published": "Fri, 29 May 2026 13:31:00 GMT"
+},
+{
+"title": "The price of gold today, June 1, 2026 \u2014 and the best places to buy - CNBC",
+"publisher": "CNBC",
+"link": "https://news.google.com/rss/articles/CBMibkFVX3lxTE43SkVaNnpZdnlqcFVJY3NiNFlYN1J0RXljNEZnTktJdUo0T1lELVhEUmhqLXh4SUYtNThpbDlVMEtScENkbm9sMjFmTnJ3TnA3MEcxWnphVmtzSjRuY1BnWEhTQzR0NXpvdFpqQndn0gFzQVVfeXFMTjdnS0NLM0dRbzlZQnMwVmxPemtHVWVMMWFOWW5yYU9oWjg2RFdjNEY2Rm9kOURCZ1ZpVEY0UXdaRG5nZkpNYWsxNmF6cGV6OWdwZTVGN1ZlSDM2UkNyS0VJcFhQNWpvQ3d2QWpyaU5pNTl0SQ?oc=5",
+"published": "Mon, 01 Jun 2026 13:13:19 GMT"
+},
+{
+"title": "Gold falls with inflation worries rising on Middle East conflict - Reuters",
+"publisher": "Reuters",
+"link": "https://news.google.com/rss/articles/CBMisgFBVV95cUxNQmkybDRsSTE5dExGbEF3WFo1bnk0d21mT2x2dzZ5QllRVklGUnpmWkNvVXpKTnhzNWs1OUstZnRYRHFUU1ZpOEJBZjdrZ29RZlFoUGU1c3N3b2x2ejBIOWp4X3lqamtIR09wanRjd1FRSThnMXpjSHE3WC1xR2xsalpqUEREbkczYlNRRDZlcXl1UW5ndGtBR0pBQ3hUNDJ1NDhhMC1BVDlxbTItRGJ2eDVn?oc=5",
+"published": "Mon, 01 Jun 2026 02:01:00 GMT"
+},
+{
+"title": "Gold price falls nearly 2% as Middle East tensions escalate again - Mining.com",
+"publisher": "Mining.com",
+"link": "https://news.google.com/rss/articles/CBMiigFBVV95cUxOY2RZbXZlNWNia3ZMSl9xSE9waHFRTUprSUxlTmVqRjlwUnp1RDJ5V01OM3ZCVTFIbFgzWWNlbGpLNENYb3NfY053N1lDZnpfUTlLcm1kZ2tvX3FkT1BWNGRrc1NXSGRaR3VPVVc2b1dhcHZ4ZjU0VTVVNlAwcE5Mc29mb1JxdjA2N0E?oc=5",
+"published": "Mon, 01 Jun 2026 16:06:42 GMT"
+},
+{
+"title": "Silver firms while gold slips on Hormuz uncertainty - Kitco AM Report - KITCO",
+"publisher": "KITCO",
+"link": "https://news.google.com/rss/articles/CBMirwFBVV95cUxNM2cwelVLOVQtOGRaVlIyTmtaMGpwOTZLdEdZeTJTamlibmRwcWNEQklrUXFzVUJlcVBkMnROMVhSaWFSZ1d5bXhmOHNKQmtiaVh2NzB3ZV84dDdlSE85N09kMkhSMHVGNzVrWUJubXVHX3lNeU0wbHAyLWt0Tm5LSk15dDkzYlZranQ3YkxUNkhGUl9TbFlWVTloTS1vMDRtcU5mbTMtaEhrYjctS21v?oc=5",
+"published": "Mon, 01 Jun 2026 13:17:29 GMT"
+},
+{
+"title": "Gold Slides, Oil Leaps as US-Iran War Dents AI-Fuelled Stock Market Records - BullionVault",
+"publisher": "BullionVault",
+"link": "https://news.google.com/rss/articles/CBMihwFBVV95cUxPcTF5c1VWQnc3TnhPemhBMmRHcVluM3M4ZGQyMHVkTS02Zks4QWlvWk1CcFVHY1lSMk1lN3JCWHo2aTFSWTRQODRLV2VRYTdfMmtnRDloSDZPejhTOEFzNHJQXzlaZGJhMkFsRGpMYTVqRncycFhKX2hDT1lJSEtScFFHdFZURW8?oc=5",
+"published": "Mon, 01 Jun 2026 14:10:59 GMT"
+},
+{
+"title": "Gold Price Forecast: XAU/USD dives to $4,500 amid simmering tensions in Iran - FXStreet",
+"publisher": "FXStreet",
+"link": "https://news.google.com/rss/articles/CBMiuAFBVV95cUxPN1N4dnJUZXM2SVZKNDZoRG9IaGdtRjdld3hoZ25HYTFURXpNbjM0Y3I5MURNZWxkVDd4Vjh1dWNMaTUwUmpHMHNKbmxKUjdkc21hZ0VkUDRoaFo2YjRLTDBaZjFzOTFpSUVTT3NZWko1bE02ajVIeHhPbkNvNTZVY245OU5vRnV1X2tNSmw2M1IzRlhqVDNjSUlZcU9ueVUyQXRfVG1wdzlwWlRsMVN4X3NuU2owZVYw?oc=5",
+"published": "Mon, 01 Jun 2026 10:48:24 GMT"
+},
+{
+"title": "Gold News: Gold Market Faces Critical Week as NFP and ISM Data Loom - FXEmpire",
+"publisher": "FXEmpire",
+"link": "https://news.google.com/rss/articles/CBMiuAFBVV95cUxQMlFBZngtTl9Pb3Nja2QwaW5JczYxNk5HMGtTWFkyMDBTUklTUkZ2ZURUYl9JMXZoaF9OZXBGNjJoamRTTDR1TDlKZjk4ZVhiMVkxNWwtM0dNQ2FNdkNTWS1kR3dzbXhIeERiRURiN0YwaEQ1dUdHY1p5M0FqMlVCS1c5S1QyNFhkT3diM215dG1zWnByOFFsdDhkaGtnYVhYZXQ2OFI0NlRXd043S2ZwUDlFWUxuOGw4?oc=5",
+"published": "Mon, 01 Jun 2026 05:23:00 GMT"
+}
+],
+"chart": {
+"symbol": "XAUUSD",
+"tv_symbol": "OANDA:XAUUSD",
+"yahoo_symbol": "GC=F",
+"interval": "1H",
+"last": 2649.53,
+"candles": [
+{
+"t": "0",
+"o": 2649.53,
+"h": 2654.59,
+"l": 2640.01,
+"c": 2648.51,
+"v": 5406
+},
+{
+"t": "1",
+"o": 2648.51,
+"h": 2656.05,
+"l": 2639.09,
+"c": 2642.5,
+"v": 7163
+},
+{
+"t": "2",
+"o": 2642.5,
+"h": 2660.56,
+"l": 2642.46,
+"c": 2655.88,
+"v": 7959
+},
+{
+"t": "3",
+"o": 2655.88,
+"h": 2661.07,
+"l": 2647.79,
+"c": 2656.5,
+"v": 6077
+},
+{
+"t": "4",
+"o": 2656.5,
+"h": 2657.51,
+"l": 2643.59,
+"c": 2648.23,
+"v": 7765
+},
+{
+"t": "5",
+"o": 2648.23,
+"h": 2665.73,
+"l": 2640.82,
+"c": 2655.59,
+"v": 6125
+},
+{
+"t": "6",
+"o": 2655.59,
+"h": 2658.18,
+"l": 2647.26,
+"c": 2650.4,
+"v": 6727
+},
+{
+"t": "7",
+"o": 2650.4,
+"h": 2655.2,
+"l": 2648.97,
+"c": 2650.79,
+"v": 5100
+},
+{
+"t": "8",
+"o": 2650.79,
+"h": 2655.6,
+"l": 2645.83,
+"c": 2648.89,
+"v": 6510
+},
+{
+"t": "9",
+"o": 2648.89,
+"h": 2658.06,
+"l": 2648.36,
+"c": 2652.87,
+"v": 6502
+},
+{
+"t": "10",
+"o": 2652.87,
+"h": 2655.75,
+"l": 2636.09,
+"c": 2639.58,
+"v": 6141
+},
+{
+"t": "11",
+"o": 2639.58,
+"h": 2649.11,
+"l": 2624.97,
+"c": 2633.54,
+"v": 5096
+},
+{
+"t": "12",
+"o": 2633.54,
+"h": 2640.36,
+"l": 2630.18,
+"c": 2635.59,
+"v": 8323
+},
+{
+"t": "13",
+"o": 2635.59,
+"h": 2641.98,
+"l": 2631.63,
+"c": 2635.07,
+"v": 5094
+},
+{
+"t": "14",
+"o": 2635.07,
+"h": 2637.1,
+"l": 2622.98,
+"c": 2628.27,
+"v": 6153
+},
+{
+"t": "15",
+"o": 2628.27,
+"h": 2640.81,
+"l": 2625.48,
+"c": 2634.86,
+"v": 7883
+},
+{
+"t": "16",
+"o": 2634.86,
+"h": 2639.06,
+"l": 2612.3,
+"c": 2615.32,
+"v": 5406
+},
+{
+"t": "17",
+"o": 2615.32,
+"h": 2621.39,
+"l": 2614.87,
+"c": 2618.23,
+"v": 5311
+},
+{
+"t": "18",
+"o": 2618.23,
+"h": 2628.74,
+"l": 2616.46,
+"c": 2627.4,
+"v": 5823
+},
+{
+"t": "19",
+"o": 2627.4,
+"h": 2629.68,
+"l": 2621.49,
+"c": 2623.56,
+"v": 5841
+},
+{
+"t": "20",
+"o": 2623.56,
+"h": 2636.74,
+"l": 2618.99,
+"c": 2625.84,
+"v": 5652
+},
+{
+"t": "21",
+"o": 2625.84,
+"h": 2637.46,
+"l": 2615.14,
+"c": 2635.3,
+"v": 7016
+},
+{
+"t": "22",
+"o": 2635.3,
+"h": 2637.16,
+"l": 2620.42,
+"c": 2620.51,
+"v": 8352
+},
+{
+"t": "23",
+"o": 2620.51,
+"h": 2624.23,
+"l": 2616.17,
+"c": 2623.08,
+"v": 9422
+},
+{
+"t": "24",
+"o": 2623.08,
+"h": 2628.99,
+"l": 2615.33,
+"c": 2624.94,
+"v": 7287
+},
+{
+"t": "25",
+"o": 2624.94,
+"h": 2629.79,
+"l": 2621.62,
+"c": 2627.6,
+"v": 9541
+},
+{
+"t": "26",
+"o": 2627.6,
+"h": 2630.34,
+"l": 2625.19,
+"c": 2629.04,
+"v": 6699
+},
+{
+"t": "27",
+"o": 2629.04,
+"h": 2640.1,
+"l": 2628.66,
+"c": 2635.59,
+"v": 5955
+},
+{
+"t": "28",
+"o": 2635.59,
+"h": 2641.14,
+"l": 2630.12,
+"c": 2639.37,
+"v": 6020
+},
+{
+"t": "29",
+"o": 2639.37,
+"h": 2644.54,
+"l": 2634.89,
+"c": 2637.24,
+"v": 5754
+},
+{
+"t": "30",
+"o": 2637.24,
+"h": 2648.1,
+"l": 2632.65,
+"c": 2643.23,
+"v": 7711
+},
+{
+"t": "31",
+"o": 2643.23,
+"h": 2656.44,
+"l": 2639.14,
+"c": 2646.5,
+"v": 7489
+},
+{
+"t": "32",
+"o": 2646.5,
+"h": 2654.42,
+"l": 2628.94,
+"c": 2632.38,
+"v": 5111
+},
+{
+"t": "33",
+"o": 2632.38,
+"h": 2640.52,
+"l": 2619.51,
+"c": 2634.59,
+"v": 5258
+},
+{
+"t": "34",
+"o": 2634.59,
+"h": 2639.28,
+"l": 2632.06,
+"c": 2635.46,
+"v": 5447
+},
+{
+"t": "35",
+"o": 2635.46,
+"h": 2637.94,
+"l": 2619.31,
+"c": 2629.21,
+"v": 7690
+},
+{
+"t": "36",
+"o": 2629.21,
+"h": 2644.48,
+"l": 2624.0,
+"c": 2641.77,
+"v": 5251
+},
+{
+"t": "37",
+"o": 2641.77,
+"h": 2648.0,
+"l": 2632.83,
+"c": 2642.22,
+"v": 8059
+},
+{
+"t": "38",
+"o": 2642.22,
+"h": 2644.47,
+"l": 2635.62,
+"c": 2640.96,
+"v": 8309
+},
+{
+"t": "39",
+"o": 2640.96,
+"h": 2647.87,
+"l": 2634.15,
+"c": 2647.49,
+"v": 7590
+},
+{
+"t": "40",
+"o": 2647.49,
+"h": 2656.32,
+"l": 2643.45,
+"c": 2644.82,
+"v": 8006
+},
+{
+"t": "41",
+"o": 2644.82,
+"h": 2646.26,
+"l": 2628.61,
+"c": 2642.87,
+"v": 5108
+},
+{
+"t": "42",
+"o": 2642.87,
+"h": 2646.55,
+"l": 2631.27,
+"c": 2641.04,
+"v": 7253
+},
+{
+"t": "43",
+"o": 2641.04,
+"h": 2646.88,
+"l": 2625.33,
+"c": 2638.91,
+"v": 5118
+},
+{
+"t": "44",
+"o": 2638.91,
+"h": 2639.15,
+"l": 2637.86,
+"c": 2639.02,
+"v": 5288
+},
+{
+"t": "45",
+"o": 2639.02,
+"h": 2641.9,
+"l": 2634.3,
+"c": 2634.48,
+"v": 6086
+},
+{
+"t": "46",
+"o": 2634.48,
+"h": 2635.04,
+"l": 2627.5,
+"c": 2628.84,
+"v": 8007
+},
+{
+"t": "47",
+"o": 2628.84,
+"h": 2634.58,
+"l": 2601.44,
+"c": 2607.94,
+"v": 9146
+}
+],
+"support": [
+2607.8,
+2633.3,
+2636.4
+],
+"resistance": [
+2675.3,
+2674.1,
+2673.9
+],
+"chart_links": {
+"tradingview": "https://www.tradingview.com/chart/?symbol=OANDA:XAUUSD",
+"yahoo": "https://finance.yahoo.com/quote/GC%3DF/chart/",
+"finviz": "https://finviz.com/quote.ashx?t=GLD"
+}
 }
 }

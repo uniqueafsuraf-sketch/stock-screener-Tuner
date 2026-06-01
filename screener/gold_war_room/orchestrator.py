@@ -19,7 +19,13 @@ from screener.gold_war_room.agents import (
     stop_hunt_panel,
     trend_continuation_panel,
 )
-from screener.gold_war_room.fetch import GoldMarketData, _synthetic_frames, fetch_gold_data
+from screener.gold_war_room.fetch import (
+    GoldMarketData,
+    _synthetic_frames,
+    build_chart_bundle,
+    fetch_gold_data,
+    fetch_gold_news,
+)
 from screener.gold_war_room.master import agent_consensus, build_alerts, run_master
 from screener.gold_war_room.performance import performance_summary, record_setup
 
@@ -85,6 +91,12 @@ def _build_response(data: GoldMarketData, agents: dict, trap: dict, risk: dict, 
         "master": master,
         "alerts": build_alerts(trap),
         "performance": performance_summary(),
+        "news": data.news or fetch_gold_news(),
+        "chart": build_chart_bundle(
+            data.frames,
+            data.price,
+            technical.get("key_levels"),
+        ),
     }
 
 

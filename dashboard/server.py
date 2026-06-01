@@ -423,6 +423,8 @@ def _war_room_warming_payload() -> dict:
         "trade_opportunity": {"status": "NO_HIGH_CONVICTION_TRADE", "why": "Waiting for agent consensus…"},
         "performance": {"total_setups": 0, "win_rate": 0, "loss_rate": 0, "average_rr": 0},
         "alerts": [],
+        "news": [],
+        "chart": {"symbol": "XAUUSD", "tv_symbol": "OANDA:XAUUSD", "candles": [], "interval": "1H"},
     }
 
 
