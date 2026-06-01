@@ -40,7 +40,21 @@ _pulse_cache: dict = {"data": [], "ts": 0.0}
 
 
 def _cfg() -> dict:
-    return load_config(CONFIG_PATH)
+    cfg = load_config(CONFIG_PATH)
+    if is_cloud_host():
+        live = dict(cfg.get("live") or {})
+        live["interval_sec"] = max(float(live.get("interval_sec", 1)), 3.0)
+        live["full_scan_interval_sec"] = max(int(live.get("full_scan_interval_sec", 300)), 600)
+        news = dict(cfg.get("news") or {})
+        news["wire_fetch_for"] = "opportunities"
+        news["workers"] = min(int(news.get("workers", 12)), 4)
+        cfg = {
+            **cfg,
+            "universe": "watchlist",
+            "live": live,
+            "news": news,
+        }
+    return cfg
 
 
 def _live_cfg() -> dict:
@@ -211,7 +225,7 @@ def _ensure_background() -> LiveEngine:
         threading.Thread(target=_scan_loop, daemon=True, name="scan-loop").start()
         def _initial_scan() -> None:
             if is_cloud_host():
-                time.sleep(8)
+                time.sleep(25)
             _run_scan(force=True)
 
         threading.Thread(target=_initial_scan, daemon=True, name="initial-scan").start()
