@@ -125,12 +125,10 @@
     }
   }
 
-  function reloadTradingViewEmbed(interval = "60") {
-    const wrap = $("gold-tv-embed");
-    if (!wrap) return;
-    const cfg = {
+  function tvChartConfig(symbol, interval) {
+    return {
       autosize: true,
-      symbol: "OANDA:XAUUSD",
+      symbol,
       interval,
       timezone: "Etc/UTC",
       theme: "dark",
@@ -138,91 +136,45 @@
       locale: "en",
       enable_publishing: false,
       allow_symbol_change: true,
+      withdateranges: true,
+      hide_side_toolbar: false,
+      hide_top_toolbar: false,
+      details: true,
+      hotlist: true,
       calendar: false,
+      studies: ["STD;Volume"],
       support_host: "https://www.tradingview.com",
     };
+  }
+
+  function setChartHeight(px) {
+    const embed = $("gold-tv-embed");
+    const wrap = $("war-chart-wrap");
+    const h = Math.min(820, Math.max(360, Number(px) || 500));
+    if (embed) embed.style.height = `${h}px`;
+    if (wrap) wrap.style.height = `${h}px`;
+    try {
+      localStorage.setItem("warChartHeight", String(h));
+    } catch { /* ignore */ }
+  }
+
+  function reloadTradingViewEmbed(interval, symbol) {
+    const wrap = $("gold-tv-embed");
+    if (!wrap) return;
+    const sym = symbol || $("chart-symbol")?.value || "OANDA:XAUUSD";
+    const iv = interval || document.querySelector(".chart-tf.active")?.getAttribute("data-interval") || "60";
+    const cfg = tvChartConfig(sym, iv);
     wrap.innerHTML = `<div class="tradingview-widget-container__widget" id="gold-tv-widget"></div>
       <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js" async>
       ${JSON.stringify(cfg)}
       <\/script>`;
-  }
-
-  function drawCanvasChart(chart) {
-    const canvas = $("gold-canvas-chart");
-    if (!canvas || !chart?.candles?.length) return;
-    const ctx = canvas.getContext("2d");
-    const dpr = window.devicePixelRatio || 1;
-    const w = canvas.clientWidth || 800;
-    const h = 140;
-    canvas.width = w * dpr;
-    canvas.height = h * dpr;
-    ctx.scale(dpr, dpr);
-    ctx.clearRect(0, 0, w, h);
-
-    const candles = chart.candles;
-    const closes = candles.map((c) => c.c);
-    const min = Math.min(...closes);
-    const max = Math.max(...closes);
-    const pad = (max - min) * 0.08 || 1;
-    const lo = min - pad;
-    const hi = max + pad;
-    const range = hi - lo || 1;
-
-    ctx.strokeStyle = "rgba(255, 215, 0, 0.15)";
-    for (let i = 0; i <= 4; i++) {
-      const y = (h * i) / 4;
-      ctx.beginPath();
-      ctx.moveTo(0, y);
-      ctx.lineTo(w, y);
-      ctx.stroke();
-    }
-
-    ctx.beginPath();
-    ctx.strokeStyle = "#ffd700";
-    ctx.lineWidth = 2;
-    candles.forEach((c, i) => {
-      const x = (i / Math.max(candles.length - 1, 1)) * (w - 8) + 4;
-      const y = h - ((c.c - lo) / range) * (h - 16) - 8;
-      if (i === 0) ctx.moveTo(x, y);
-      else ctx.lineTo(x, y);
-    });
-    ctx.stroke();
-
-    const last = chart.last ?? closes[closes.length - 1];
-    ctx.fillStyle = "#ffd700";
-    ctx.font = "600 12px JetBrains Mono, monospace";
-    ctx.fillText(`$${last} · ${chart.interval || "1H"} desk series`, 8, 16);
-
-    if (chart.support?.length) {
-      const sy = h - ((chart.support[0] - lo) / range) * (h - 16) - 8;
-      ctx.strokeStyle = "rgba(0, 255, 136, 0.5)";
-      ctx.setLineDash([4, 4]);
-      ctx.beginPath();
-      ctx.moveTo(0, sy);
-      ctx.lineTo(w, sy);
-      ctx.stroke();
-      ctx.setLineDash([]);
-    }
-    if (chart.resistance?.length) {
-      const ry = h - ((chart.resistance[0] - lo) / range) * (h - 16) - 8;
-      ctx.strokeStyle = "rgba(255, 68, 102, 0.5)";
-      ctx.setLineDash([4, 4]);
-      ctx.beginPath();
-      ctx.moveTo(0, ry);
-      ctx.lineTo(w, ry);
-      ctx.stroke();
-      ctx.setLineDash([]);
-    }
+    const cap = $("chart-caption");
+    if (cap) cap.textContent = `Live TradingView · ${sym} · use toolbar to zoom, pan & draw`;
   }
 
   function renderChart(chart) {
-    if (!chart) return;
-    const cap = $("chart-caption");
-    if (cap) {
-      cap.textContent = `TradingView live · ${chart.tv_symbol || "OANDA:XAUUSD"} · desk ${chart.interval || "1H"} overlay`;
-    }
     const links = $("chart-ext-links");
-    if (links && chart.chart_links) {
+    if (links && chart?.chart_links) {
       const L = chart.chart_links;
       links.innerHTML = [
         ["TradingView", L.tradingview],
@@ -235,7 +187,6 @@
         )
         .join("");
     }
-    drawCanvasChart(chart);
   }
 
   function renderNews(items) {
@@ -401,11 +352,21 @@
     }
   }
 
+  const heightRange = $("chart-height-range");
+  const savedH = localStorage.getItem("warChartHeight");
+  if (heightRange && savedH) heightRange.value = savedH;
+  setChartHeight(heightRange?.value || 500);
+  heightRange?.addEventListener("input", () => setChartHeight(heightRange.value));
+
+  $("chart-symbol")?.addEventListener("change", (e) => {
+    reloadTradingViewEmbed(null, e.target.value);
+  });
+
   document.querySelectorAll(".chart-tf").forEach((btn) => {
     btn.addEventListener("click", () => {
       document.querySelectorAll(".chart-tf").forEach((b) => b.classList.remove("active"));
       btn.classList.add("active");
-      reloadTradingViewEmbed(btn.getAttribute("data-interval") || "60");
+      reloadTradingViewEmbed(btn.getAttribute("data-interval") || "60", $("chart-symbol")?.value);
     });
   });
 

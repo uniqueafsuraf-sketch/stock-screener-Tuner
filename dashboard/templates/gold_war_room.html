@@ -110,63 +110,59 @@
 
             <h2 class="war-panel-title">Live Gold Chart</h2>
 
-            <div class="chart-tf-btns" role="group" aria-label="Chart timeframe">
-
-              <button type="button" class="chart-tf" data-interval="15">15m</button>
-
-              <button type="button" class="chart-tf active" data-interval="60">1H</button>
-
-              <button type="button" class="chart-tf" data-interval="240">4H</button>
-
-              <button type="button" class="chart-tf" data-interval="D">1D</button>
-
+            <div class="chart-controls">
+              <label class="chart-control-label">
+                Symbol
+                <select id="chart-symbol" class="chart-symbol-select" aria-label="Chart symbol">
+                  <option value="OANDA:XAUUSD" selected>Gold spot (XAUUSD)</option>
+                  <option value="COMEX:GC1!">Gold futures (GC)</option>
+                  <option value="TVC:GOLD">Gold index</option>
+                  <option value="AMEX:GLD">GLD ETF</option>
+                </select>
+              </label>
+              <div class="chart-tf-btns" role="group" aria-label="Chart timeframe">
+                <button type="button" class="chart-tf" data-interval="15">15m</button>
+                <button type="button" class="chart-tf" data-interval="30">30m</button>
+                <button type="button" class="chart-tf active" data-interval="60">1H</button>
+                <button type="button" class="chart-tf" data-interval="240">4H</button>
+                <button type="button" class="chart-tf" data-interval="D">1D</button>
+                <button type="button" class="chart-tf" data-interval="W">1W</button>
+              </div>
+              <label class="chart-control-label chart-height-control">
+                Height
+                <input type="range" id="chart-height-range" class="chart-height-range" min="360" max="780" value="500" aria-label="Chart height">
+              </label>
             </div>
-
           </div>
 
-          <div class="war-chart-wrap">
-
+          <div class="war-chart-wrap" id="war-chart-wrap">
             <div class="tradingview-widget-container gold-tv-embed" id="gold-tv-embed">
-
               <div class="tradingview-widget-container__widget" id="gold-tv-widget"></div>
-
               <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js" async>
-
               {
-
                 "autosize": true,
-
                 "symbol": "OANDA:XAUUSD",
-
                 "interval": "60",
-
                 "timezone": "Etc/UTC",
-
                 "theme": "dark",
-
                 "style": "1",
-
                 "locale": "en",
-
                 "enable_publishing": false,
-
                 "allow_symbol_change": true,
-
+                "withdateranges": true,
+                "hide_side_toolbar": false,
+                "hide_top_toolbar": false,
+                "details": true,
+                "hotlist": true,
                 "calendar": false,
-
+                "studies": ["STD;Volume"],
                 "support_host": "https://www.tradingview.com"
-
               }
-
               </script>
-
             </div>
-
-            <canvas id="gold-canvas-chart" class="gold-canvas-chart" width="800" height="200" aria-label="Gold price series"></canvas>
-
           </div>
 
-          <p class="war-muted chart-caption" id="chart-caption">TradingView live · OANDA:XAUUSD</p>
+          <p class="war-muted chart-caption" id="chart-caption">Live TradingView — zoom, pan, draw tools, and symbol search on chart</p>
 
           <div class="chart-ext-links" id="chart-ext-links">
 
