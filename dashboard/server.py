@@ -458,6 +458,26 @@ def _refresh_war_room_async(*, force: bool = False) -> None:
     threading.Thread(target=_run, daemon=True, name="war-room-refresh").start()
 
 
+@app.route("/gold-war-room")
+def gold_war_room_page():
+    from dashboard.brand import SITE_NAME  # noqa: PLC0415
+    from dashboard.launch import APP_VERSION  # noqa: PLC0415
+
+    _schedule_background_start()
+    _schedule_war_room_warmup()
+    initial = load_war_room_seed() or {}
+    with _war_room_lock:
+        cached = _war_room_cache.get("data")
+        if _war_room_ready(cached):
+            initial = cached
+    return render_template(
+        "gold_war_room.html",
+        site_name=SITE_NAME,
+        app_version=APP_VERSION,
+        initial=initial,
+    )
+
+
 @app.route("/api/gold-war-room")
 def api_gold_war_room():
     force = request.args.get("refresh") == "1"
