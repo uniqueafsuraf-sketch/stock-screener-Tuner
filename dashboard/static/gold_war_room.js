@@ -215,20 +215,38 @@
     renderPerformance(data.performance);
   }
 
-  async function load(refresh = false) {
+  let warmPolls = 0;
+
+  async function load(refresh = false, retries = 0) {
     const btn = $("btn-war-refresh");
     if (btn) btn.disabled = true;
-    $("bias-why").textContent = "Running 7 agents + master synthesis…";
-    $("consensus-table").innerHTML = "<span class='war-muted'>Analyzing…</span>";
+    if (!refresh || warmPolls === 0) {
+      $("bias-why").textContent = "Running 7 agents + master synthesis…";
+      $("consensus-table").innerHTML = "<span class='war-muted'>Analyzing…</span>";
+    }
     try {
       const res = await fetch(`/api/gold-war-room${refresh ? "?refresh=1" : ""}`, { cache: "no-store" });
+      if (res.status === 502 || res.status === 503) {
+        if (retries < 8) {
+          showStatusBanner({ error: `Server ${res.status} — retrying…`, fetch_notes: [] });
+          setTimeout(() => load(refresh, retries + 1), 4000);
+          return;
+        }
+        throw new Error(`Server ${res.status}`);
+      }
       if (!res.ok) throw new Error(`Server ${res.status}`);
       const json = await res.json();
       if (json.warming) {
+        warmPolls += 1;
         $("bias-why").textContent = json.message || "Agents analyzing…";
-        setTimeout(() => load(refresh), 3000);
+        if (warmPolls < 40) {
+          setTimeout(() => load(false), 3000);
+        } else {
+          $("bias-why").textContent = "Still loading — click Refresh.";
+        }
         return;
       }
+      warmPolls = 0;
       apply(json);
     } catch (e) {
       $("bias-why").textContent = `Network error: ${e.message}. Try Refresh.`;

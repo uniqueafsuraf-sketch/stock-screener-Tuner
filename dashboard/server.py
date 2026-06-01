@@ -17,7 +17,13 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from screener.alerts import create_alert, delete_alert, evaluate_alerts, load_alerts  # noqa: E402
-from screener.cache_io import load_scan_cache, load_seed_bootstrap, save_scan_cache  # noqa: E402
+from screener.cache_io import (  # noqa: E402
+    load_scan_cache,
+    load_seed_bootstrap,
+    load_war_room_seed,
+    save_scan_cache,
+    save_war_room_seed,
+)
 from screener.runtime import is_cloud_host  # noqa: E402
 from screener.live import LiveEngine  # noqa: E402
 from screener.scan import load_config, resolve_symbols, scan_full  # noqa: E402
@@ -376,9 +382,26 @@ def gold_war_room_page():
     return render_template("gold_war_room.html", site_name=SITE_NAME)
 
 
-_war_room_cache: dict = {"data": None, "ts": 0.0, "computing": False}
+_war_room_cache: dict = {"data": None, "ts": 0.0, "computing": False, "computing_since": 0.0}
 _war_room_lock = threading.Lock()
 WAR_ROOM_TTL = 90
+WAR_ROOM_COMPUTE_MAX = 75
+
+
+def _war_room_ready(cached: dict | None) -> bool:
+    return bool(cached and cached.get("ok") and not cached.get("warming") and cached.get("agents"))
+
+
+def _load_war_room_seed_into_cache() -> bool:
+    seed = load_war_room_seed()
+    if not seed:
+        return False
+    with _war_room_lock:
+        _war_room_cache["data"] = seed
+        _war_room_cache["ts"] = time.time()
+        _war_room_cache["computing"] = False
+    print(f"Loaded Gold War Room seed ({len(seed.get('agents', {}))} agents)")
+    return True
 
 
 def _war_room_warming_payload() -> dict:
@@ -403,17 +426,28 @@ def _war_room_warming_payload() -> dict:
     }
 
 
+def _reset_war_room_compute_lock() -> None:
+    with _war_room_lock:
+        _war_room_cache["computing"] = False
+        _war_room_cache["computing_since"] = 0.0
+
+
 def _refresh_war_room_async(*, force: bool = False) -> None:
     with _war_room_lock:
         if _war_room_cache.get("computing"):
-            return
+            started = _war_room_cache.get("computing_since") or 0.0
+            if time.time() - started < WAR_ROOM_COMPUTE_MAX:
+                return
         _war_room_cache["computing"] = True
+        _war_room_cache["computing_since"] = time.time()
 
     def _run() -> None:
         from screener.gold_war_room import run_war_room_analysis  # noqa: PLC0415
 
         try:
             payload = run_war_room_analysis()
+            if payload.get("ok"):
+                save_war_room_seed(payload)
             with _war_room_lock:
                 _war_room_cache["data"] = payload
                 _war_room_cache["ts"] = time.time()
@@ -426,8 +460,7 @@ def _refresh_war_room_async(*, force: bool = False) -> None:
                 _war_room_cache["data"] = err_payload
                 _war_room_cache["ts"] = time.time()
         finally:
-            with _war_room_lock:
-                _war_room_cache["computing"] = False
+            _reset_war_room_compute_lock()
 
     threading.Thread(target=_run, daemon=True, name="war-room-refresh").start()
 
@@ -440,14 +473,22 @@ def api_gold_war_room():
         cached = _war_room_cache.get("data")
         age = now - (_war_room_cache.get("ts") or 0)
         computing = _war_room_cache.get("computing", False)
+        started = _war_room_cache.get("computing_since") or 0.0
 
-    if cached and age < WAR_ROOM_TTL and not force:
+    if computing and started and (now - started) > WAR_ROOM_COMPUTE_MAX:
+        _reset_war_room_compute_lock()
+        computing = False
+
+    if _war_room_ready(cached) and age < WAR_ROOM_TTL and not force:
+        return jsonify(_json_safe(cached))
+
+    if _war_room_ready(cached) and not force:
         return jsonify(_json_safe(cached))
 
     if not computing:
         _refresh_war_room_async(force=force)
 
-    if cached:
+    if _war_room_ready(cached):
         out = dict(cached)
         if force or age >= WAR_ROOM_TTL:
             out["stale"] = True
@@ -618,7 +659,12 @@ def _schedule_war_room_warmup() -> None:
         return
     _war_room_warm_scheduled = True
 
-    _refresh_war_room_async()
+    def _delayed() -> None:
+        if is_cloud_host():
+            time.sleep(30)
+        _refresh_war_room_async()
+
+    threading.Thread(target=_delayed, daemon=True, name="war-room-warm").start()
 
 
 def init_production() -> None:
@@ -632,8 +678,10 @@ def init_production() -> None:
                 _scan_cache["data"] = seed
                 _scan_cache["ts"] = time.time()
             print(f"Loaded {len(seed.get('all_stocks', []))} stocks from seed_bootstrap.json")
+    _load_war_room_seed_into_cache()
     _schedule_background_start()
-    _schedule_war_room_warmup()
+    if not _war_room_ready(_war_room_cache.get("data")):
+        _schedule_war_room_warmup()
 
 
 def main(port: int | None = None) -> None:

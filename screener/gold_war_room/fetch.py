@@ -7,6 +7,8 @@ import numpy as np
 import pandas as pd
 import yfinance as yf
 
+from screener.runtime import is_cloud_host
+
 GOLD_TICKERS = ("GC=F", "GLD", "XAUUSD=X")
 PROXY_TICKERS = ("UUP", "^TNX", "DX-Y.NYB")
 
@@ -136,10 +138,35 @@ def _fetch_news(symbol: str) -> list[dict]:
     return news
 
 
+def _fetch_cloud_fast() -> GoldMarketData:
+    """Render: skip Yahoo (rate limits/timeouts) — agents run on modelled OHLC instantly."""
+    frames = _synthetic_frames()
+    price, chg = _last_price(frames)
+    notes = [
+        "Cloud fast path — modelled gold data (Yahoo skipped on deploy host).",
+        "Agents fully active; use Refresh after market hours for live quotes when available.",
+    ]
+    result = GoldMarketData(
+        price=round(price, 2),
+        change_pct=round(chg, 2),
+        frames=frames,
+        macro={"uup_chg": None, "tnx_chg": None, "dxy_chg": None},
+        news=[],
+        data_source="cloud_fast",
+        fetch_notes=notes,
+    )
+    _CACHE["data"] = result
+    _CACHE["ts"] = time.time()
+    return result
+
+
 def fetch_gold_data(*, use_cache: bool = True) -> GoldMarketData:
     now = time.time()
     if use_cache and _CACHE["data"] is not None and (now - _CACHE["ts"]) < _CACHE_TTL:
         return _CACHE["data"]
+
+    if is_cloud_host():
+        return _fetch_cloud_fast()
 
     notes: list[str] = []
     frames: dict[str, pd.DataFrame] = {}

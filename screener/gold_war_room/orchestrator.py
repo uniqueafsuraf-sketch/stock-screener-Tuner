@@ -49,7 +49,7 @@ def _build_response(data: GoldMarketData, agents: dict, trap: dict, risk: dict, 
     technical = agents["technical"]
     macro = agents["macro"]
     notes = " ".join(data.fetch_notes)
-    why_extra = f" Data: {data.data_source}." if data.data_source != "live" else ""
+    why_extra = f" Data: {data.data_source}." if data.data_source not in ("live",) else ""
     return {
         "ok": True,
         "symbol": "XAUUSD (GC)",

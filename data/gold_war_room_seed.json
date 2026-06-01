@@ -1,0 +1,329 @@
+{
+"ok": true,
+"symbol": "XAUUSD (GC)",
+"price": 2649.53,
+"change_pct": 0.17,
+"data_source": "cloud_fast",
+"fetch_notes": [
+"Cloud fast path \u2014 modelled gold data (Yahoo skipped on deploy host).",
+"Agents fully active; use Refresh after market hours for live quotes when available."
+],
+"updated_at": "2026-06-01 21:14:51 UTC",
+"market_bias": {
+"bias": "Neutral",
+"confidence": 32.0,
+"bull_probability": 54.1,
+"bear_probability": 45.9,
+"neutral_probability": 91.7,
+"why": "Filters not met: confidence 32% (need >80), agent agreement 3/5 (need 4+), RR 1.19 (need >2.5), manipulation 48% (need <70). Data: cloud_fast. Cloud fast path \u2014 modelled gold data (Yahoo skipped on deploy host). Agents fully active; use Refresh after market hours for live quotes when available."
+},
+"confidence_meter": {
+"score": 32.0,
+"label": "Low"
+},
+"agent_consensus": {
+"rows": [
+{
+"agent": "Macro",
+"view": "Neutral",
+"detail": "Macro mixed \u2014 monitor Fed, yields, and USD."
+},
+{
+"agent": "Technical",
+"view": "Bullish",
+"detail": "Price above mid-range \u2014 bullish structure bias."
+},
+{
+"agent": "Order Flow",
+"view": "Bullish",
+"detail": "Recent delta bias buying; liquidity near 2707.5 / 2585.3."
+},
+{
+"agent": "Sentiment",
+"view": "Bullish",
+"detail": "Mixed mood. Headlines scanned: 0 items."
+},
+{
+"agent": "Quant",
+"view": "Neutral",
+"detail": "60-day up-day rate 52% \u2014 expected 1\u03c3 range 2629.7-2669.4."
+},
+{
+"agent": "Risk",
+"view": "Neutral",
+"detail": "Black swan: geopolitical headline risk always present for gold."
+},
+{
+"agent": "Trap Detector",
+"view": "Safe",
+"detail": "No dominant trap pattern."
+}
+],
+"bullish_count": 3,
+"total": 7,
+"headline": "3 / 7 Agents Bullish"
+},
+"agents": {
+"macro": {
+"id": "macro",
+"name": "Macro Economist",
+"bullish_score": 50.0,
+"bearish_score": 50.0,
+"summary": "Macro mixed \u2014 monitor Fed, yields, and USD.",
+"stance": "neutral"
+},
+"technical": {
+"id": "technical",
+"name": "Technical Analyst",
+"bullish_score": 82.87105,
+"bearish_score": 65.645,
+"stance": "bullish",
+"key_levels": {
+"resistance": [
+2675.3,
+2674.1,
+2673.9,
+2666.7
+],
+"support": [
+2607.8,
+2633.3,
+2636.4,
+2640.8
+]
+},
+"levels_by_tf": {
+"1D": {
+"resistance": [
+2675.3,
+2674.1,
+2673.9,
+2666.7
+],
+"support": [
+2607.8,
+2633.3,
+2636.4,
+2640.8
+]
+},
+"1H": {
+"resistance": [
+2658.1,
+2656.4,
+2656.3,
+2648.0
+],
+"support": [
+2612.3,
+2615.1,
+2615.3,
+2619.3
+]
+},
+"15M": {
+"resistance": [
+2668.6,
+2634.1,
+2623.3,
+2614.7
+],
+"support": [
+2538.2,
+2585.3,
+2594.5,
+2598.8
+]
+},
+"4H": {
+"resistance": [
+2658.1,
+2656.4,
+2656.3,
+2648.0
+],
+"support": [
+2612.3,
+2615.1,
+2615.3,
+2619.3
+]
+},
+"1W": {
+"resistance": [
+2673.9,
+2663.4,
+2639.6
+],
+"support": [
+2596.0,
+2600.0,
+2624.9
+]
+}
+},
+"summary": "Price above mid-range \u2014 bullish structure bias."
+},
+"order_flow": {
+"id": "order_flow",
+"name": "Order Flow Analyst",
+"bullish_score": 72.0,
+"bearish_score": 50.0,
+"stance": "bullish",
+"liquidity_levels": [
+2707.5,
+2585.3
+],
+"summary": "Recent delta bias buying; liquidity near 2707.5 / 2585.3."
+},
+"sentiment": {
+"id": "sentiment",
+"name": "Sentiment Analyst",
+"bullish_score": 55.0,
+"bearish_score": 45.0,
+"stance": "bullish",
+"market_mood": "Mixed mood",
+"summary": "Mixed mood. Headlines scanned: 0 items."
+},
+"quant": {
+"id": "quant",
+"name": "Quant Analyst",
+"bullish_score": 51.66666666666667,
+"bearish_score": 48.33333333333333,
+"bull_probability": 51.66666666666667,
+"bear_probability": 48.33333333333333,
+"expected_move_range": "2629.7 \u2013 2669.4",
+"stance": "neutral",
+"summary": "60-day up-day rate 52% \u2014 expected 1\u03c3 range 2629.7-2669.4."
+},
+"risk": {
+"id": "risk",
+"name": "Risk Manager",
+"risk_score": 35.0,
+"warnings": [
+"Black swan: geopolitical headline risk always present for gold."
+],
+"confidence_reduction": 8.8,
+"stance": "neutral",
+"summary": "Black swan: geopolitical headline risk always present for gold."
+},
+"trap": {
+"id": "trap",
+"name": "Institutional Trap Detector",
+"liquidity_sweep_up_prob": 52.0,
+"liquidity_sweep_down_prob": 48.0,
+"stop_hunt_prob": 55.0,
+"fake_breakout_prob": 45.0,
+"reversal_prob": 40.0,
+"trend_continuation_prob": 42.0,
+"manipulation_risk_score": 48.0,
+"stance": "safe",
+"summary": "No dominant trap pattern."
+}
+},
+"smart_money": {
+"title": "What Smart Money Likely Wants Next",
+"ranked": [
+{
+"label": "Stop Hunt (aggregated)",
+"probability": 55.0,
+"why": "Retail stops likely clustered at obvious swing levels."
+},
+{
+"label": "Upside Liquidity Sweep",
+"probability": 52.0,
+"why": "Target zone 2675 \u2013 2682 \u2014 cluster above recent highs."
+},
+{
+"label": "Downside Stop Hunt",
+"probability": 48.0,
+"why": "Target zone 2601 \u2013 2608 \u2014 liquidity under lows."
+},
+{
+"label": "Trend Continuation",
+"probability": 42.0,
+"why": "Momentum and structure alignment after liquidity event."
+},
+{
+"label": "Full Reversal",
+"probability": 40.0,
+"why": "Mean reversion after sweep / trap completion."
+}
+]
+},
+"liquidity_sweep": {
+"direction": "Upside Sweep Likely",
+"target_zone": "2675 \u2013 2682",
+"probability": 52.0,
+"explanation": "No dominant trap pattern."
+},
+"stop_hunt": {
+"probability": 55.0,
+"risk_level": "Medium",
+"explanation": "Stop hunt probability 55% \u2014 institutions may run obvious retail stop clusters."
+},
+"fake_breakout": {
+"breakout_validity_score": 55.0,
+"fake_breakout_probability": 45.0,
+"explanation": "Breakout structure appears more valid."
+},
+"reversal": {
+"probability": 40.0,
+"reversal_zone": "2608 \u2013 2675",
+"confidence": 34.0,
+"explanation": "Reversal more likely after liquidity grab at range extremes."
+},
+"trend_continuation": {
+"probability": 42.0,
+"confidence": 37.800000000000004,
+"supporting_factors": [
+"Technical trend alignment"
+],
+"explanation": "Continuation favored when sweep already occurred and bias aligns."
+},
+"trade_opportunity": {
+"status": "NO_HIGH_CONVICTION_TRADE",
+"direction": null,
+"entry_zone": null,
+"stop_loss": null,
+"target_1": null,
+"target_2": null,
+"target_3": null,
+"risk_reward": null,
+"invalidation": 2607.8,
+"why": "Filters not met: confidence 32% (need >80), agent agreement 3/5 (need 4+), RR 1.19 (need >2.5), manipulation 48% (need <70)."
+},
+"master": {
+"market_bias": "Neutral",
+"confidence_score": 32.0,
+"bull_probability": 54.1,
+"bear_probability": 45.9,
+"neutral_probability": 91.7,
+"trade": {
+"status": "NO_HIGH_CONVICTION_TRADE",
+"direction": null,
+"entry_zone": null,
+"stop_loss": null,
+"target_1": null,
+"target_2": null,
+"target_3": null,
+"risk_reward": null,
+"invalidation": 2607.8,
+"why": "Filters not met: confidence 32% (need >80), agent agreement 3/5 (need 4+), RR 1.19 (need >2.5), manipulation 48% (need <70)."
+},
+"bullish_agents": 3,
+"bearish_agents": 0
+},
+"alerts": [],
+"performance": {
+"total_setups": 0,
+"open_setups": 0,
+"win_rate": 0,
+"loss_rate": 0,
+"average_rr": 0,
+"accuracy_by_agent": {},
+"accuracy_by_condition": {},
+"accuracy_by_session": {},
+"recent": []
+}
+}
