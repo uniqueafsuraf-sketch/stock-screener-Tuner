@@ -1,0 +1,69 @@
+STOCKSTUNERSTATION — GitHub + Render (you are here)
+=================================================
+
+DONE ON YOUR PC:
+  - Git repository created in this folder
+  - All app code committed on branch "main"
+  - Render startup fix included (health check)
+
+YOU DO 2 THINGS (about 5 minutes total):
+
+
+PART 1 — PUBLISH TO GITHUB (GitHub Desktop)
+-------------------------------------------
+
+1. Open "GitHub Desktop" from the Start menu
+   (If you don't have it: https://desktop.github.com )
+
+2. Sign in with your GitHub account
+
+3. Menu: File → Add local repository
+
+4. Browse to THIS folder:
+   c:\Users\Pauly\Documents\projects cursor\stock-screener
+
+5. Click "Add repository"
+   (If it says "not a Git repository", click "create a repository")
+
+6. Click the blue button: "Publish repository"
+
+7. Name: stockstunerstation
+   Uncheck "Keep this code private" (optional, for easier Render)
+
+8. Click "Publish repository"
+
+9. Wait until done — you should see your code on github.com
+
+
+PART 2 — REDEPLOY ON RENDER
+---------------------------
+
+1. Go to https://dashboard.render.com
+
+2. Open your "stockstunerstation" service
+   (Or create New + → Web Service → connect GitHub repo)
+
+3. Settings — check:
+   Root Directory:  (leave EMPTY)
+   Build Command:   pip install -r requirements.txt
+   Start Command:   gunicorn wsgi:application --bind 0.0.0.0:$PORT --workers 1 --threads 8 --timeout 180
+   Branch:          main
+
+4. Click "Manual Deploy" → "Deploy latest commit"
+
+5. Wait until status is LIVE (green) — 5-10 minutes
+
+6. Test:
+   https://stockstunerstation.onrender.com/api/health
+   (should show JSON with "ok": true)
+
+7. Open:
+   https://stockstunerstation.onrender.com
+
+
+TROUBLESHOOTING
+---------------
+See RENDER_FIX.md if the site still says "not found".
+
+Quick test on PC while waiting:
+  Double-click START.bat
