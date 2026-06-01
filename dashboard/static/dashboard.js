@@ -673,13 +673,50 @@
     throw new Error(`Server returned ${res.status}`);
   }
 
-  async function loadBootstrap() {
-    try {
-      const json = await fetchJsonWithFallback("/api/bootstrap", "/api/scan");
-      onDataLoaded(json);
-    } catch (e) {
-      showServerError(`Cannot load data: ${e.message}`);
+  async function waitForServer(maxMs = 120000) {
+    const deadline = Date.now() + maxMs;
+    while (Date.now() < deadline) {
+      try {
+        const res = await fetch("/api/health", { cache: "no-store" });
+        if (res.ok) {
+          const j = await res.json();
+          if (j.ok) return true;
+        }
+      } catch (_) {}
+      const banner = $("status-banner");
+      if (banner) {
+        banner.hidden = false;
+        banner.className = "status-banner scanning";
+        banner.textContent = "Waking up server on Render… first load can take 30–60 seconds.";
+      }
+      await new Promise((r) => setTimeout(r, 2500));
     }
+    return false;
+  }
+
+  async function loadBootstrap() {
+    const up = await waitForServer();
+    if (!up) {
+      showServerError("Server not responding. On Render free tier, open the site once and wait ~1 minute, then refresh.");
+      return;
+    }
+    for (let attempt = 0; attempt < 8; attempt++) {
+      try {
+        const json = await fetchJsonWithFallback("/api/bootstrap", "/api/scan");
+        if (json?.all_stocks?.length || json?.opportunities?.length) {
+          onDataLoaded(json);
+          return;
+        }
+        if (json?.message && $("meta")) $("meta").textContent = json.message;
+      } catch (e) {
+        if (attempt === 7) {
+          showServerError(`Cannot load data: ${e.message}`);
+          return;
+        }
+      }
+      await new Promise((r) => setTimeout(r, 3000));
+    }
+    showServerError("No stock data yet. Click Refresh scan or wait for the background scan to finish.");
   }
 
   function scheduleScanPoll() {

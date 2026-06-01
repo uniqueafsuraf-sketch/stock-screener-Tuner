@@ -17,7 +17,8 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from screener.alerts import create_alert, delete_alert, evaluate_alerts, load_alerts  # noqa: E402
-from screener.cache_io import load_scan_cache, save_scan_cache  # noqa: E402
+from screener.cache_io import load_scan_cache, load_seed_bootstrap, save_scan_cache  # noqa: E402
+from screener.runtime import is_cloud_host  # noqa: E402
 from screener.live import LiveEngine  # noqa: E402
 from screener.scan import load_config, resolve_symbols, scan_full  # noqa: E402
 
@@ -32,6 +33,7 @@ _scan_cache: dict = {"data": None, "ts": 0.0, "scanning": False, "last_error": N
 _scan_lock = threading.Lock()
 _live_engine: LiveEngine | None = None
 _bg_started = False
+_bg_scheduled = False
 _alert_history: list[dict] = []
 _alert_lock = threading.Lock()
 _pulse_cache: dict = {"data": [], "ts": 0.0}
@@ -151,12 +153,16 @@ def _bootstrap_from_live() -> dict:
     }
 
 
-def _build_movers_tape() -> list[dict]:
+def _build_movers_tape(*, start_bg: bool = True) -> list[dict]:
     """Top gainers / losers by change % only (for header ticker)."""
     from screener.movers import movers_tape_list
 
-    engine = _ensure_background()
-    quotes = engine.get_payload().get("quotes", {}) or {}
+    quotes: dict = {}
+    if start_bg:
+        engine = _ensure_background()
+        quotes = engine.get_payload().get("quotes", {}) or {}
+    elif _live_engine is not None:
+        quotes = _live_engine.get_payload().get("quotes", {}) or {}
 
     with _scan_lock:
         cached = _scan_cache.get("data") or {}
@@ -165,8 +171,8 @@ def _build_movers_tape() -> list[dict]:
     return movers_tape_list(stocks, quotes, top_n=15)
 
 
-def _get_market_pulse() -> list:
-    pulse = _build_movers_tape()
+def _get_market_pulse(*, start_bg: bool = True) -> list:
+    pulse = _build_movers_tape(start_bg=start_bg)
     if pulse:
         _pulse_cache["data"] = pulse
         _pulse_cache["ts"] = time.time()
@@ -175,18 +181,25 @@ def _get_market_pulse() -> list:
 
 def _load_disk_cache_into_memory() -> None:
     disk = load_scan_cache()
+    src = "cache"
+    if not disk:
+        disk = load_seed_bootstrap()
+        src = "seed"
     if disk:
         with _scan_lock:
             if _scan_cache["data"] is None:
                 _scan_cache["data"] = disk
                 _scan_cache["ts"] = time.time()
-                print(f"Loaded {len(disk.get('all_stocks', []))} stocks from cache")
+                print(f"Loaded {len(disk.get('all_stocks', []))} stocks from {src}")
 
 
 def _ensure_background() -> LiveEngine:
     global _live_engine, _bg_started
     if _live_engine is None:
-        _live_engine = LiveEngine(interval_sec=float(_live_cfg().get("interval_sec", 1)))
+        interval = float(_live_cfg().get("interval_sec", 1))
+        if is_cloud_host():
+            interval = max(interval, 2.0)
+        _live_engine = LiveEngine(interval_sec=interval)
 
     if not _bg_started:
         _bg_started = True
@@ -196,7 +209,12 @@ def _ensure_background() -> LiveEngine:
         if _live_cfg().get("enabled", True):
             _live_engine.start()
         threading.Thread(target=_scan_loop, daemon=True, name="scan-loop").start()
-        threading.Thread(target=lambda: _run_scan(force=True), daemon=True, name="initial-scan").start()
+        def _initial_scan() -> None:
+            if is_cloud_host():
+                time.sleep(8)
+            _run_scan(force=True)
+
+        threading.Thread(target=_initial_scan, daemon=True, name="initial-scan").start()
 
     return _live_engine
 
@@ -215,9 +233,19 @@ def _patch_row_with_quote(row: dict, quote: dict | None) -> dict:
     return row
 
 
-def _merge_scan_with_live(scan_data: dict) -> dict:
-    engine = _ensure_background()
-    live = engine.get_payload()
+def _live_payload_safe() -> dict:
+    if _live_engine is None:
+        return {"quotes": {}, "count": 0, "fetching": True, "updated_at": "", "tick": 0, "error": None}
+    try:
+        return _live_engine.get_payload()
+    except Exception:
+        return {"quotes": {}, "count": 0, "fetching": False, "error": "live unavailable"}
+
+
+def _merge_scan_with_live(scan_data: dict, *, start_bg: bool = True) -> dict:
+    if start_bg:
+        _schedule_background_start()
+    live = _live_payload_safe()
     quotes = live.get("quotes", {})
 
     data = dict(scan_data)
@@ -235,7 +263,7 @@ def _merge_scan_with_live(scan_data: dict) -> dict:
         boot = _bootstrap_from_live()
         data.update(boot)
 
-    data["market_pulse"] = _get_market_pulse()
+    data["market_pulse"] = _get_market_pulse(start_bg=start_bg)
     data["live"] = live
     data["alerts"] = load_alerts().to_dict()
     with _alert_lock:
@@ -350,10 +378,20 @@ def api_health():
 
 @app.route("/api/bootstrap")
 def api_bootstrap():
+    """Fast first paint: return seed/disk cache immediately; live quotes patch in via /api/live."""
+    _schedule_background_start()
     try:
+        with _scan_lock:
+            cached = _scan_cache.get("data")
+            scanning = _scan_cache.get("scanning", False)
+        if cached and cached.get("all_stocks"):
+            data = dict(cached)
+            data["ok"] = True
+            data["scanning"] = scanning
+            data["message"] = data.get("message") or "Data loaded — live quotes updating…"
+            return jsonify(_json_safe(_merge_scan_with_live(data, start_bg=False)))
         data = _bootstrap_from_live()
-        data = _merge_scan_with_live(data)
-        return jsonify(_json_safe(data))
+        return jsonify(_json_safe(_merge_scan_with_live(data, start_bg=False)))
     except Exception as e:
         traceback.print_exc()
         return jsonify({"ok": True, "error": str(e), "all_stocks": [], "scanning": True})
@@ -361,15 +399,16 @@ def api_bootstrap():
 
 @app.route("/api/live")
 def api_live():
-    engine = _ensure_background()
-    return jsonify({"ok": True, **engine.get_payload()})
+    _schedule_background_start()
+    return jsonify({"ok": True, **_live_payload_safe()})
 
 
 @app.route("/api/market")
 def api_market():
     """Live top gainers + losers for the header ticker."""
+    _schedule_background_start()
     try:
-        pulse = _build_movers_tape()
+        pulse = _build_movers_tape(start_bg=False)
         return jsonify({
             "ok": True,
             "pulse": pulse,
@@ -444,9 +483,10 @@ def api_stream():
 
 def _schedule_background_start() -> None:
     """Start live engine + scan in background (never block HTTP responses)."""
-    global _bg_started
-    if _bg_started:
+    global _bg_scheduled
+    if _bg_scheduled:
         return
+    _bg_scheduled = True
 
     def _start() -> None:
         try:
@@ -463,6 +503,13 @@ def init_production() -> None:
     """Lightweight boot for gunicorn — Render health check must pass in seconds."""
     (ROOT / "data").mkdir(parents=True, exist_ok=True)
     _load_disk_cache_into_memory()
+    if is_cloud_host() and _scan_cache.get("data") is None:
+        seed = load_seed_bootstrap()
+        if seed:
+            with _scan_lock:
+                _scan_cache["data"] = seed
+                _scan_cache["ts"] = time.time()
+            print(f"Loaded {len(seed.get('all_stocks', []))} stocks from seed_bootstrap.json")
     _schedule_background_start()
 
 

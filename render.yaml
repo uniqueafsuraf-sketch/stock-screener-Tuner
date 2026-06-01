@@ -15,4 +15,6 @@ services:
       - key: STS_HOST
         value: "0.0.0.0"
       - key: STS_PUBLIC_URL
-        sync: false
+        value: "https://stock-screener-tuner-1.onrender.com"
+      - key: WEB_CONCURRENCY
+        value: "1"

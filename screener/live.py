@@ -9,9 +9,10 @@ from datetime import datetime
 import yfinance as yf
 
 from screener.market_symbols import MARKET_SYMBOLS
+from screener.runtime import is_cloud_host
 
-CHUNK_SIZE = 45
-MAX_WORKERS = 24
+CHUNK_SIZE = 25 if is_cloud_host() else 45
+MAX_WORKERS = 6 if is_cloud_host() else 24
 PRIORITY_SYMBOLS: list[str] = MARKET_SYMBOLS
 
 
