@@ -291,7 +291,7 @@
     const pb = $("edge-playbook");
     if (pb) {
       pb.innerHTML = plays.length
-        ? plays.slice(0, 6).map((r) => `
+        ? plays.map((r) => `
           <div class="playbook-card">
             <div class="playbook-head">
               <span class="playbook-sym">${esc(r.symbol)}</span>
@@ -303,24 +303,7 @@
         : '<span class="muted">Waiting for scan…</span>';
     }
 
-    const earn = data?.earnings_watch || [];
-    const ep = $("earnings-panel");
-    if (ep) {
-      ep.innerHTML = earn.length
-        ? earn.slice(0, 10).map((e) =>
-            `<div class="earn-row"><span style="font-weight:700">${esc(e.symbol)}</span><span>${e.days}d</span></div>`
-          ).join("")
-        : '<span class="muted">None in next 14 days</span>';
-    }
-
     renderNewsWire();
-
-    const leg = $("edge-legend");
-    if (leg && data?.proprietary_signals) {
-      leg.innerHTML = data.proprietary_signals.map((s) =>
-        `<p style="margin-bottom:0.6rem"><strong>${esc(s.name)}</strong><br><span style="color:var(--text-tertiary);font-size:0.8rem">${esc(s.desc)}</span></p>`
-      ).join("");
-    }
 
     renderAlerts();
   }

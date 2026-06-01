@@ -367,6 +367,41 @@ def index():
     return render_template("index.html")
 
 
+@app.route("/gold-war-room")
+def gold_war_room_page():
+    from dashboard.brand import SITE_NAME  # noqa: PLC0415
+
+    _schedule_background_start()
+    return render_template("gold_war_room.html", site_name=SITE_NAME)
+
+
+_war_room_cache: dict = {"data": None, "ts": 0.0}
+_war_room_lock = threading.Lock()
+WAR_ROOM_TTL = 90
+
+
+@app.route("/api/gold-war-room")
+def api_gold_war_room():
+    from screener.gold_war_room import run_war_room_analysis  # noqa: PLC0415
+
+    force = request.args.get("refresh") == "1"
+    now = time.time()
+    with _war_room_lock:
+        cached = _war_room_cache.get("data")
+        age = now - (_war_room_cache.get("ts") or 0)
+    if cached and age < WAR_ROOM_TTL and not force:
+        return jsonify(_json_safe(cached))
+    try:
+        payload = run_war_room_analysis()
+        with _war_room_lock:
+            _war_room_cache["data"] = payload
+            _war_room_cache["ts"] = now
+        return jsonify(_json_safe(payload))
+    except Exception as e:
+        traceback.print_exc()
+        return jsonify({"ok": False, "error": str(e)}), 500
+
+
 @app.route("/api/health")
 def api_health():
     """Fast health check — must not block Render deploy (no heavy scan here)."""

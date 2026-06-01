@@ -3,6 +3,7 @@ __pycache__/
 *.pyc
 .env
 data/scan_cache.json
+data/gold_war_room_history.json
 *.log
 
 # Deploy / local tools (do not upload to GitHub)

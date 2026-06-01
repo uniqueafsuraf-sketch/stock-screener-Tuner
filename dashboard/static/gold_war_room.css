@@ -1,0 +1,302 @@
+/* Gold AI War Room — extends StocksTunerStation theme */
+
+.brand-mark-gold {
+  background: linear-gradient(135deg, #ffd700, #b8860b);
+  box-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+}
+
+.nav-link {
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
+}
+
+.nav-premium {
+  border-color: rgba(255, 215, 0, 0.45);
+  background: linear-gradient(90deg, rgba(255, 215, 0, 0.12), transparent);
+}
+
+.nav-premium.active {
+  border-color: var(--gold);
+  color: var(--gold);
+}
+
+.nav-tag {
+  font-size: 0.58rem;
+  font-weight: 800;
+  padding: 0.12rem 0.35rem;
+  border-radius: 4px;
+  background: var(--gold);
+  color: #1a1000;
+}
+
+.war-room-main { max-width: 1600px; }
+
+.war-price {
+  font-family: var(--mono);
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--gold);
+  margin-right: 0.75rem;
+}
+
+.war-alerts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  background: rgba(255, 68, 102, 0.15);
+  border: 2px solid var(--red);
+  border-radius: var(--radius-sm);
+}
+
+.war-alert-chip {
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.35rem 0.65rem;
+  background: var(--red);
+  color: #fff;
+  border-radius: 6px;
+}
+
+.war-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+}
+
+.war-panel {
+  background: var(--bg-panel);
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1rem 1.15rem;
+  min-height: 0;
+}
+
+.war-panel-gold {
+  border-color: rgba(255, 215, 0, 0.4);
+  box-shadow: 0 0 28px rgba(255, 215, 0, 0.08);
+}
+
+.war-panel-hero {
+  grid-column: span 1;
+  background: linear-gradient(145deg, #1f2a1a 0%, var(--bg-panel) 60%);
+  border-color: rgba(255, 215, 0, 0.35);
+}
+
+.war-panel-wide { grid-column: span 3; }
+
+.war-panel-trade { border-color: rgba(0, 255, 136, 0.35); }
+
+.war-panel-title {
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 0.75rem;
+}
+
+.war-bias-value {
+  font-size: 2rem;
+  font-weight: 800;
+  line-height: 1.1;
+}
+
+.war-bias-value.bull { color: var(--green); }
+.war-bias-value.bear { color: var(--red); }
+.war-bias-value.neutral { color: var(--amber); }
+
+.war-why, .war-muted, .war-detail p {
+  font-size: 0.88rem;
+  color: var(--text-secondary);
+  margin-top: 0.5rem;
+  line-height: 1.45;
+}
+
+.war-chip {
+  font-size: 0.65rem;
+  padding: 0.15rem 0.45rem;
+  background: var(--bg-hover);
+  border-radius: 4px;
+  margin-left: 0.35rem;
+}
+
+.war-meter-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.war-meter-bar {
+  flex: 1;
+  height: 12px;
+  background: var(--bg-base);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.war-meter-fill {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, var(--accent), var(--gold));
+  transition: width 0.6s ease;
+}
+
+.war-meter-score {
+  font-family: var(--mono);
+  font-weight: 800;
+  font-size: 1.1rem;
+  min-width: 3rem;
+}
+
+.consensus-table {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.consensus-row {
+  display: grid;
+  grid-template-columns: 120px 100px 1fr;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  padding: 0.4rem 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.consensus-row:last-child { border-bottom: none; }
+
+.consensus-view.bullish { color: var(--green); font-weight: 700; }
+.consensus-view.bearish { color: var(--red); font-weight: 700; }
+.consensus-view.warning { color: var(--amber); font-weight: 700; }
+
+.intent-list {
+  list-style: none;
+  counter-reset: intent;
+}
+
+.intent-list li {
+  counter-increment: intent;
+  padding: 0.65rem 0;
+  border-bottom: 1px solid var(--border);
+  display: grid;
+  grid-template-columns: 1.5rem 1fr auto;
+  gap: 0.5rem;
+  align-items: start;
+}
+
+.intent-list li::before {
+  content: counter(intent);
+  font-weight: 800;
+  color: var(--gold);
+}
+
+.intent-prob {
+  font-family: var(--mono);
+  font-weight: 800;
+  color: var(--accent);
+}
+
+.war-stat-big {
+  font-family: var(--mono);
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--text);
+}
+
+.trade-box {
+  font-size: 0.9rem;
+}
+
+.trade-box.no-trade {
+  padding: 1rem;
+  background: rgba(255, 68, 102, 0.1);
+  border: 2px dashed var(--red);
+  border-radius: var(--radius-sm);
+  font-weight: 700;
+  color: var(--red);
+}
+
+.trade-box.has-trade {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 0.75rem;
+}
+
+.trade-field label {
+  display: block;
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-tertiary);
+}
+
+.trade-field span {
+  font-family: var(--mono);
+  font-weight: 700;
+}
+
+.agent-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 0.75rem;
+}
+
+.agent-card {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 0.85rem;
+}
+
+.agent-card h3 {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--accent);
+  margin-bottom: 0.5rem;
+}
+
+.agent-scores {
+  display: flex;
+  gap: 1rem;
+  font-family: var(--mono);
+  font-size: 0.8rem;
+  margin-bottom: 0.5rem;
+}
+
+.perf-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.75rem;
+}
+
+.perf-stat {
+  background: var(--bg-elevated);
+  padding: 0.75rem;
+  border-radius: var(--radius-sm);
+  text-align: center;
+}
+
+.perf-stat .val {
+  font-family: var(--mono);
+  font-size: 1.35rem;
+  font-weight: 800;
+}
+
+.perf-stat .lbl {
+  font-size: 0.7rem;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+}
+
+@media (max-width: 1200px) {
+  .war-grid { grid-template-columns: 1fr 1fr; }
+  .war-panel-wide { grid-column: span 2; }
+}
+
+@media (max-width: 768px) {
+  .war-grid { grid-template-columns: 1fr; }
+  .war-panel-wide { grid-column: span 1; }
+  .perf-grid { grid-template-columns: repeat(2, 1fr); }
+}

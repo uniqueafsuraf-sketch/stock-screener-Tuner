@@ -1,0 +1,19 @@
+ONE CLICK IN RENDER (30 seconds)
+================================
+
+Your code is already on GitHub. I pushed the latest commit.
+
+In the browser window that opened (Render):
+
+1. Sign in if needed
+2. Find your service: stockstunerstation
+   OR create Web Service and pick GitHub repo:
+      uniqueafsuraf-sketch / stock-screener-Tuner
+3. Branch: main
+4. Root Directory: leave EMPTY
+5. Save → Manual Deploy → Deploy latest commit
+
+When status is LIVE (green), open:
+   https://stockstunerstation.onrender.com
+
+Or double-click FINISH_DEPLOY.bat — it waits and opens the site when live.

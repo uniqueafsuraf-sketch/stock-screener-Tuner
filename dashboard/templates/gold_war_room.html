@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Gold AI War Room — {{ site_name }}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/dashboard.css">
+  <link rel="stylesheet" href="/static/gold_war_room.css">
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-mark brand-mark-gold" aria-hidden="true"></div>
+        <div>
+          <span class="brand-name">{{ site_name }}</span>
+        </div>
+      </div>
+      <nav class="sidebar-nav" aria-label="Main navigation">
+        <p class="nav-section-label">Scanners</p>
+        <a href="/" class="nav-item nav-link"><span>Setups &amp; universe</span></a>
+        <p class="nav-section-label">Premium</p>
+        <a href="/gold-war-room" class="nav-item nav-link nav-premium active">
+          <span>Gold AI War Room</span>
+          <span class="nav-tag">LIVE</span>
+        </a>
+      </nav>
+      <footer class="sidebar-footer">
+        <p class="disclaimer">Multi-agent analysis — not financial advice.</p>
+      </footer>
+    </aside>
+
+    <main class="main war-room-main">
+      <header class="topbar">
+        <div class="topbar-left">
+          <h1>Gold AI War Room</h1>
+          <p class="meta" id="war-meta">XAUUSD · Institutional desk simulation</p>
+        </div>
+        <div class="topbar-actions">
+          <span class="war-price" id="war-price">—</span>
+          <button type="button" id="btn-war-refresh" class="btn btn-primary">
+            <span class="btn-label">Refresh analysis</span>
+          </button>
+        </div>
+      </header>
+
+      <div id="war-alerts" class="war-alerts" hidden></div>
+
+      <div class="war-grid">
+        <section class="war-panel war-panel-hero" id="panel-bias">
+          <h2 class="war-panel-title">Market Bias</h2>
+          <div class="war-bias-value" id="bias-value">—</div>
+          <p class="war-why" id="bias-why">Loading…</p>
+        </section>
+
+        <section class="war-panel" id="panel-confidence">
+          <h2 class="war-panel-title">Confidence Meter</h2>
+          <div class="war-meter-wrap">
+            <div class="war-meter-bar"><div class="war-meter-fill" id="confidence-fill"></div></div>
+            <span class="war-meter-score" id="confidence-score">0</span>
+          </div>
+          <p class="war-muted" id="confidence-label">—</p>
+        </section>
+
+        <section class="war-panel war-panel-wide" id="panel-consensus">
+          <h2 class="war-panel-title">Agent Consensus <span id="consensus-headline" class="war-chip"></span></h2>
+          <div id="consensus-table" class="consensus-table"></div>
+        </section>
+
+        <section class="war-panel war-panel-wide war-panel-gold" id="panel-smart-money">
+          <h2 class="war-panel-title" id="smart-money-title">Smart Money Intent</h2>
+          <ol id="smart-money-list" class="intent-list"></ol>
+        </section>
+
+        <section class="war-panel" id="panel-sweep">
+          <h2 class="war-panel-title">Liquidity Sweep Analysis</h2>
+          <div id="sweep-content" class="war-detail"></div>
+        </section>
+
+        <section class="war-panel" id="panel-stop-hunt">
+          <h2 class="war-panel-title">Stop Hunt Detection</h2>
+          <div id="stop-hunt-content" class="war-detail"></div>
+        </section>
+
+        <section class="war-panel" id="panel-fake-bo">
+          <h2 class="war-panel-title">Fake Breakout Detection</h2>
+          <div id="fake-bo-content" class="war-detail"></div>
+        </section>
+
+        <section class="war-panel" id="panel-reversal">
+          <h2 class="war-panel-title">Reversal Probability</h2>
+          <div id="reversal-content" class="war-detail"></div>
+        </section>
+
+        <section class="war-panel" id="panel-continuation">
+          <h2 class="war-panel-title">Trend Continuation Probability</h2>
+          <div id="continuation-content" class="war-detail"></div>
+        </section>
+
+        <section class="war-panel war-panel-wide war-panel-trade" id="panel-trade">
+          <h2 class="war-panel-title">Trade Opportunity</h2>
+          <div id="trade-content" class="trade-box"></div>
+        </section>
+
+        <section class="war-panel war-panel-wide" id="panel-agents">
+          <h2 class="war-panel-title">Agent Reports</h2>
+          <div id="agent-cards" class="agent-cards"></div>
+        </section>
+
+        <section class="war-panel war-panel-wide" id="panel-performance">
+          <h2 class="war-panel-title">Historical Performance</h2>
+          <div id="performance-content" class="perf-grid"></div>
+        </section>
+      </div>
+    </main>
+  </div>
+  <script src="/static/gold_war_room.js"></script>
+</body>
+</html>
