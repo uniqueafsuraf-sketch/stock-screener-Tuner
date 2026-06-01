@@ -224,6 +224,11 @@
       const res = await fetch(`/api/gold-war-room${refresh ? "?refresh=1" : ""}`, { cache: "no-store" });
       if (!res.ok) throw new Error(`Server ${res.status}`);
       const json = await res.json();
+      if (json.warming) {
+        $("bias-why").textContent = json.message || "Agents analyzing…";
+        setTimeout(() => load(refresh), 3000);
+        return;
+      }
       apply(json);
     } catch (e) {
       $("bias-why").textContent = `Network error: ${e.message}. Try Refresh.`;

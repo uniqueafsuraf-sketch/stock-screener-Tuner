@@ -376,31 +376,84 @@ def gold_war_room_page():
     return render_template("gold_war_room.html", site_name=SITE_NAME)
 
 
-_war_room_cache: dict = {"data": None, "ts": 0.0}
+_war_room_cache: dict = {"data": None, "ts": 0.0, "computing": False}
 _war_room_lock = threading.Lock()
 WAR_ROOM_TTL = 90
 
 
+def _war_room_warming_payload() -> dict:
+    return {
+        "ok": True,
+        "warming": True,
+        "message": "Agents analyzing gold — results in a few seconds…",
+        "symbol": "XAUUSD (GC)",
+        "market_bias": {"bias": "—", "confidence": 0, "why": "Analysis in progress…"},
+        "confidence_meter": {"score": 0, "label": "—"},
+        "agent_consensus": {"rows": [], "headline": "Analyzing…"},
+        "agents": {},
+        "smart_money": {"title": "What Smart Money Likely Wants Next", "ranked": []},
+        "liquidity_sweep": {},
+        "stop_hunt": {},
+        "fake_breakout": {},
+        "reversal": {},
+        "trend_continuation": {},
+        "trade_opportunity": {"status": "NO_HIGH_CONVICTION_TRADE", "why": "Waiting for agent consensus…"},
+        "performance": {"total_setups": 0, "win_rate": 0, "loss_rate": 0, "average_rr": 0},
+        "alerts": [],
+    }
+
+
+def _refresh_war_room_async(*, force: bool = False) -> None:
+    with _war_room_lock:
+        if _war_room_cache.get("computing"):
+            return
+        _war_room_cache["computing"] = True
+
+    def _run() -> None:
+        from screener.gold_war_room import run_war_room_analysis  # noqa: PLC0415
+
+        try:
+            payload = run_war_room_analysis()
+            with _war_room_lock:
+                _war_room_cache["data"] = payload
+                _war_room_cache["ts"] = time.time()
+        except Exception as e:
+            traceback.print_exc()
+            with _war_room_lock:
+                err_payload = _war_room_warming_payload()
+                err_payload["ok"] = False
+                err_payload["error"] = str(e)
+                _war_room_cache["data"] = err_payload
+                _war_room_cache["ts"] = time.time()
+        finally:
+            with _war_room_lock:
+                _war_room_cache["computing"] = False
+
+    threading.Thread(target=_run, daemon=True, name="war-room-refresh").start()
+
+
 @app.route("/api/gold-war-room")
 def api_gold_war_room():
-    from screener.gold_war_room import run_war_room_analysis  # noqa: PLC0415
-
     force = request.args.get("refresh") == "1"
     now = time.time()
     with _war_room_lock:
         cached = _war_room_cache.get("data")
         age = now - (_war_room_cache.get("ts") or 0)
+        computing = _war_room_cache.get("computing", False)
+
     if cached and age < WAR_ROOM_TTL and not force:
         return jsonify(_json_safe(cached))
-    try:
-        payload = run_war_room_analysis()
-        with _war_room_lock:
-            _war_room_cache["data"] = payload
-            _war_room_cache["ts"] = now
-        return jsonify(_json_safe(payload))
-    except Exception as e:
-        traceback.print_exc()
-        return jsonify({"ok": False, "error": str(e)}), 500
+
+    if not computing:
+        _refresh_war_room_async(force=force)
+
+    if cached:
+        out = dict(cached)
+        if force or age >= WAR_ROOM_TTL:
+            out["stale"] = True
+        return jsonify(_json_safe(out))
+
+    return jsonify(_json_safe(_war_room_warming_payload()))
 
 
 @app.route("/api/health")
@@ -565,20 +618,7 @@ def _schedule_war_room_warmup() -> None:
         return
     _war_room_warm_scheduled = True
 
-    def _warm() -> None:
-        try:
-            from screener.gold_war_room import run_war_room_analysis  # noqa: PLC0415
-
-            payload = run_war_room_analysis()
-            with _war_room_lock:
-                _war_room_cache["data"] = payload
-                _war_room_cache["ts"] = time.time()
-            print("Gold War Room cache warmed", payload.get("ok"), payload.get("data_source"))
-        except Exception as e:
-            traceback.print_exc()
-            print(f"Gold War Room warmup failed: {e}")
-
-    threading.Thread(target=_warm, daemon=True, name="war-room-warm").start()
+    _refresh_war_room_async()
 
 
 def init_production() -> None:
