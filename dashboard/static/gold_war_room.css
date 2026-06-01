@@ -288,6 +288,40 @@
 .scalp-votes { font-size: 0.72rem; }
 .scalp-empty { color: var(--text-secondary); font-size: 0.88rem; }
 
+.scalp-feeds {
+  font-size: 0.72rem;
+  margin: 0.35rem 0 0.5rem;
+  line-height: 1.45;
+}
+
+.scalp-feed-head {
+  display: block;
+  font-weight: 700;
+  color: var(--gold);
+  margin-bottom: 0.35rem;
+}
+
+.scalp-feed-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.scalp-feed-chip {
+  font-family: var(--mono);
+  font-size: 0.65rem;
+  padding: 0.2rem 0.45rem;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  background: var(--bg-base);
+}
+
+.scalp-feed-chip em {
+  font-style: normal;
+  color: var(--text-tertiary);
+  margin-left: 0.2rem;
+}
+
 .scalp-risk-badge {
   font-size: 0.58rem;
   font-weight: 800;
@@ -579,15 +613,60 @@
   margin-bottom: 0.75rem;
 }
 
-.war-bias-value {
-  font-size: 2rem;
+.war-bias-value,
+.war-bias-headline {
+  font-size: 1.65rem;
   font-weight: 800;
-  line-height: 1.1;
+  line-height: 1.2;
 }
 
-.war-bias-value.bull { color: var(--green); }
-.war-bias-value.bear { color: var(--red); }
-.war-bias-value.neutral { color: var(--amber); }
+.war-bias-value.bull,
+.war-bias-headline.bull { color: var(--green); }
+.war-bias-value.bear,
+.war-bias-headline.bear { color: var(--red); }
+.war-bias-value.neutral,
+.war-bias-headline.neutral { color: var(--amber); }
+
+.war-bias-meaning {
+  font-size: 0.95rem;
+  color: var(--text-primary);
+  line-height: 1.5;
+  margin-top: 0.65rem;
+}
+
+.war-bias-agents {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--gold);
+  margin-top: 0.5rem;
+}
+
+.war-bias-prob {
+  font-size: 0.72rem;
+  margin-top: 0.35rem;
+  opacity: 0.75;
+}
+
+.war-confidence-plain {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin-bottom: 0.65rem;
+}
+
+.war-meter-score-secondary {
+  font-size: 0.85rem;
+  opacity: 0.65;
+}
+
+.chart-symbol-fixed {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--gold);
+  padding: 0.35rem 0.6rem;
+  border: 1px solid rgba(255, 215, 0, 0.35);
+  border-radius: 6px;
+}
 
 .war-why, .war-muted, .war-detail p {
   font-size: 0.88rem;

@@ -401,8 +401,16 @@ def _war_room_warming_payload() -> dict:
         "ok": True,
         "warming": True,
         "message": "Agents analyzing gold — results in a few seconds…",
-        "symbol": "XAUUSD (GC)",
-        "market_bias": {"bias": "—", "confidence": 0, "why": "Analysis in progress…"},
+        "symbol": "XAUUSD",
+        "price_symbol": "XAUUSD spot",
+        "market_bias": {
+            "bias": "—",
+            "headline": "Analyzing gold…",
+            "meaning": "Agents are scanning — bias will appear in a few seconds.",
+            "confidence": 0,
+            "confidence_label": "—",
+            "why": "Analysis in progress…",
+        },
         "confidence_meter": {"score": 0, "label": "—"},
         "agent_consensus": {"rows": [], "headline": "Analyzing…"},
         "agents": {},
@@ -523,10 +531,11 @@ def api_gold_war_room():
 
 @app.route("/api/gold-spot")
 def api_gold_spot():
-    """Fast live gold quote for header + scalp alignment (Yahoo chart API)."""
+    """Multi-feed XAUUSD spot median for header + scalping (Stooq, Yahoo, ETF-implied)."""
     from screener.gold_war_room.fetch import fetch_spot_payload  # noqa: PLC0415
 
-    return jsonify(fetch_spot_payload())
+    force = request.args.get("force") == "1"
+    return jsonify(fetch_spot_payload(force=force))
 
 
 @app.route("/api/ping")

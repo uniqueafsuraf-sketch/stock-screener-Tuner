@@ -239,7 +239,6 @@ def build_chart_bundle(
     return {
         "symbol": "XAUUSD",
         "tv_symbol": "OANDA:XAUUSD",
-        "yahoo_symbol": "GC=F",
         "interval": interval,
         "last": round(price, 2),
         "candles": candles,
@@ -247,8 +246,6 @@ def build_chart_bundle(
         "resistance": res[:3],
         "chart_links": {
             "tradingview": "https://www.tradingview.com/chart/?symbol=OANDA:XAUUSD",
-            "yahoo": "https://finance.yahoo.com/quote/GC%3DF/chart/",
-            "finviz": "https://finviz.com/quote.ashx?t=GLD",
         },
     }
 
@@ -297,7 +294,18 @@ def _stooq_spot() -> tuple[float, float] | None:
 
 
 def fetch_live_spot_quote() -> tuple[float, float, str] | None:
-    """Live COMEX / gold spot — Yahoo chart API, then Stooq, then yfinance."""
+    """Live XAU spot — multi-feed median (Stooq XAUUSD, Yahoo, ETF-implied)."""
+    from screener.gold_war_room.spot_consensus import consensus_tuple  # noqa: PLC0415
+
+    live = consensus_tuple()
+    if live:
+        price, chg, sym = live
+        now = time.time()
+        _SPOT_CACHE.update({
+            "price": price, "chg": chg, "sym": sym, "source": "consensus", "ts": now,
+        })
+        return live
+
     now = time.time()
     if (
         _SPOT_CACHE["price"] is not None
@@ -305,7 +313,7 @@ def fetch_live_spot_quote() -> tuple[float, float, str] | None:
     ):
         return _SPOT_CACHE["price"], _SPOT_CACHE["chg"], _SPOT_CACHE["sym"]
 
-    for sym in ("GC=F", "XAUUSD=X"):
+    for sym in ("GC=F",):
         spot = _yahoo_chart_spot(sym)
         if spot:
             price, chg = spot
@@ -318,17 +326,6 @@ def fetch_live_spot_quote() -> tuple[float, float, str] | None:
         _SPOT_CACHE.update({"price": price, "chg": chg, "sym": "GC=F", "source": "stooq", "ts": now})
         return price, chg, "GC=F (Stooq)"
 
-    for sym in ("GC=F", "XAUUSD=X"):
-        for period, interval in (("5d", "1h"), ("5d", "1d")):
-            df = _download(sym, period, interval)
-            if df is not None and len(df) >= 1:
-                last = float(df["close"].iloc[-1])
-                prev = float(df["close"].iloc[-2]) if len(df) > 1 else last
-                chg = ((last - prev) / prev) * 100 if prev else 0.0
-                price = round(last, 2)
-                _SPOT_CACHE.update({"price": price, "chg": round(chg, 2), "sym": sym, "source": "yfinance", "ts": now})
-                return price, round(chg, 2), sym
-            time.sleep(0.1)
     return None
 
 
@@ -340,14 +337,14 @@ def _patch_live_spot(data: GoldMarketData) -> GoldMarketData:
     price, chg, sym = live
     src = _SPOT_CACHE.get("source") or "live"
     notes = [n for n in data.fetch_notes if "Live spot" not in n and "Yahoo chart" not in n]
-    notes.insert(0, f"Live gold ${price:,.2f} ({sym}, {src}) — matches COMEX / chart.")
+    notes.insert(0, f"Live XAU spot ${price:,.2f} ({sym}, {src}) — multi-feed median, aligns with chart.")
     return GoldMarketData(
         price=price,
         change_pct=chg,
         frames=_synthetic_frames(base=price) if data.data_source in ("cloud_fast", "cloud_live", "fallback") else data.frames,
         macro=data.macro,
         news=data.news,
-        data_source="live" if src == "yahoo_chart" else data.data_source,
+        data_source="live" if src in ("yahoo_chart", "consensus") else data.data_source,
         fetch_notes=notes,
     )
 
@@ -381,20 +378,11 @@ def _fetch_cloud_fast() -> GoldMarketData:
     return _patch_live_spot(result)
 
 
-def fetch_spot_payload() -> dict:
-    """Lightweight spot for header polling."""
-    live = fetch_live_spot_quote()
-    if not live:
-        return {"ok": False, "price": None, "change_pct": None, "symbol": "GC=F"}
-    price, chg, sym = live
-    return {
-        "ok": True,
-        "price": price,
-        "change_pct": chg,
-        "symbol": sym,
-        "source": _SPOT_CACHE.get("source"),
-        "display": f"GC (COMEX) ${price:,.2f}",
-    }
+def fetch_spot_payload(*, force: bool = False) -> dict:
+    """Lightweight multi-source spot for header + scalping."""
+    from screener.gold_war_room.spot_consensus import fetch_consensus_spot  # noqa: PLC0415
+
+    return fetch_consensus_spot(force=force)
 
 
 def fetch_gold_data(*, use_cache: bool = True) -> GoldMarketData:

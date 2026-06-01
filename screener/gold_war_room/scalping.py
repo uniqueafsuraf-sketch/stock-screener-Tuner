@@ -126,10 +126,14 @@ def analyze_scalping_setups(
     price: float,
     *,
     leverage: int = 30,
+    live_spot: dict | None = None,
 ) -> dict:
     leverage = max(10, min(200, int(leverage)))
     tier = _leverage_tier(leverage)
-    live = round(float(price), 2)
+    if live_spot and live_spot.get("price") is not None:
+        live = round(float(live_spot["price"]), 2)
+    else:
+        live = round(float(price), 2)
     setups: list[dict] = []
     m15 = _pick_frame(data.frames, "15M", "1H")
     of = agents.get("order_flow", {})
@@ -208,10 +212,14 @@ def analyze_scalping_setups(
         "aggressive": "Tight stops · RR ≥3 · 50x+ mode",
         "extreme": "Max risk/reward · RR ≥3.5 · 100x+ mode",
     }
+    src_n = (live_spot or {}).get("source_count") or 0
+    spot_note = (live_spot or {}).get("scalp_label") or f"XAUUSD spot ${live:,.2f}"
     return {
         "title": "Live Scalping · High Risk / High Reward",
-        "subtitle": f"{leverage}x · {tier.upper()} tier · live ${live} · 7 agents / 45s",
+        "subtitle": f"{leverage}x · {tier.upper()} · {spot_note} · {src_n} feeds · 45s scan",
         "reference_price": live,
+        "reference_label": "XAUUSD spot",
+        "live_spot": live_spot,
         "leverage": leverage,
         "tier": tier,
         "leverage_warning": (

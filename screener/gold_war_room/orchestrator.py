@@ -26,7 +26,8 @@ from screener.gold_war_room.fetch import (
     fetch_gold_data,
     fetch_gold_news,
 )
-from screener.gold_war_room.master import agent_consensus, build_alerts, run_master
+from screener.gold_war_room.spot_consensus import fetch_consensus_spot
+from screener.gold_war_room.master import agent_consensus, build_alerts, market_bias_display, run_master
 from screener.gold_war_room.performance import (
     performance_summary,
     record_setup,
@@ -65,32 +66,54 @@ def _build_response(
     master: dict,
     *,
     leverage: int = 30,
+    live_spot: dict | None = None,
 ) -> dict:
     technical = agents["technical"]
     macro = agents["macro"]
+    spot = live_spot or fetch_consensus_spot()
+    display_price = spot.get("price") if spot.get("ok") else data.price
+    display_chg = spot.get("change_pct") if spot.get("ok") else data.change_pct
     notes = " ".join(data.fetch_notes)
-    why_extra = f" Data: {data.data_source}." if data.data_source not in ("live",) else ""
+    bias_copy = market_bias_display(
+        master["market_bias"],
+        master["confidence_score"],
+        master["bull_probability"],
+        master["bear_probability"],
+        bullish_agents=master["bullish_agents"],
+        bearish_agents=master["bearish_agents"],
+    )
+    meaning = bias_copy["meaning"]
+    if data.data_source not in ("live",):
+        meaning += f" (Price data: {data.data_source}.)"
+    if notes:
+        meaning += f" {notes}"
     return {
         "ok": True,
-        "symbol": "XAUUSD (GC)",
-        "price": data.price,
-        "change_pct": data.change_pct,
-        "price_symbol": "GC=F (COMEX)",
-        "price_display": f"${data.price:,.2f}",
+        "symbol": "XAUUSD",
+        "price": display_price,
+        "change_pct": display_chg,
+        "price_symbol": "XAUUSD spot",
+        "price_display": f"${display_price:,.2f}" if display_price else "—",
+        "live_spot": spot,
         "data_source": data.data_source,
         "fetch_notes": data.fetch_notes,
         "updated_at": datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S UTC"),
         "market_bias": {
             "bias": master["market_bias"],
+            "headline": bias_copy["headline"],
+            "meaning": meaning,
             "confidence": master["confidence_score"],
+            "confidence_label": bias_copy["confidence_label"],
+            "agents_summary": bias_copy["agents_summary"],
+            "probability_detail": bias_copy["probability_detail"],
             "bull_probability": master["bull_probability"],
             "bear_probability": master["bear_probability"],
             "neutral_probability": master["neutral_probability"],
-            "why": master["trade"]["why"] + why_extra + (" " + notes if notes else ""),
+            "why": meaning,
         },
         "confidence_meter": {
             "score": master["confidence_score"],
-            "label": "High" if master["confidence_score"] > 75 else "Moderate" if master["confidence_score"] > 50 else "Low",
+            "label": bias_copy["confidence_label"],
         },
         "agent_consensus": agent_consensus(agents, trap, risk),
         "agent_stations": build_agent_stations(agents, trap, risk, data),
@@ -111,11 +134,17 @@ def _build_response(
         "news": data.news or fetch_gold_news(),
         "chart": build_chart_bundle(
             data.frames,
-            data.price,
+            display_price or data.price,
             technical.get("key_levels"),
         ),
         "scalping": analyze_scalping_setups(
-            data, agents, trap, technical, data.price, leverage=leverage,
+            data,
+            agents,
+            trap,
+            technical,
+            display_price or data.price,
+            leverage=leverage,
+            live_spot=spot,
         ),
         "live_scan": {
             "active": True,
@@ -148,9 +177,13 @@ def run_war_room_analysis(*, leverage: int = 30) -> dict:
             "trap": trap,
         }
 
-        master = run_master(agents, trap, risk, data.price, technical)
-        payload = _build_response(data, agents, trap, risk, master, leverage=leverage)
-        record_setup(master, data.price)
+        live_spot = fetch_consensus_spot(force=True)
+        spot_px = live_spot.get("price") if live_spot.get("ok") else data.price
+        master = run_master(agents, trap, risk, spot_px, technical)
+        payload = _build_response(
+            data, agents, trap, risk, master, leverage=leverage, live_spot=live_spot,
+        )
+        record_setup(master, spot_px)
         record_war_room_cycle(payload)
         return payload
     except Exception as e:
@@ -177,8 +210,12 @@ def run_war_room_analysis(*, leverage: int = 30) -> dict:
             trap = _safe_agent("trap", agent_trap_detector, data)
             agents["risk"] = risk
             agents["trap"] = trap
-            master = run_master(agents, trap, risk, data.price, agents["technical"])
-            payload = _build_response(data, agents, trap, risk, master, leverage=leverage)
+            live_spot = fetch_consensus_spot(force=True)
+            spot_px = live_spot.get("price") if live_spot.get("ok") else data.price
+            master = run_master(agents, trap, risk, spot_px, agents["technical"])
+            payload = _build_response(
+                data, agents, trap, risk, master, leverage=leverage, live_spot=live_spot,
+            )
             payload["ok"] = True
             payload["fetch_notes"] = [f"Recovered after error: {e}"]
             record_war_room_cycle(payload)

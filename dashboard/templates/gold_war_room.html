@@ -78,7 +78,7 @@
 
           <h1>Gold AI War Room</h1>
 
-          <p class="meta" id="war-meta">XAUUSD · Institutional desk simulation</p>
+          <p class="meta" id="war-meta">XAUUSD spot · Institutional desk simulation</p>
 
         </div>
 
@@ -115,15 +115,8 @@
             <h2 class="war-panel-title">Live Gold Chart</h2>
 
             <div class="chart-controls">
-              <label class="chart-control-label">
-                Symbol
-                <select id="chart-symbol" class="chart-symbol-select" aria-label="Chart symbol">
-                  <option value="OANDA:XAUUSD" selected>Gold spot (XAUUSD)</option>
-                  <option value="COMEX:GC1!">Gold futures (GC)</option>
-                  <option value="TVC:GOLD">Gold index</option>
-                  <option value="AMEX:GLD">GLD ETF</option>
-                </select>
-              </label>
+              <input type="hidden" id="chart-symbol" value="OANDA:XAUUSD">
+              <span class="chart-symbol-fixed" aria-label="Chart symbol">Gold spot · XAUUSD</span>
               <div class="chart-tf-btns" role="group" aria-label="Chart timeframe">
                 <button type="button" class="chart-tf" data-interval="15">15m</button>
                 <button type="button" class="chart-tf" data-interval="30">30m</button>
@@ -152,7 +145,7 @@
                 "style": "1",
                 "locale": "en",
                 "enable_publishing": false,
-                "allow_symbol_change": true,
+                "allow_symbol_change": false,
                 "withdateranges": true,
                 "hide_side_toolbar": false,
                 "hide_top_toolbar": false,
@@ -166,15 +159,11 @@
             </div>
           </div>
 
-          <p class="war-muted chart-caption" id="chart-caption">Live TradingView — zoom, pan, draw tools, and symbol search on chart</p>
+          <p class="war-muted chart-caption" id="chart-caption">Live TradingView · XAUUSD spot — zoom, pan, and draw tools</p>
 
           <div class="chart-ext-links" id="chart-ext-links">
 
-            <a href="https://www.tradingview.com/chart/?symbol=OANDA:XAUUSD" target="_blank" rel="noopener">TradingView</a>
-
-            <a href="https://finance.yahoo.com/quote/GC%3DF/chart/" target="_blank" rel="noopener">Yahoo GC</a>
-
-            <a href="https://finviz.com/quote.ashx?t=GLD" target="_blank" rel="noopener">GLD</a>
+            <a href="https://www.tradingview.com/chart/?symbol=OANDA:XAUUSD" target="_blank" rel="noopener">Open XAUUSD on TradingView</a>
 
           </div>
 
@@ -222,9 +211,13 @@
 
           <h2 class="war-panel-title">Market Bias</h2>
 
-          <div class="war-bias-value neutral" id="bias-value">{% if initial and initial.market_bias %}{{ initial.market_bias.bias }}{% else %}—{% endif %}</div>
+          <div class="war-bias-headline neutral" id="bias-headline">{% if initial and initial.market_bias and initial.market_bias.headline %}{{ initial.market_bias.headline }}{% elif initial and initial.market_bias %}{{ initial.market_bias.bias }}{% else %}Loading…{% endif %}</div>
 
-          <p class="war-why" id="bias-why">{% if initial and initial.market_bias and initial.market_bias.why %}{{ (initial.market_bias.why or '')[:320] }}{% else %}Loading agents…{% endif %}</p>
+          <p class="war-bias-meaning" id="bias-meaning">{% if initial and initial.market_bias and initial.market_bias.meaning %}{{ (initial.market_bias.meaning or '')[:400] }}{% elif initial and initial.market_bias and initial.market_bias.why %}{{ (initial.market_bias.why or '')[:400] }}{% else %}Loading agents…{% endif %}</p>
+
+          <p class="war-bias-agents" id="bias-agents">{% if initial and initial.market_bias and initial.market_bias.agents_summary %}{{ initial.market_bias.agents_summary }}{% endif %}</p>
+
+          <p class="war-muted war-bias-prob" id="bias-prob-detail">{% if initial and initial.market_bias and initial.market_bias.probability_detail %}{{ initial.market_bias.probability_detail }}{% endif %}</p>
 
         </section>
 
@@ -232,17 +225,17 @@
 
         <section class="war-panel" id="panel-confidence">
 
-          <h2 class="war-panel-title">Confidence Meter</h2>
+          <h2 class="war-panel-title">How Sure Are We?</h2>
+
+          <p class="war-confidence-plain" id="confidence-label">{% if initial and initial.confidence_meter %}{{ initial.confidence_meter.label }}{% else %}—{% endif %}</p>
 
           <div class="war-meter-wrap">
 
             <div class="war-meter-bar"><div class="war-meter-fill" id="confidence-fill" style="width:{% if initial and initial.confidence_meter %}{{ initial.confidence_meter.score }}%{% else %}0%{% endif %}"></div></div>
 
-            <span class="war-meter-score" id="confidence-score">{% if initial and initial.confidence_meter %}{{ initial.confidence_meter.score }}%{% else %}0{% endif %}</span>
+            <span class="war-meter-score war-meter-score-secondary" id="confidence-score" title="Internal score">{% if initial and initial.confidence_meter %}{{ initial.confidence_meter.score }}%{% else %}0{% endif %}</span>
 
           </div>
-
-          <p class="war-muted" id="confidence-label">{% if initial and initial.confidence_meter %}{{ initial.confidence_meter.label }}{% else %}—{% endif %}</p>
 
         </section>
 
@@ -371,6 +364,8 @@
           <p class="war-muted" id="scalp-subtitle">7 agents scanning 15M / 1H for scalp setups…</p>
 
           <p class="scalp-warning" id="scalp-warning">High leverage magnifies risk — not financial advice.</p>
+
+          <div id="scalp-feeds" class="scalp-feeds war-muted" hidden></div>
 
           <div id="scalp-content" class="scalp-grid"></div>
 

@@ -179,7 +179,7 @@
       style: "1",
       locale: "en",
       enable_publishing: false,
-      allow_symbol_change: true,
+      allow_symbol_change: false,
       withdateranges: true,
       hide_side_toolbar: false,
       hide_top_toolbar: false,
@@ -228,16 +228,46 @@
     const links = $("chart-ext-links");
     if (links && chart?.chart_links) {
       const L = chart.chart_links;
-      links.innerHTML = [
-        ["TradingView", L.tradingview],
-        ["Yahoo GC", L.yahoo],
-        ["GLD", L.finviz],
-      ]
-        .filter(([, u]) => u)
-        .map(([label, url]) =>
-          `<a href="${esc(url)}" target="_blank" rel="noopener">${esc(label)}</a>`
-        )
-        .join("");
+      const tv = L.tradingview || "https://www.tradingview.com/chart/?symbol=OANDA:XAUUSD";
+      links.innerHTML = `<a href="${esc(tv)}" target="_blank" rel="noopener">Open XAUUSD on TradingView</a>`;
+    }
+  }
+
+  function renderMarketBias(mb, cm) {
+    const headlineEl = $("bias-headline");
+    const meaningEl = $("bias-meaning");
+    const agentsEl = $("bias-agents");
+    const probEl = $("bias-prob-detail");
+    if (!headlineEl) return;
+
+    const bias = mb.bias || "—";
+    const headline = mb.headline || (
+      bias.toLowerCase() === "bullish" ? "Gold is leaning BULLISH"
+        : bias.toLowerCase() === "bearish" ? "Gold is leaning BEARISH"
+          : bias.toLowerCase() === "neutral" ? "Gold looks NEUTRAL"
+            : bias
+    );
+    headlineEl.textContent = headline;
+    headlineEl.className = `war-bias-headline ${biasClass(bias)}`;
+
+    if (meaningEl) {
+      meaningEl.textContent = mb.meaning || mb.why || "";
+    }
+    if (agentsEl) {
+      agentsEl.textContent = mb.agents_summary || "";
+      agentsEl.hidden = !mb.agents_summary;
+    }
+    if (probEl) {
+      probEl.textContent = mb.probability_detail || "";
+      probEl.hidden = !mb.probability_detail;
+    }
+
+    const label = mb.confidence_label || cm?.label || "";
+    const score = cm?.score ?? mb.confidence ?? 0;
+    if ($("confidence-label")) $("confidence-label").textContent = label || "—";
+    if ($("confidence-score")) $("confidence-score").textContent = `${Math.round(score)}%`;
+    if ($("confidence-fill")) {
+      $("confidence-fill").style.width = `${Math.min(100, score || 0)}%`;
     }
   }
 
@@ -269,6 +299,27 @@
     badge.title = ls?.message || "Continuous multi-agent gold analysis";
   }
 
+  let lastScalpSpot = null;
+
+  function renderSpotFeeds(spot) {
+    const feeds = $("scalp-feeds");
+    if (!feeds) return;
+    feeds.hidden = true;
+    if (spot?.price == null) return;
+    feeds.hidden = false;
+    feeds.textContent = `XAUUSD spot $${Number(spot.price).toFixed(2)}`;
+  }
+
+  function patchScalpLivePrices(price, label) {
+    document.querySelectorAll(".scalp-live-ref strong").forEach((el) => {
+      el.textContent = `$${Number(price).toFixed(2)}`;
+    });
+    document.querySelectorAll(".scalp-live-ref").forEach((el) => {
+      const rest = el.textContent.split("·").slice(1).join("·").trim();
+      el.innerHTML = `${label || "XAUUSD spot"}: <strong>$${Number(price).toFixed(2)}</strong>${rest ? ` · ${rest}` : ""}`;
+    });
+  }
+
   function renderScalping(sc) {
     const sub = $("scalp-subtitle");
     const warn = $("scalp-warning");
@@ -278,10 +329,10 @@
       el.innerHTML = "<p class='war-muted'>Scalp scanner loading…</p>";
       return;
     }
-    if (sub) {
-      sub.textContent = sc.subtitle || sc.title || "";
-      if (sc.reference_price) sub.textContent += ` · chart/live ref $${sc.reference_price}`;
-    }
+    const spot = sc.live_spot || lastScalpSpot;
+    if (sc.live_spot) lastScalpSpot = sc.live_spot;
+    renderSpotFeeds(spot);
+    if (sub) sub.textContent = sc.subtitle || sc.title || "";
     if (warn) warn.textContent = sc.leverage_warning || "High leverage — extreme risk.";
     const setups = sc.setups || [];
     if (!setups.length) {
@@ -301,7 +352,7 @@
           <span class="scalp-status">${esc(s.status)}</span>
           <span class="scalp-conf">${s.confidence}%</span>
         </header>
-        <p class="scalp-live-ref">Live gold: <strong>$${s.market_price ?? s.entry}</strong> · ${s.leverage}x</p>
+        <p class="scalp-live-ref">${esc(sc.reference_label || "XAUUSD spot")}: <strong>$${s.market_price ?? s.entry}</strong> · ${s.leverage}x</p>
         <div class="scalp-levels">
           <div><label>Entry</label><span>${s.entry}</span></div>
           <div><label>Stop</label><span>${s.stop}</span></div>
@@ -400,34 +451,28 @@
 
   function apply(data) {
     if (!data) {
-      $("bias-why").textContent = "No response from server";
+      renderMarketBias({ headline: "No data", meaning: "No response from server." }, {});
       return;
     }
     showStatusBanner(data);
 
     const agentKeys = data.agents ? Object.keys(data.agents) : [];
     if (!data.ok && agentKeys.length === 0) {
-      $("bias-why").textContent = data.error || "Analysis failed";
+      renderMarketBias({ headline: "Analysis failed", meaning: data.error || "Try Refresh." }, {});
       return;
     }
 
     const mb = data.market_bias || {};
-    const biasEl = $("bias-value");
-    biasEl.textContent = mb.bias || "—";
-    biasEl.className = `war-bias-value ${biasClass(mb.bias)}`;
-    $("bias-why").textContent = mb.why || "";
-
     const cm = data.confidence_meter || {};
-    $("confidence-score").textContent = `${cm.score ?? 0}%`;
-    $("confidence-fill").style.width = `${Math.min(100, cm.score || 0)}%`;
-    $("confidence-label").textContent = cm.label || "";
+    renderMarketBias(mb, cm);
 
     const px = data.price != null ? Number(data.price) : null;
     $("war-price").textContent = px != null
       ? `$${px.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}  ${data.change_pct >= 0 ? "+" : ""}${data.change_pct}%`
       : "—";
-    const sym = data.price_symbol || "GC=F (COMEX)";
+    const sym = data.price_symbol || "XAUUSD spot";
     $("war-meta").textContent = `${sym} · Updated ${data.updated_at || "—"}`;
+    if (data.live_spot) lastScalpSpot = data.live_spot;
 
     renderAgentStations(data.agent_stations);
     renderConsensus(data.agent_consensus);
@@ -478,7 +523,10 @@
     const btn = $("btn-war-refresh");
     if (btn) btn.disabled = true;
     if (!refresh || warmPolls === 0) {
-      $("bias-why").textContent = "Running 7 agents + master synthesis…";
+      renderMarketBias({
+        headline: "Analyzing gold…",
+        meaning: "Running 7 agents + master synthesis…",
+      }, {});
       $("consensus-table").innerHTML = "<span class='war-muted'>Analyzing…</span>";
     }
     try {
@@ -498,18 +546,27 @@
       const json = await res.json();
       if (json.warming) {
         warmPolls += 1;
-        $("bias-why").textContent = json.message || "Agents analyzing…";
+        renderMarketBias({
+          headline: "Analyzing gold…",
+          meaning: json.message || "Agents analyzing…",
+        }, {});
         if (warmPolls < 40) {
           setTimeout(() => load(false), 3000);
         } else {
-          $("bias-why").textContent = "Still loading — click Refresh.";
+          renderMarketBias({
+            headline: "Still loading",
+            meaning: "Click Refresh analysis.",
+          }, {});
         }
         return;
       }
       warmPolls = 0;
       apply(json);
     } catch (e) {
-      $("bias-why").textContent = `Network error: ${e.message}. Try Refresh.`;
+      renderMarketBias({
+        headline: "Connection issue",
+        meaning: `Network error: ${e.message}. Try Refresh.`,
+      }, {});
       showStatusBanner({ error: e.message, fetch_notes: [] });
     } finally {
       if (btn) btn.disabled = false;
@@ -521,10 +578,6 @@
   if (heightRange && savedH) heightRange.value = savedH;
   setChartHeight(heightRange?.value || 500);
   heightRange?.addEventListener("input", () => setChartHeight(heightRange.value));
-
-  $("chart-symbol")?.addEventListener("change", (e) => {
-    reloadTradingViewEmbed(null, e.target.value);
-  });
 
   document.querySelectorAll(".chart-tf").forEach((btn) => {
     btn.addEventListener("click", (e) => {
@@ -548,25 +601,28 @@
 
   async function refreshLiveSpot() {
     try {
-      const res = await fetch("/api/gold-spot", { cache: "no-store" });
+      const res = await fetch("/api/gold-spot?force=1", { cache: "no-store" });
       const j = await res.json();
       if (!j.ok || j.price == null) return;
+      lastScalpSpot = j;
       const el = $("war-price");
       if (el) {
         el.textContent = `$${Number(j.price).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}  ${j.change_pct >= 0 ? "+" : ""}${j.change_pct}%`;
       }
       const meta = $("war-meta");
-      if (meta && j.symbol) {
+      if (meta) {
         const cur = meta.textContent || "";
         const tail = cur.includes("· Updated") ? cur.slice(cur.indexOf("· Updated")) : "";
-        meta.textContent = `${j.symbol} ${tail}`.trim();
+        meta.textContent = `XAUUSD spot ${tail}`.trim();
       }
+      renderSpotFeeds(j);
+      patchScalpLivePrices(j.price, "XAUUSD spot");
     } catch { /* ignore */ }
   }
 
   $("btn-war-refresh")?.addEventListener("click", () => load(true));
   load(false);
   refreshLiveSpot();
-  setInterval(refreshLiveSpot, 20000);
+  setInterval(refreshLiveSpot, 15000);
   setInterval(() => load(false), 45000);
 })();
