@@ -159,17 +159,25 @@
   }
 
   function reloadTradingViewEmbed(interval, symbol) {
-    const wrap = $("gold-tv-embed");
-    if (!wrap) return;
+    const host = $("gold-tv-embed");
+    if (!host) return;
     const sym = symbol || $("chart-symbol")?.value || "OANDA:XAUUSD";
     const iv = interval || document.querySelector(".chart-tf.active")?.getAttribute("data-interval") || "60";
     const cfg = tvChartConfig(sym, iv);
-    wrap.innerHTML = `<div class="tradingview-widget-container__widget" id="gold-tv-widget"></div>
-      <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js" async>
-      ${JSON.stringify(cfg)}
-      <\/script>`;
+    host.innerHTML = "";
+    const widget = document.createElement("div");
+    widget.className = "tradingview-widget-container__widget";
+    widget.style.height = "100%";
+    widget.style.width = "100%";
+    host.appendChild(widget);
+    const script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src = "https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js";
+    script.async = true;
+    script.text = JSON.stringify(cfg);
+    host.appendChild(script);
     const cap = $("chart-caption");
-    if (cap) cap.textContent = `Live TradingView · ${sym} · use toolbar to zoom, pan & draw`;
+    if (cap) cap.textContent = `Loading ${sym} · ${iv} — chart toolbar: zoom, pan, draw`;
   }
 
   function renderChart(chart) {
@@ -205,6 +213,54 @@
         <a href="${esc(href)}" target="_blank" rel="noopener">${esc(n.title)}</a>
         <div class="gold-news-meta">${esc(pub)}${when}</div>
       </li>`;
+    }).join("");
+  }
+
+  function renderLiveScan(ls, updatedAt) {
+    const badge = $("live-scan-badge");
+    if (!badge) return;
+    const sec = ls?.interval_sec || 45;
+    const t = updatedAt ? ` · ${updatedAt}` : "";
+    badge.innerHTML = `<span class="live-scan-dot"></span> Agents live · ${sec}s scan${t}`;
+    badge.title = ls?.message || "Continuous multi-agent gold analysis";
+  }
+
+  function renderScalping(sc) {
+    const sub = $("scalp-subtitle");
+    const warn = $("scalp-warning");
+    const el = $("scalp-content");
+    if (!el) return;
+    if (!sc) {
+      el.innerHTML = "<p class='war-muted'>Scalp scanner loading…</p>";
+      return;
+    }
+    if (sub) sub.textContent = sc.subtitle || sc.title || "";
+    if (warn) warn.textContent = sc.leverage_warning || "High leverage — extreme risk.";
+    const setups = sc.setups || [];
+    if (!setups.length) {
+      el.innerHTML = `<p class="scalp-empty">No scalp meeting criteria right now (${sc.criteria || "agents watching"}). Next scan in ~45s.</p>`;
+      return;
+    }
+    el.innerHTML = setups.map((s) => {
+      const cls = s.direction === "LONG" ? "long" : "short";
+      const st = s.status === "ACTIVE" ? "active" : "watch";
+      return `<article class="scalp-card ${cls} ${st}">
+        <header>
+          <span class="scalp-dir">${esc(s.direction)}</span>
+          <span class="scalp-status">${esc(s.status)}</span>
+          <span class="scalp-conf">${s.confidence}%</span>
+        </header>
+        <div class="scalp-levels">
+          <div><label>Entry</label><span>${s.entry}</span></div>
+          <div><label>Stop</label><span>${s.stop}</span></div>
+          <div><label>Target</label><span>${s.target}</span></div>
+          <div><label>T2</label><span>${s.target_2}</span></div>
+          <div><label>RR</label><span>${s.risk_reward}:1</span></div>
+          <div><label>${s.leverage}x</label><span>~${s.margin_at_risk_pct}% margin @ stop</span></div>
+        </div>
+        <p class="scalp-thesis">${esc(s.thesis)}</p>
+        <p class="war-muted scalp-votes">${s.agent_votes}/5 agents: ${esc((s.agents_aligned || []).join(", "))} · ${esc(s.timeframe)}</p>
+      </article>`;
     }).join("");
   }
 
@@ -309,9 +365,12 @@
     renderPerformance(data.performance);
     renderNews(data.news);
     renderChart(data.chart);
+    renderScalping(data.scalping);
+    renderLiveScan(data.live_scan, data.updated_at);
   }
 
   let warmPolls = 0;
+  let scalpLeverage = Number($("scalp-leverage")?.value) || 30;
 
   async function load(refresh = false, retries = 0) {
     const btn = $("btn-war-refresh");
@@ -321,7 +380,10 @@
       $("consensus-table").innerHTML = "<span class='war-muted'>Analyzing…</span>";
     }
     try {
-      const res = await fetch(`/api/gold-war-room${refresh ? "?refresh=1" : ""}`, { cache: "no-store" });
+      const q = new URLSearchParams();
+      if (refresh) q.set("refresh", "1");
+      q.set("leverage", String(scalpLeverage));
+      const res = await fetch(`/api/gold-war-room?${q}`, { cache: "no-store" });
       if (res.status === 502 || res.status === 503) {
         if (retries < 8) {
           showStatusBanner({ error: `Server ${res.status} — retrying…`, fetch_notes: [] });
@@ -363,11 +425,18 @@
   });
 
   document.querySelectorAll(".chart-tf").forEach((btn) => {
-    btn.addEventListener("click", () => {
+    btn.addEventListener("click", (e) => {
+      e.preventDefault();
       document.querySelectorAll(".chart-tf").forEach((b) => b.classList.remove("active"));
       btn.classList.add("active");
-      reloadTradingViewEmbed(btn.getAttribute("data-interval") || "60", $("chart-symbol")?.value);
+      const iv = btn.getAttribute("data-interval") || "60";
+      reloadTradingViewEmbed(iv, $("chart-symbol")?.value);
     });
+  });
+
+  $("scalp-leverage")?.addEventListener("change", (e) => {
+    scalpLeverage = Number(e.target.value) || 30;
+    load(true);
   });
 
   const boot = readBootstrap();
@@ -377,5 +446,5 @@
 
   $("btn-war-refresh")?.addEventListener("click", () => load(true));
   load(false);
-  setInterval(() => load(false), 120000);
+  setInterval(() => load(false), 45000);
 })();

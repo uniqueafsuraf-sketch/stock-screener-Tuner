@@ -84,6 +84,10 @@
 
         <div class="topbar-actions">
 
+          <span id="live-scan-badge" class="live-scan-badge" title="Agents re-scan every 45 seconds">
+            <span class="live-scan-dot"></span> Agents live · 45s
+          </span>
+
           <span class="war-price" id="war-price">{% if initial and initial.price %}${{ initial.price }}{% else %}—{% endif %}</span>
 
           <button type="button" id="btn-war-refresh" class="btn btn-primary">
@@ -314,9 +318,45 @@
 
 
 
+        <section class="war-panel war-panel-wide war-panel-scalp" id="panel-scalping">
+
+          <div class="war-panel-head">
+
+            <h2 class="war-panel-title">Live Scalping · High Leverage</h2>
+
+            <label class="chart-control-label">
+
+              Leverage
+
+              <select id="scalp-leverage" class="chart-symbol-select" aria-label="Scalp leverage context">
+
+                <option value="20">20x</option>
+
+                <option value="30" selected>30x</option>
+
+                <option value="40">40x</option>
+
+                <option value="50">50x</option>
+
+              </select>
+
+            </label>
+
+          </div>
+
+          <p class="war-muted" id="scalp-subtitle">7 agents scanning 15M / 1H for scalp setups…</p>
+
+          <p class="scalp-warning" id="scalp-warning">High leverage magnifies risk — not financial advice.</p>
+
+          <div id="scalp-content" class="scalp-grid"></div>
+
+        </section>
+
+
+
         <section class="war-panel war-panel-wide war-panel-trade" id="panel-trade">
 
-          <h2 class="war-panel-title">Trade Opportunity</h2>
+          <h2 class="war-panel-title">Swing Trade Opportunity</h2>
 
           <div id="trade-content" class="trade-box"></div>
 

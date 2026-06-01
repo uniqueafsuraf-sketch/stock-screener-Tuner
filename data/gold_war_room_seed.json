@@ -8,17 +8,17 @@
 "Cloud fast path \u2014 modelled gold data (Yahoo skipped on deploy host).",
 "Agents fully active; use Refresh after market hours for live quotes when available."
 ],
-"updated_at": "2026-06-01 21:20:31 UTC",
+"updated_at": "2026-06-01 22:16:10 UTC",
 "market_bias": {
 "bias": "Neutral",
-"confidence": 35.0,
-"bull_probability": 55.6,
-"bear_probability": 44.4,
-"neutral_probability": 88.7,
-"why": "Filters not met: confidence 35% (need >80), agent agreement 4/5 (need 4+), RR 1.19 (need >2.5), manipulation 48% (need <70). Data: cloud_fast. Cloud fast path \u2014 modelled gold data (Yahoo skipped on deploy host). Agents fully active; use Refresh after market hours for live quotes when available."
+"confidence": 33.1,
+"bull_probability": 54.7,
+"bear_probability": 45.3,
+"neutral_probability": 90.6,
+"why": "Filters not met: confidence 33% (need >80), agent agreement 4/5 (need 4+), RR 1.19 (need >2.5), manipulation 48% (need <70). Data: cloud_fast. Cloud fast path \u2014 modelled gold data (Yahoo skipped on deploy host). Agents fully active; use Refresh after market hours for live quotes when available."
 },
 "confidence_meter": {
-"score": 35.0,
+"score": 33.1,
 "label": "Low"
 },
 "agent_consensus": {
@@ -41,7 +41,7 @@
 {
 "agent": "Sentiment",
 "view": "Bullish",
-"detail": "Risk-on gold bid. Headlines scanned: 14 items."
+"detail": "Mixed mood. Headlines scanned: 14 items."
 },
 {
 "agent": "Quant",
@@ -180,10 +180,10 @@
 "id": "sentiment",
 "name": "Sentiment Analyst",
 "bullish_score": 70.0,
-"bearish_score": 45.0,
+"bearish_score": 60.0,
 "stance": "bullish",
-"market_mood": "Risk-on gold bid",
-"summary": "Risk-on gold bid. Headlines scanned: 14 items."
+"market_mood": "Mixed mood",
+"summary": "Mixed mood. Headlines scanned: 14 items."
 },
 "quant": {
 "id": "quant",
@@ -292,14 +292,14 @@
 "target_3": null,
 "risk_reward": null,
 "invalidation": 2607.8,
-"why": "Filters not met: confidence 35% (need >80), agent agreement 4/5 (need 4+), RR 1.19 (need >2.5), manipulation 48% (need <70)."
+"why": "Filters not met: confidence 33% (need >80), agent agreement 4/5 (need 4+), RR 1.19 (need >2.5), manipulation 48% (need <70)."
 },
 "master": {
 "market_bias": "Neutral",
-"confidence_score": 35.0,
-"bull_probability": 55.6,
-"bear_probability": 44.4,
-"neutral_probability": 88.7,
+"confidence_score": 33.1,
+"bull_probability": 54.7,
+"bear_probability": 45.3,
+"neutral_probability": 90.6,
 "trade": {
 "status": "NO_HIGH_CONVICTION_TRADE",
 "direction": null,
@@ -310,7 +310,7 @@
 "target_3": null,
 "risk_reward": null,
 "invalidation": 2607.8,
-"why": "Filters not met: confidence 35% (need >80), agent agreement 4/5 (need 4+), RR 1.19 (need >2.5), manipulation 48% (need <70)."
+"why": "Filters not met: confidence 33% (need >80), agent agreement 4/5 (need 4+), RR 1.19 (need >2.5), manipulation 48% (need <70)."
 },
 "bullish_agents": 4,
 "bearish_agents": 0
@@ -359,16 +359,16 @@
 "published": "Thu, 28 May 2026 13:40:28 GMT"
 },
 {
-"title": "Geopolitics or Monetary Policy: Which Matters More for the Evolution of Gold Prices? - Funds Society",
-"publisher": "Funds Society",
-"link": "https://news.google.com/rss/articles/CBMixwFBVV95cUxNTktfSm5faHJTQnk3MWV1VVI4LWZBczk4MTJDNkNIeENwYm9qOXNEVko2RHRBdWhUa19ESzVKUUJjbEhyQWVXcnRRdE9BM0ZvOU9WNldfTWxRSUF4ZF9pQTNaUDBXMlhnWHhHOHNCcFR5d1ZBRFZzYVZxaXQySlVod05EWnB5QUNvcVJXSlZ6eWkxV0dhVmdNQllFUVdrWnpjNno0Z0gycmlMc0VScTF5TDF1YUg2RHZYMEtQcU8yR21Hb3BRTi1z?oc=5",
-"published": "Mon, 01 Jun 2026 14:18:29 GMT"
-},
-{
 "title": "Gold Price Today: May 29, 2026 - Forbes",
 "publisher": "Forbes",
 "link": "https://news.google.com/rss/articles/CBMiYkFVX3lxTE1zX1NXTllPckpxeXBCVHlJc0I2dDBaRVRVdllsN19XQUhXYjBxWkx5TjNlVGF4NWx2RDFkSzA0V2FocXh4Z2lrUHMzZkV3a3ZnVXMwZjhZdU9LLWVQX3RyNVVn?oc=5",
 "published": "Fri, 29 May 2026 13:31:00 GMT"
+},
+{
+"title": "Geopolitics or Monetary Policy: Which Matters More for the Evolution of Gold Prices? - Funds Society",
+"publisher": "Funds Society",
+"link": "https://news.google.com/rss/articles/CBMixwFBVV95cUxNTktfSm5faHJTQnk3MWV1VVI4LWZBczk4MTJDNkNIeENwYm9qOXNEVko2RHRBdWhUa19ESzVKUUJjbEhyQWVXcnRRdE9BM0ZvOU9WNldfTWxRSUF4ZF9pQTNaUDBXMlhnWHhHOHNCcFR5d1ZBRFZzYVZxaXQySlVod05EWnB5QUNvcVJXSlZ6eWkxV0dhVmdNQllFUVdrWnpjNno0Z0gycmlMc0VScTF5TDF1YUg2RHZYMEtQcU8yR21Hb3BRTi1z?oc=5",
+"published": "Mon, 01 Jun 2026 14:18:29 GMT"
 },
 {
 "title": "The price of gold today, June 1, 2026 \u2014 and the best places to buy - CNBC",
@@ -389,28 +389,28 @@
 "published": "Mon, 01 Jun 2026 16:06:42 GMT"
 },
 {
+"title": "AngloGold Ashanti slides as gold prices retreat to start June - Quiver Quantitative",
+"publisher": "Quiver Quantitative",
+"link": "https://news.google.com/rss/articles/CBMimgFBVV95cUxQREVQQktnUXV0d3FzLXpMYkd0eFZVSVBlSGRVeXVrVkpHZF9lLUFCOHV2VW9xNmxPb05UQ1k0UFBkRy1hTndLbXZzR3VPbjN6RjRudU5saVhWQkV6ejJUQW9kd04ybHFGX1dRcm91X1RvUG80UU91Ti1BTHBxVW81eW45ZHNLTGY4VC10MEY1UTRiMlBJMVFKYTBB?oc=5",
+"published": "Mon, 01 Jun 2026 21:21:00 GMT"
+},
+{
 "title": "Silver firms while gold slips on Hormuz uncertainty - Kitco AM Report - KITCO",
 "publisher": "KITCO",
 "link": "https://news.google.com/rss/articles/CBMirwFBVV95cUxNM2cwelVLOVQtOGRaVlIyTmtaMGpwOTZLdEdZeTJTamlibmRwcWNEQklrUXFzVUJlcVBkMnROMVhSaWFSZ1d5bXhmOHNKQmtiaVh2NzB3ZV84dDdlSE85N09kMkhSMHVGNzVrWUJubXVHX3lNeU0wbHAyLWt0Tm5LSk15dDkzYlZranQ3YkxUNkhGUl9TbFlWVTloTS1vMDRtcU5mbTMtaEhrYjctS21v?oc=5",
 "published": "Mon, 01 Jun 2026 13:17:29 GMT"
 },
 {
+"title": "Why is gold price down today, and will precious metals continue to drop or rise again? Gold falls as infla - The Economic Times",
+"publisher": "The Economic Times",
+"link": "https://news.google.com/rss/articles/CBMixwJBVV95cUxOTzMwLU00RVY2Z3AzR2ZzNF9rMGxpS2R6RE02V1FIeXJISHo2UExLN1QzYWJrSXRhRUFhRXdQVTZLV2ZnS1Z3MmxmQS1tTzVnZDE0RXlselZyM1I5dWdmU25VSTlHWDBOTmQzYV9hSGtxa3czaFRrYXQ2ZXhIdmlEb0YtVUxXWGZJanNDeDRSdTczeTk1NGI1OV9RNU8wSmxvMHpuekNzOElFWXBwWUxlcl9MWFB2cFAyT1E0V2xzZDJBZzlnSmxOSDhubzNwTkVURERYYkR2SXZ2UEJVNFpvUDRFa1NOWl9ybEtjTENET2ZVZ29XbldXNkxBbm9uS1hsYWoxUWdGdklJWHdEc284QmRpM0pGdTYtT3pEeS1aTmY0YXhPUVY5WUlReGlwRW44cHVFVmVpQkQ2ZVBjRVdua0xUS3pyRTTSAcwCQVVfeXFMUDREdFpSeDREZHN3dzQ3QWJXaWFvWVNaeGtRUmtCR3lNbnR6enpmVWFJS1YxNmQzb05ZLXJUNHB0eFVhekNoNldDcTVxUUxaMExNLU03NzBNRjhqVEtlY0JremE4dDVxblpHaXZ5UWFZVUtrTWpTcWY1ci1MQzdFUGdnN2JTT0pIMUZ2YmRPdkFiLXpxZVJaYy1CY1d2U20tbkx6emtwRFV4V0xqUVZLdFZkazQzYnZDTHFOaHhSTlV1eVh6RHpBOGVLQlB4WjNic2lhai10LWpybW1WbTdMdmppMFFGSFlDSDh6R1lYUTVXRDBZMzBOeXR1Rmw3UDBIR1M0X0xHNGc1WnNjNWdoZjNtUVhJQUQ5MXgzMjc1Z2k4bmRYZVhQRzZzTExxQm1nVFh3dnJETHRRVGdvbWpMRlFhVEF6XzBvMVZ3aEc?oc=5",
+"published": "Mon, 01 Jun 2026 21:32:28 GMT"
+},
+{
 "title": "Gold Slides, Oil Leaps as US-Iran War Dents AI-Fuelled Stock Market Records - BullionVault",
 "publisher": "BullionVault",
 "link": "https://news.google.com/rss/articles/CBMihwFBVV95cUxPcTF5c1VWQnc3TnhPemhBMmRHcVluM3M4ZGQyMHVkTS02Zks4QWlvWk1CcFVHY1lSMk1lN3JCWHo2aTFSWTRQODRLV2VRYTdfMmtnRDloSDZPejhTOEFzNHJQXzlaZGJhMkFsRGpMYTVqRncycFhKX2hDT1lJSEtScFFHdFZURW8?oc=5",
 "published": "Mon, 01 Jun 2026 14:10:59 GMT"
-},
-{
-"title": "Gold Price Forecast: XAU/USD dives to $4,500 amid simmering tensions in Iran - FXStreet",
-"publisher": "FXStreet",
-"link": "https://news.google.com/rss/articles/CBMiuAFBVV95cUxPN1N4dnJUZXM2SVZKNDZoRG9IaGdtRjdld3hoZ25HYTFURXpNbjM0Y3I5MURNZWxkVDd4Vjh1dWNMaTUwUmpHMHNKbmxKUjdkc21hZ0VkUDRoaFo2YjRLTDBaZjFzOTFpSUVTT3NZWko1bE02ajVIeHhPbkNvNTZVY245OU5vRnV1X2tNSmw2M1IzRlhqVDNjSUlZcU9ueVUyQXRfVG1wdzlwWlRsMVN4X3NuU2owZVYw?oc=5",
-"published": "Mon, 01 Jun 2026 10:48:24 GMT"
-},
-{
-"title": "Gold News: Gold Market Faces Critical Week as NFP and ISM Data Loom - FXEmpire",
-"publisher": "FXEmpire",
-"link": "https://news.google.com/rss/articles/CBMiuAFBVV95cUxQMlFBZngtTl9Pb3Nja2QwaW5JczYxNk5HMGtTWFkyMDBTUklTUkZ2ZURUYl9JMXZoaF9OZXBGNjJoamRTTDR1TDlKZjk4ZVhiMVkxNWwtM0dNQ2FNdkNTWS1kR3dzbXhIeERiRURiN0YwaEQ1dUdHY1p5M0FqMlVCS1c5S1QyNFhkT3diM215dG1zWnByOFFsdDhkaGtnYVhYZXQ2OFI0NlRXd043S2ZwUDlFWUxuOGw4?oc=5",
-"published": "Mon, 01 Jun 2026 05:23:00 GMT"
 }
 ],
 "chart": {
@@ -820,5 +820,64 @@
 "yahoo": "https://finance.yahoo.com/quote/GC%3DF/chart/",
 "finviz": "https://finviz.com/quote.ashx?t=GLD"
 }
+},
+"scalping": {
+"title": "Live Scalping Opportunities",
+"subtitle": "30x leverage context \u00b7 7 agents scanning every 45s",
+"leverage": 30,
+"leverage_warning": "High leverage (30x) magnifies gains and losses. A 6.8pt adverse move can liquidate margin \u2014 not financial advice.",
+"scanning": true,
+"setups": [
+{
+"direction": "LONG",
+"entry": 2628.7,
+"stop": 2621.9,
+"target": 2647.7,
+"target_2": 2659.1,
+"risk_reward": 2.79,
+"confidence": 80.8,
+"agent_votes": 4,
+"agents_aligned": [
+"Macro",
+"Technical",
+"Order Flow",
+"Sentiment"
+],
+"leverage": 30,
+"margin_at_risk_pct": 7.76,
+"timeframe": "15M / 1H",
+"thesis": "Liquidity sweep / bid stack \u2014 quick bounce scalp",
+"status": "ACTIVE"
+}
+],
+"best": {
+"direction": "LONG",
+"entry": 2628.7,
+"stop": 2621.9,
+"target": 2647.7,
+"target_2": 2659.1,
+"risk_reward": 2.79,
+"confidence": 80.8,
+"agent_votes": 4,
+"agents_aligned": [
+"Macro",
+"Technical",
+"Order Flow",
+"Sentiment"
+],
+"leverage": 30,
+"margin_at_risk_pct": 7.76,
+"timeframe": "15M / 1H",
+"thesis": "Liquidity sweep / bid stack \u2014 quick bounce scalp",
+"status": "ACTIVE"
+},
+"total_found": 1,
+"criteria": "\u22652 agents align \u00b7 RR \u22652 \u00b7 manip <75 \u00b7 15M vol/flow"
+},
+"live_scan": {
+"active": true,
+"interval_sec": 45,
+"agents_running": 7,
+"message": "Agents continuously re-scanning gold for scalp setups"
 }
 }

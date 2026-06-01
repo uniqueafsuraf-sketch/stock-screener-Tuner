@@ -28,6 +28,7 @@ from screener.gold_war_room.fetch import (
 )
 from screener.gold_war_room.master import agent_consensus, build_alerts, run_master
 from screener.gold_war_room.performance import performance_summary, record_setup
+from screener.gold_war_room.scalping import analyze_scalping_setups
 
 
 def _safe_agent(name: str, fn, *args) -> dict:
@@ -51,7 +52,15 @@ def _safe_agent(name: str, fn, *args) -> dict:
         }
 
 
-def _build_response(data: GoldMarketData, agents: dict, trap: dict, risk: dict, master: dict) -> dict:
+def _build_response(
+    data: GoldMarketData,
+    agents: dict,
+    trap: dict,
+    risk: dict,
+    master: dict,
+    *,
+    leverage: int = 30,
+) -> dict:
     technical = agents["technical"]
     macro = agents["macro"]
     notes = " ".join(data.fetch_notes)
@@ -97,10 +106,19 @@ def _build_response(data: GoldMarketData, agents: dict, trap: dict, risk: dict, 
             data.price,
             technical.get("key_levels"),
         ),
+        "scalping": analyze_scalping_setups(
+            data, agents, trap, technical, data.price, leverage=leverage,
+        ),
+        "live_scan": {
+            "active": True,
+            "interval_sec": 45,
+            "agents_running": 7,
+            "message": "Agents continuously re-scanning gold for scalp setups",
+        },
     }
 
 
-def run_war_room_analysis() -> dict:
+def run_war_room_analysis(*, leverage: int = 30) -> dict:
     try:
         data = fetch_gold_data()
         macro = _safe_agent("macro", agent_macro, data)
@@ -124,7 +142,7 @@ def run_war_room_analysis() -> dict:
 
         master = run_master(agents, trap, risk, data.price, technical)
         record_setup(master, data.price)
-        return _build_response(data, agents, trap, risk, master)
+        return _build_response(data, agents, trap, risk, master, leverage=leverage)
     except Exception as e:
         traceback.print_exc()
         try:
@@ -150,7 +168,7 @@ def run_war_room_analysis() -> dict:
             agents["risk"] = risk
             agents["trap"] = trap
             master = run_master(agents, trap, risk, data.price, agents["technical"])
-            payload = _build_response(data, agents, trap, risk, master)
+            payload = _build_response(data, agents, trap, risk, master, leverage=leverage)
             payload["ok"] = True
             payload["fetch_notes"] = [f"Recovered after error: {e}"]
             return payload
@@ -171,4 +189,6 @@ def run_war_room_analysis() -> dict:
                 "trade_opportunity": {"status": "NO_HIGH_CONVICTION_TRADE", "why": str(e2)},
                 "performance": performance_summary(),
                 "alerts": [],
+                "scalping": {"title": "Live Scalping Opportunities", "setups": [], "scanning": True},
+                "live_scan": {"active": True, "interval_sec": 45, "agents_running": 7},
             }

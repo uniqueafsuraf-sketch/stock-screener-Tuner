@@ -375,7 +375,8 @@ def index():
 
 _war_room_cache: dict = {"data": None, "ts": 0.0, "computing": False, "computing_since": 0.0}
 _war_room_lock = threading.Lock()
-WAR_ROOM_TTL = 90
+WAR_ROOM_TTL = 45
+WAR_ROOM_SCAN_INTERVAL = 45
 WAR_ROOM_COMPUTE_MAX = 75
 
 
@@ -416,6 +417,8 @@ def _war_room_warming_payload() -> dict:
         "alerts": [],
         "news": [],
         "chart": {"symbol": "XAUUSD", "tv_symbol": "OANDA:XAUUSD", "candles": [], "interval": "1H"},
+        "scalping": {"title": "Live Scalping Opportunities", "setups": [], "scanning": True},
+        "live_scan": {"active": True, "interval_sec": 45, "agents_running": 7},
     }
 
 
@@ -438,7 +441,9 @@ def _refresh_war_room_async(*, force: bool = False) -> None:
         from screener.gold_war_room import run_war_room_analysis  # noqa: PLC0415
 
         try:
-            payload = run_war_room_analysis()
+            with _war_room_lock:
+                lev = int(_war_room_cache.get("leverage") or 30)
+            payload = run_war_room_analysis(leverage=max(10, min(50, lev)))
             if payload.get("ok"):
                 save_war_room_seed(payload)
             with _war_room_lock:
@@ -465,6 +470,7 @@ def gold_war_room_page():
 
     _schedule_background_start()
     _schedule_war_room_warmup()
+    _schedule_war_room_loop()
     initial = load_war_room_seed() or {}
     with _war_room_lock:
         cached = _war_room_cache.get("data")
@@ -481,6 +487,10 @@ def gold_war_room_page():
 @app.route("/api/gold-war-room")
 def api_gold_war_room():
     force = request.args.get("refresh") == "1"
+    lev_arg = request.args.get("leverage", type=int)
+    if lev_arg is not None:
+        with _war_room_lock:
+            _war_room_cache["leverage"] = max(10, min(50, lev_arg))
     now = time.time()
     with _war_room_lock:
         cached = _war_room_cache.get("data")
@@ -663,6 +673,26 @@ def _schedule_background_start() -> None:
 
 
 _war_room_warm_scheduled = False
+_war_room_loop_started = False
+
+
+def _schedule_war_room_loop() -> None:
+    """Re-run all agents on a fixed interval for live scalp / bias updates."""
+    global _war_room_loop_started
+    if _war_room_loop_started:
+        return
+    _war_room_loop_started = True
+
+    def _loop() -> None:
+        while True:
+            time.sleep(WAR_ROOM_SCAN_INTERVAL)
+            try:
+                _refresh_war_room_async()
+            except Exception as e:
+                traceback.print_exc()
+                print(f"War room loop error: {e}")
+
+    threading.Thread(target=_loop, daemon=True, name="war-room-loop").start()
 
 
 def _schedule_war_room_warmup() -> None:
@@ -692,7 +722,10 @@ def init_production() -> None:
                 _scan_cache["ts"] = time.time()
             print(f"Loaded {len(seed.get('all_stocks', []))} stocks from seed_bootstrap.json")
     _load_war_room_seed_into_cache()
+    with _war_room_lock:
+        _war_room_cache.setdefault("leverage", 30)
     _schedule_background_start()
+    _schedule_war_room_loop()
     if not _war_room_ready(_war_room_cache.get("data")):
         _schedule_war_room_warmup()
 
