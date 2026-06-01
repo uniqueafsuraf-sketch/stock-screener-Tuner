@@ -106,21 +106,45 @@
 
         </header>
 
-        <p class="war-muted ops-intro" id="stations-subtitle">{% if initial and initial.agent_stations %}{{ initial.agent_stations.subtitle }}{% else %}Each agent works at their own station{% endif %}</p>
+        <p class="war-muted ops-intro" id="stations-subtitle">{% if initial and initial.agent_stations %}{{ initial.agent_stations.subtitle }}{% else %}Live desk map — each crewmate is working their station{% endif %}</p>
 
-        <section class="ops-command-deck" aria-label="Command overseers">
+        <div class="ops-map-layout">
 
-          <div id="ops-overseers" class="ops-overseer-row"></div>
+          <section class="au-map-stage" aria-label="Gold desk floor map">
 
-        </section>
+            <div class="ops-floor-title-row">
 
-        <section class="ops-trading-floor-wrap" aria-label="Analyst stations">
+              <h2 class="ops-floor-title">Live floor map <span id="stations-headline" class="war-chip">{% if initial and initial.agent_stations %}{{ initial.agent_stations.headline }}{% else %}Crew deploying…{% endif %}</span></h2>
 
-          <h2 class="ops-floor-title">Analyst stations <span id="stations-headline" class="war-chip">{% if initial and initial.agent_stations %}{{ initial.agent_stations.headline }}{% else %}7 online{% endif %}</span></h2>
+              <span class="au-map-legend"><span class="au-legend-dot active"></span> Working</span>
 
-          <div id="ops-floor-grid" class="ops-trading-floor"></div>
+              <span class="au-map-legend"><span class="au-legend-dot idle"></span> Idle</span>
 
-        </section>
+              <span class="au-map-legend"><span class="au-legend-dot warn"></span> Alert</span>
+
+            </div>
+
+            <div id="ops-map" class="au-map">
+
+              <div class="au-map-corridors" aria-hidden="true"></div>
+
+              <div id="ops-map-rooms" class="au-map-rooms"></div>
+
+              <div id="ops-map-crew" class="au-map-crew"></div>
+
+            </div>
+
+          </section>
+
+          <aside id="ops-map-hud" class="au-hud" aria-label="Agent activity feed">
+
+            <h3 class="au-hud-title">Live activity</h3>
+
+            <div id="ops-hud-list" class="au-hud-list"></div>
+
+          </aside>
+
+        </div>
 
       </div>
 

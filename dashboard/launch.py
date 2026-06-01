@@ -7,7 +7,7 @@ import subprocess
 import sys
 import time
 
-APP_VERSION = "3.0"
+APP_VERSION = "3.1"
 PREFERRED_PORT = 5050
 FALLBACK_PORTS = (8765, 5051, 8080)
 

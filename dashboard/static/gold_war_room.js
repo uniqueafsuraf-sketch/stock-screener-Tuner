@@ -95,102 +95,104 @@
     return "st-idle";
   }
 
-  function renderOverseerCard(st) {
+  function renderCrewmate(st) {
     const cls = stationStatusClass(st.status);
-    const tier = st.tier || "command";
+    const activity = st.activity || (cls === "st-active" ? "working" : "patrol");
+    const color = st.crew_color || "#7f8c8d";
+    const x = st.map_x != null ? st.map_x : 50;
+    const y = st.map_y != null ? st.map_y : 70;
+    const room = st.map_room || st.id;
+    const isBoss = st.tier === "command" || st.id === "boss";
     return `
-      <article class="ops-booth ops-booth-overseer ops-booth-${tier} ${cls} ops-accent-${st.accent || tier}">
-        <div class="ops-booth-scene">
-          <div class="ops-character ops-character-boss" aria-hidden="true">
-            <span class="ops-avatar">${st.avatar || "👤"}</span>
-            <span class="ops-character-shadow"></span>
-          </div>
-          <div class="ops-desk">
-            <div class="ops-monitor ops-monitor-wide">
-              <span class="ops-monitor-label">LIVE TASK</span>
-              <p class="ops-monitor-task">${esc(st.task_label)}</p>
-              <p class="ops-monitor-detail">${esc(st.working_on)}</p>
-            </div>
-          </div>
+      <div class="au-crew ${cls} activity-${activity}${isBoss ? " au-crew-boss" : ""}"
+           data-room="${esc(room)}"
+           data-agent="${esc(st.id)}"
+           style="--crew-color:${color};left:${x}%;top:${y}%"
+           title="${esc(st.character)} — ${esc(st.task_label)}">
+        <div class="au-speech">
+          <strong>${esc(st.task_label)}</strong>
+          <span>${esc(st.intel || st.working_on)}</span>
         </div>
-        <div class="ops-booth-info">
-          <span class="ops-status-pill ${cls}">${esc(st.status)}</span>
-          <h3 class="ops-character-name">${esc(st.character || st.name)}</h3>
-          <p class="ops-station-name">${esc(st.station)}</p>
-          <p class="ops-title">${esc(st.title || st.role)}</p>
-          <div class="ops-label-row">
-            <span class="ops-field-label">Right now</span>
-            <p class="ops-field-value">${esc(st.working_on)}</p>
-          </div>
-          <div class="ops-label-row">
-            <span class="ops-field-label">Report</span>
-            <p class="ops-field-value ops-report">${esc(st.output)}</p>
-          </div>
-          ${st.metrics ? `<p class="ops-metrics">${esc(st.metrics)}</p>` : ""}
+        <div class="au-crewmate" aria-hidden="true">
+          <div class="au-body"></div>
+          <div class="au-visor"></div>
+          <div class="au-backpack"></div>
+          ${activity === "working" ? '<div class="au-sparkles"></div>' : ""}
         </div>
-      </article>`;
+        <span class="au-crew-label">${esc(st.character || st.name)}</span>
+        <span class="au-crew-stance ${(st.stance || "").toLowerCase()}">${esc(st.stance)}</span>
+      </div>`;
   }
 
-  function renderAnalystBooth(st) {
-    const cls = stationStatusClass(st.status);
-    const stance = (st.stance || "neutral").toLowerCase();
+  function renderMapRoom(room, crewInRoom) {
+    const busy = crewInRoom.some((c) => stationStatusClass(c.status) === "st-active");
     return `
-      <article class="ops-booth ops-booth-analyst ${cls} ops-accent-${st.accent || "default"}">
-        <div class="ops-booth-scene">
-          <div class="ops-character" aria-hidden="true">
-            <span class="ops-avatar">${st.avatar || "🤖"}</span>
-            <span class="ops-character-shadow"></span>
-          </div>
-          <div class="ops-desk">
-            <div class="ops-monitor">
-              <span class="ops-monitor-label">${esc(st.desk_code)}</span>
-              <p class="ops-monitor-task">${esc(st.task_label)}</p>
-              <p class="ops-monitor-detail">${esc(st.working_on)}</p>
-            </div>
-            <div class="ops-desk-plate">${esc(st.station)}</div>
-          </div>
+      <div class="au-room ${busy ? "au-room-busy" : ""}" data-room-id="${esc(room.id)}"
+           style="left:${room.x}%;top:${room.y}%;width:${room.w}%;height:${room.h}%">
+        <span class="au-room-label">${esc(room.label)}</span>
+        <div class="au-room-console">
+          <span class="au-console-line"></span>
+          <span class="au-console-line"></span>
+          <span class="au-console-line"></span>
         </div>
-        <div class="ops-booth-info">
-          <span class="ops-status-pill ${cls}">${esc(st.status)}</span>
-          <span class="ops-stance ops-stance-${stance}">${esc(st.stance)}</span>
-          <h3 class="ops-character-name">${esc(st.character || st.name)}</h3>
-          <p class="ops-role">${esc(st.role)}</p>
-          <div class="ops-label-row">
-            <span class="ops-field-label">Doing exactly</span>
-            <p class="ops-field-value">${esc(st.working_on)}</p>
-          </div>
-          <div class="ops-label-row">
-            <span class="ops-field-label">Just said</span>
-            <p class="ops-field-value ops-report">${esc(st.output)}</p>
-          </div>
-          ${st.metrics ? `<p class="ops-metrics">${esc(st.metrics)}</p>` : ""}
-        </div>
+      </div>`;
+  }
+
+  function renderHudCard(st) {
+    const cls = stationStatusClass(st.status);
+    return `
+      <article class="au-hud-card ${cls}" data-agent="${esc(st.id)}">
+        <header>
+          <span class="au-hud-dot" style="background:${st.crew_color || '#888'}"></span>
+          <strong>${esc(st.character || st.name)}</strong>
+          <span class="au-hud-status">${esc(st.status)}</span>
+        </header>
+        <p class="au-hud-task">${esc(st.task_label)}</p>
+        <p class="au-hud-intel">${esc(st.intel || st.working_on)}</p>
+        <p class="au-hud-detail">${esc(st.working_on)}</p>
+        <p class="au-hud-report">${esc(st.output)}</p>
       </article>`;
   }
 
   function renderAgentStations(ops) {
     const sub = $("stations-subtitle");
     const head = $("stations-headline");
-    const floor = $("ops-floor-grid");
-    const overseers = $("ops-overseers");
+    const mapRooms = $("ops-map-rooms");
+    const mapCrew = $("ops-map-crew");
+    const hudList = $("ops-hud-list");
     const chip = $("ops-floor-status-chip");
     const meta = $("ops-meta");
 
-    if (!ops?.stations?.length && !ops?.overseers?.length) {
-      if (floor) floor.innerHTML = "<p class='war-muted'>Stations loading…</p>";
+    const crew = ops?.crew || [...(ops?.overseers || []), ...(ops?.stations || [])];
+    const rooms = ops?.map_rooms || [];
+
+    if (!crew.length) {
+      if (mapCrew) mapCrew.innerHTML = "";
+      if (mapRooms) mapRooms.innerHTML = "<p class='au-map-loading'>Deploying crew to floor…</p>";
+      if (hudList) hudList.innerHTML = "";
       return;
     }
     if (sub) sub.textContent = ops.subtitle || "";
     if (head) head.textContent = ops.headline || "";
     if (chip) chip.textContent = ops.floor_status || "Floor status";
-    if (meta) meta.textContent = `Updated ${document.querySelector("#war-meta")?.textContent?.split("Updated")[1] || "live"}`.trim();
+    const updated = document.querySelector("#war-meta")?.textContent || "";
+    if (meta) meta.textContent = updated.includes("Updated") ? updated : `XAUUSD desk · ${ops.scan_interval_sec || 45}s refresh`;
 
-    const overseerList = ops.overseers || [];
-    if (overseers) {
-      overseers.innerHTML = overseerList.map((st) => renderOverseerCard(st)).join("");
+    if (mapRooms && rooms.length) {
+      mapRooms.innerHTML = rooms.map((room) => {
+        const inRoom = crew.filter((c) => c.map_room === room.id);
+        return renderMapRoom(room, inRoom);
+      }).join("");
     }
-    if (floor) {
-      floor.innerHTML = (ops.stations || []).map((st) => renderAnalystBooth(st)).join("");
+
+    if (mapCrew) {
+      mapCrew.innerHTML = crew.map((st) => renderCrewmate(st)).join("");
+    }
+
+    if (hudList) {
+      const order = ["boss", "ops", "macro", "technical", "order_flow", "sentiment", "quant", "risk", "trap"];
+      const sorted = [...crew].sort((a, b) => order.indexOf(a.id) - order.indexOf(b.id));
+      hudList.innerHTML = sorted.map((st) => renderHudCard(st)).join("");
     }
   }
 

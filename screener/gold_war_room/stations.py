@@ -63,6 +63,41 @@ STATION_META: dict[str, dict] = {
     },
 }
 
+MAP_ROOMS: list[dict] = [
+    {"id": "macro", "label": "Macro Wing", "x": 2, "y": 4, "w": 22, "h": 26},
+    {"id": "technical", "label": "Chart Lab", "x": 76, "y": 4, "w": 22, "h": 26},
+    {"id": "sentiment", "label": "News Wire", "x": 2, "y": 36, "w": 22, "h": 24},
+    {"id": "command", "label": "Command Bridge", "x": 30, "y": 30, "w": 40, "h": 28},
+    {"id": "order_flow", "label": "Flow Terminal", "x": 76, "y": 36, "w": 22, "h": 24},
+    {"id": "quant", "label": "Quant Pod", "x": 2, "y": 68, "w": 22, "h": 26},
+    {"id": "trap", "label": "Trap Unit", "x": 38, "y": 68, "w": 24, "h": 26},
+    {"id": "risk", "label": "Risk Tower", "x": 76, "y": 68, "w": 22, "h": 26},
+]
+
+AGENT_MAP_SLOT: dict[str, dict] = {
+    "macro": {"room": "macro", "x": 13, "y": 22},
+    "technical": {"room": "technical", "x": 87, "y": 22},
+    "sentiment": {"room": "sentiment", "x": 13, "y": 48},
+    "order_flow": {"room": "order_flow", "x": 87, "y": 48},
+    "quant": {"room": "quant", "x": 13, "y": 81},
+    "trap": {"room": "trap", "x": 50, "y": 81},
+    "risk": {"room": "risk", "x": 87, "y": 81},
+    "boss": {"room": "command", "x": 44, "y": 46},
+    "ops": {"room": "command", "x": 56, "y": 50},
+}
+
+CREW_COLORS: dict[str, str] = {
+    "macro": "#e74c3c",
+    "technical": "#3498db",
+    "order_flow": "#2ecc71",
+    "sentiment": "#f39c12",
+    "quant": "#9b59b6",
+    "risk": "#e67e22",
+    "trap": "#ff6b9d",
+    "boss": "#ffd700",
+    "ops": "#00d4ff",
+}
+
 OVERSEER_META = {
     "boss": {
         "id": "boss",
@@ -146,6 +181,92 @@ def _working_on(agent_id: str, agent: dict, data: GoldMarketData, trap: dict, ri
     return (agent.get("summary") or "Analyzing gold…")[:140]
 
 
+def _activity_mode(status: str) -> str:
+    if status == "active":
+        return "working"
+    if status in ("warning", "error"):
+        return "fixing"
+    return "patrol"
+
+
+def _intel_snippet(
+    agent_id: str, agent: dict, data: GoldMarketData, trap: dict, risk: dict,
+) -> str:
+    """Best single-line intel for map HUD."""
+    if agent.get("error"):
+        return "Reconnecting feeds…"
+    if agent_id == "macro":
+        dxy = data.macro.get("dxy_chg")
+        tnx = data.macro.get("tnx_chg")
+        bits = []
+        if dxy is not None:
+            bits.append(f"DXY {dxy:+.2f}%")
+        if tnx is not None:
+            bits.append(f"10Y {tnx:+.2f}%")
+        return " · ".join(bits) if bits else f"{len(data.news)} macro headlines"
+    if agent_id == "technical":
+        lv = agent.get("key_levels") or {}
+        sup = (lv.get("support") or [None])[0]
+        res = (lv.get("resistance") or [None])[0]
+        return f"XAU ${data.price:,.0f} · S {sup or '—'} / R {res or '—'}"
+    if agent_id == "order_flow":
+        return (agent.get("summary") or "Flow scan")[:90]
+    if agent_id == "sentiment":
+        return f"Mood: {agent.get('market_mood', '—')} · {len(data.news)} stories"
+    if agent_id == "quant":
+        return f"Range {agent.get('expected_move_range', '—')} · up-day {agent.get('up_day_rate', '—')}"
+    if agent_id == "risk":
+        return f"Risk {agent.get('risk_score', 50)} · cut {agent.get('confidence_reduction', 0)} pts"
+    if agent_id == "trap":
+        return (
+            f"Manip {trap.get('manipulation_risk_score', 0):.0f}% · "
+            f"stop hunt {trap.get('stop_hunt_prob', 0):.0f}%"
+        )
+    return (agent.get("summary") or "")[:90]
+
+
+def _agent_payload(
+    agent_id: str,
+    agent: dict,
+    data: GoldMarketData,
+    trap: dict,
+    risk: dict,
+    *,
+    extra: dict | None = None,
+) -> dict:
+    meta = STATION_META.get(agent_id, {})
+    status = _status_from_agent(agent)
+    slot = AGENT_MAP_SLOT.get(agent_id, {"room": agent_id, "x": 50, "y": 70})
+    base = {
+        "id": agent_id,
+        "name": meta.get("character") or agent.get("name") or agent_id,
+        "character": meta.get("character", agent_id),
+        "avatar": meta.get("avatar", "🤖"),
+        "accent": meta.get("accent", "default"),
+        "crew_color": CREW_COLORS.get(agent_id, "#7f8c8d"),
+        "station": meta.get("station", agent_id),
+        "desk_code": meta.get("desk_code", "AGENT"),
+        "role": meta.get("role", ""),
+        "map_room": slot["room"],
+        "map_x": slot["x"],
+        "map_y": slot["y"],
+        "status": status,
+        "activity": _activity_mode(status),
+        "stance": (agent.get("stance") or "neutral").title(),
+        "task_label": _task_label(agent_id, agent, data, trap, risk),
+        "working_on": _working_on(agent_id, agent, data, trap, risk),
+        "intel": _intel_snippet(agent_id, agent, data, trap, risk),
+        "output": (agent.get("summary") or "")[:200],
+        "metrics": _metrics_line(agent_id, agent),
+        "has_error": bool(agent.get("error")),
+        "is_overseer": False,
+        "tier": "analyst",
+    }
+    if extra:
+        base.update(extra)
+    return base
+
+
 def _metrics_line(agent_id: str, agent: dict) -> str:
     if agent_id == "risk":
         return f"Risk {agent.get('risk_score', '—')} · confidence cut {agent.get('confidence_reduction', 0)}"
@@ -191,13 +312,20 @@ def _build_boss(master: dict | None, data: GoldMarketData, health: dict) -> dict
     status = "active" if conf >= 55 else "idle"
     if not health["all_ok"]:
         status = "warning"
+    slot = AGENT_MAP_SLOT["boss"]
     return {
         **meta,
         "name": meta["character"],
         "status": status,
+        "activity": _activity_mode(status),
         "stance": bias,
+        "crew_color": CREW_COLORS["boss"],
+        "map_room": slot["room"],
+        "map_x": slot["x"],
+        "map_y": slot["y"],
         "task_label": "Commanding the desk",
         "working_on": working,
+        "intel": f"Desk {bias} · {conf:.0f}% confidence · {bull}B/{bear}S",
         "output": output[:220],
         "metrics": f"Confidence {conf:.0f}% · {bull}/5 bull · {bear}/5 bear",
         "is_overseer": True,
@@ -236,13 +364,20 @@ def _build_ops(
         status = "active"
         task_label = "Monitoring all systems"
 
+    slot = AGENT_MAP_SLOT["ops"]
     return {
         **meta,
         "name": meta["character"],
         "status": status,
+        "activity": _activity_mode(status),
         "stance": "Operational" if health["all_ok"] else "Alert",
+        "crew_color": CREW_COLORS["ops"],
+        "map_room": slot["room"],
+        "map_x": slot["x"],
+        "map_y": slot["y"],
         "task_label": task_label,
         "working_on": working,
+        "intel": f"{health['online']}/{health['total']} online · scan {scan_interval_sec}s",
         "output": output,
         "metrics": f"Uptime OK · scan {scan_interval_sec}s · {ls.get('agents_running', 7)} agents",
         "is_overseer": True,
@@ -281,25 +416,7 @@ def build_agent_stations(
         status = _status_from_agent(agent)
         if status == "active":
             active_count += 1
-        rows.append({
-            "id": agent_id,
-            "name": meta.get("character") or agent.get("name") or agent_id,
-            "character": meta.get("character", agent_id),
-            "avatar": meta.get("avatar", "🤖"),
-            "accent": meta.get("accent", "default"),
-            "station": meta.get("station", agent_id),
-            "desk_code": meta.get("desk_code", "AGENT"),
-            "role": meta.get("role", ""),
-            "status": status,
-            "stance": (agent.get("stance") or "neutral").title(),
-            "task_label": _task_label(agent_id, agent, data, trap, risk),
-            "working_on": _working_on(agent_id, agent, data, trap, risk),
-            "output": (agent.get("summary") or "")[:200],
-            "metrics": _metrics_line(agent_id, agent),
-            "has_error": bool(agent.get("error")),
-            "is_overseer": False,
-            "tier": "analyst",
-        })
+        rows.append(_agent_payload(agent_id, agent, data, trap, risk))
 
     floor_status = (
         "All agents running smoothly"
@@ -307,13 +424,16 @@ def build_agent_stations(
         else f"{len(health['errors'])} agent(s) need attention · overseer active"
     )
 
+    all_crew = [boss, ops] + rows
     return {
         "title": "Agent Operations Center",
         "subtitle": f"{active_count}/7 analysts on mission · Commander + Ops overseeing · refresh {scan_interval_sec}s",
         "scan_interval_sec": scan_interval_sec,
         "floor_status": floor_status,
         "health": health,
+        "map_rooms": MAP_ROOMS,
         "overseers": [boss, ops],
         "stations": rows,
-        "headline": f"Command bridge live · {active_count} analysts active",
+        "crew": all_crew,
+        "headline": f"{len(all_crew)} crew on map · {active_count} actively working",
     }

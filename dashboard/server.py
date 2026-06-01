@@ -431,6 +431,8 @@ def _war_room_warming_payload() -> dict:
             "title": "Agent Operations Center",
             "stations": [],
             "overseers": [],
+            "crew": [],
+            "map_rooms": [],
             "headline": "Analyzing…",
             "floor_status": "Starting agents…",
         },
