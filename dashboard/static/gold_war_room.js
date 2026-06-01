@@ -115,37 +115,36 @@
     }).join("");
   }
 
-  let tvWidget = null;
-  let tvInterval = "60";
+  function readBootstrap() {
+    const el = document.getElementById("war-room-bootstrap");
+    if (!el?.textContent?.trim()) return null;
+    try {
+      return JSON.parse(el.textContent);
+    } catch {
+      return null;
+    }
+  }
 
-  function initTradingViewChart(symbol = "OANDA:XAUUSD", interval = "60") {
-    const el = $("gold-tv-chart");
-    if (!el || typeof TradingView === "undefined") return false;
-    tvInterval = interval;
-    el.innerHTML = "";
-    tvWidget = new TradingView.widget({
+  function reloadTradingViewEmbed(interval = "60") {
+    const wrap = $("gold-tv-embed");
+    if (!wrap) return;
+    const cfg = {
       autosize: true,
-      symbol,
+      symbol: "OANDA:XAUUSD",
       interval,
       timezone: "Etc/UTC",
       theme: "dark",
       style: "1",
       locale: "en",
       enable_publishing: false,
-      hide_top_toolbar: false,
-      hide_legend: false,
-      save_image: false,
-      container_id: "gold-tv-chart",
-      studies: ["Volume@tv-basicstudies"],
-      backgroundColor: "#0d1117",
-      gridColor: "rgba(255, 215, 0, 0.08)",
-    });
-    return true;
-  }
-
-  function waitForTradingView(symbol, interval, tries = 0) {
-    if (initTradingViewChart(symbol, interval)) return;
-    if (tries < 25) setTimeout(() => waitForTradingView(symbol, interval, tries + 1), 400);
+      allow_symbol_change: true,
+      calendar: false,
+      support_host: "https://www.tradingview.com",
+    };
+    wrap.innerHTML = `<div class="tradingview-widget-container__widget" id="gold-tv-widget"></div>
+      <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js" async>
+      ${JSON.stringify(cfg)}
+      <\/script>`;
   }
 
   function drawCanvasChart(chart) {
@@ -237,9 +236,6 @@
         .join("");
     }
     drawCanvasChart(chart);
-    const map = { "15M": "15", "1H": "60", "4H": "240", "1D": "D" };
-    const iv = map[chart.interval] || tvInterval;
-    waitForTradingView(chart.tv_symbol || "OANDA:XAUUSD", iv);
   }
 
   function renderNews(items) {
@@ -303,7 +299,8 @@
     }
     showStatusBanner(data);
 
-    if (!data.ok && !(data.agents && Object.keys(data.agents).length)) {
+    const agentKeys = data.agents ? Object.keys(data.agents) : [];
+    if (!data.ok && agentKeys.length === 0) {
       $("bias-why").textContent = data.error || "Analysis failed";
       return;
     }
@@ -408,12 +405,14 @@
     btn.addEventListener("click", () => {
       document.querySelectorAll(".chart-tf").forEach((b) => b.classList.remove("active"));
       btn.classList.add("active");
-      const iv = btn.getAttribute("data-interval") || "60";
-      initTradingViewChart("OANDA:XAUUSD", iv);
+      reloadTradingViewEmbed(btn.getAttribute("data-interval") || "60");
     });
   });
 
-  waitForTradingView("OANDA:XAUUSD", "60");
+  const boot = readBootstrap();
+  if (boot?.ok && boot.agents && Object.keys(boot.agents).length) {
+    apply(boot);
+  }
 
   $("btn-war-refresh")?.addEventListener("click", () => load(true));
   load(false);

@@ -1,150 +1,363 @@
 <!DOCTYPE html>
+
 <html lang="en">
+
 <head>
+
   <meta charset="utf-8">
+
   <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+
   <title>Gold AI War Room — {{ site_name }}</title>
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
+
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/static/dashboard.css">
-  <link rel="stylesheet" href="/static/gold_war_room.css">
+
+  <link rel="stylesheet" href="/static/dashboard.css?v={{ app_version }}">
+
+  <link rel="stylesheet" href="/static/gold_war_room.css?v={{ app_version }}">
+
 </head>
+
 <body>
+
   <div class="app">
+
     <aside class="sidebar">
+
       <div class="brand">
+
         <div class="brand-mark brand-mark-gold" aria-hidden="true"></div>
+
         <div>
+
           <span class="brand-name">{{ site_name }}</span>
+
         </div>
+
       </div>
+
       <nav class="sidebar-nav" aria-label="Main navigation">
+
         <p class="nav-section-label">Scanners</p>
+
         <a href="/" class="nav-item nav-link"><span>Setups &amp; universe</span></a>
+
         <p class="nav-section-label">Premium</p>
+
         <a href="/gold-war-room" class="nav-item nav-link nav-premium active">
+
           <span>Gold AI War Room</span>
+
           <span class="nav-tag">LIVE</span>
+
         </a>
+
       </nav>
+
       <footer class="sidebar-footer">
+
         <p class="disclaimer">Multi-agent analysis — not financial advice.</p>
+
       </footer>
+
     </aside>
 
+
+
     <main class="main war-room-main">
+
       <header class="topbar">
+
         <div class="topbar-left">
+
           <h1>Gold AI War Room</h1>
+
           <p class="meta" id="war-meta">XAUUSD · Institutional desk simulation</p>
+
         </div>
+
         <div class="topbar-actions">
-          <span class="war-price" id="war-price">—</span>
+
+          <span class="war-price" id="war-price">{% if initial and initial.price %}${{ initial.price }}{% else %}—{% endif %}</span>
+
           <button type="button" id="btn-war-refresh" class="btn btn-primary">
+
             <span class="btn-label">Refresh analysis</span>
+
           </button>
+
         </div>
+
       </header>
+
+
 
       <div id="war-alerts" class="war-alerts" hidden></div>
 
+
+
       <div class="war-live-row">
+
         <section class="war-panel war-panel-chart war-panel-gold" id="panel-chart">
+
           <div class="war-panel-head">
+
             <h2 class="war-panel-title">Live Gold Chart</h2>
+
             <div class="chart-tf-btns" role="group" aria-label="Chart timeframe">
-              <button type="button" class="chart-tf active" data-interval="15">15m</button>
-              <button type="button" class="chart-tf" data-interval="60">1H</button>
+
+              <button type="button" class="chart-tf" data-interval="15">15m</button>
+
+              <button type="button" class="chart-tf active" data-interval="60">1H</button>
+
               <button type="button" class="chart-tf" data-interval="240">4H</button>
+
               <button type="button" class="chart-tf" data-interval="D">1D</button>
+
             </div>
+
           </div>
+
           <div class="war-chart-wrap">
-            <div id="gold-tv-chart" class="gold-tv-chart"></div>
+
+            <div class="tradingview-widget-container gold-tv-embed" id="gold-tv-embed">
+
+              <div class="tradingview-widget-container__widget" id="gold-tv-widget"></div>
+
+              <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js" async>
+
+              {
+
+                "autosize": true,
+
+                "symbol": "OANDA:XAUUSD",
+
+                "interval": "60",
+
+                "timezone": "Etc/UTC",
+
+                "theme": "dark",
+
+                "style": "1",
+
+                "locale": "en",
+
+                "enable_publishing": false,
+
+                "allow_symbol_change": true,
+
+                "calendar": false,
+
+                "support_host": "https://www.tradingview.com"
+
+              }
+
+              </script>
+
+            </div>
+
             <canvas id="gold-canvas-chart" class="gold-canvas-chart" width="800" height="200" aria-label="Gold price series"></canvas>
+
           </div>
+
           <p class="war-muted chart-caption" id="chart-caption">TradingView live · OANDA:XAUUSD</p>
-          <div class="chart-ext-links" id="chart-ext-links"></div>
+
+          <div class="chart-ext-links" id="chart-ext-links">
+
+            <a href="https://www.tradingview.com/chart/?symbol=OANDA:XAUUSD" target="_blank" rel="noopener">TradingView</a>
+
+            <a href="https://finance.yahoo.com/quote/GC%3DF/chart/" target="_blank" rel="noopener">Yahoo GC</a>
+
+            <a href="https://finviz.com/quote.ashx?t=GLD" target="_blank" rel="noopener">GLD</a>
+
+          </div>
+
         </section>
+
+
 
         <section class="war-panel war-panel-news" id="panel-news">
+
           <h2 class="war-panel-title">Latest Gold News</h2>
+
           <ul id="gold-news-list" class="gold-news-list">
-            <li class="war-muted">Loading headlines…</li>
+
+            {% if initial and initial.news %}
+
+              {% for n in initial.news[:14] %}
+
+              <li>
+
+                <a href="{{ n.link or '#' }}" target="_blank" rel="noopener">{{ n.title }}</a>
+
+                <div class="gold-news-meta">{{ n.publisher or 'News' }}{% if n.published %} · {{ n.published[:22] }}{% endif %}</div>
+
+              </li>
+
+              {% endfor %}
+
+            {% else %}
+
+              <li class="war-muted">Loading headlines…</li>
+
+            {% endif %}
+
           </ul>
+
         </section>
+
       </div>
+
+
 
       <div class="war-grid">
+
         <section class="war-panel war-panel-hero" id="panel-bias">
+
           <h2 class="war-panel-title">Market Bias</h2>
-          <div class="war-bias-value" id="bias-value">—</div>
-          <p class="war-why" id="bias-why">Loading…</p>
+
+          <div class="war-bias-value neutral" id="bias-value">{% if initial and initial.market_bias %}{{ initial.market_bias.bias }}{% else %}—{% endif %}</div>
+
+          <p class="war-why" id="bias-why">{% if initial and initial.market_bias and initial.market_bias.why %}{{ (initial.market_bias.why or '')[:320] }}{% else %}Loading agents…{% endif %}</p>
+
         </section>
+
+
 
         <section class="war-panel" id="panel-confidence">
+
           <h2 class="war-panel-title">Confidence Meter</h2>
+
           <div class="war-meter-wrap">
-            <div class="war-meter-bar"><div class="war-meter-fill" id="confidence-fill"></div></div>
-            <span class="war-meter-score" id="confidence-score">0</span>
+
+            <div class="war-meter-bar"><div class="war-meter-fill" id="confidence-fill" style="width:{% if initial and initial.confidence_meter %}{{ initial.confidence_meter.score }}%{% else %}0%{% endif %}"></div></div>
+
+            <span class="war-meter-score" id="confidence-score">{% if initial and initial.confidence_meter %}{{ initial.confidence_meter.score }}%{% else %}0{% endif %}</span>
+
           </div>
-          <p class="war-muted" id="confidence-label">—</p>
+
+          <p class="war-muted" id="confidence-label">{% if initial and initial.confidence_meter %}{{ initial.confidence_meter.label }}{% else %}—{% endif %}</p>
+
         </section>
+
+
 
         <section class="war-panel war-panel-wide" id="panel-consensus">
-          <h2 class="war-panel-title">Agent Consensus <span id="consensus-headline" class="war-chip"></span></h2>
+
+          <h2 class="war-panel-title">Agent Consensus <span id="consensus-headline" class="war-chip">{% if initial and initial.agent_consensus %}{{ initial.agent_consensus.headline }}{% endif %}</span></h2>
+
           <div id="consensus-table" class="consensus-table"></div>
+
         </section>
+
+
 
         <section class="war-panel war-panel-wide war-panel-gold" id="panel-smart-money">
+
           <h2 class="war-panel-title" id="smart-money-title">Smart Money Intent</h2>
+
           <ol id="smart-money-list" class="intent-list"></ol>
+
         </section>
+
+
 
         <section class="war-panel" id="panel-sweep">
+
           <h2 class="war-panel-title">Liquidity Sweep Analysis</h2>
+
           <div id="sweep-content" class="war-detail"></div>
+
         </section>
+
+
 
         <section class="war-panel" id="panel-stop-hunt">
+
           <h2 class="war-panel-title">Stop Hunt Detection</h2>
+
           <div id="stop-hunt-content" class="war-detail"></div>
+
         </section>
+
+
 
         <section class="war-panel" id="panel-fake-bo">
+
           <h2 class="war-panel-title">Fake Breakout Detection</h2>
+
           <div id="fake-bo-content" class="war-detail"></div>
+
         </section>
+
+
 
         <section class="war-panel" id="panel-reversal">
+
           <h2 class="war-panel-title">Reversal Probability</h2>
+
           <div id="reversal-content" class="war-detail"></div>
+
         </section>
+
+
 
         <section class="war-panel" id="panel-continuation">
+
           <h2 class="war-panel-title">Trend Continuation Probability</h2>
+
           <div id="continuation-content" class="war-detail"></div>
+
         </section>
+
+
 
         <section class="war-panel war-panel-wide war-panel-trade" id="panel-trade">
+
           <h2 class="war-panel-title">Trade Opportunity</h2>
+
           <div id="trade-content" class="trade-box"></div>
+
         </section>
+
+
 
         <section class="war-panel war-panel-wide" id="panel-agents">
+
           <h2 class="war-panel-title">Agent Reports</h2>
+
           <div id="agent-cards" class="agent-cards"></div>
+
         </section>
 
+
+
         <section class="war-panel war-panel-wide" id="panel-performance">
+
           <h2 class="war-panel-title">Historical Performance</h2>
+
           <div id="performance-content" class="perf-grid"></div>
+
         </section>
+
       </div>
+
     </main>
+
   </div>
-  <script src="https://s3.tradingview.com/tv.js" async></script>
-  <script src="/static/gold_war_room.js"></script>
+
+  <script type="application/json" id="war-room-bootstrap">{{ initial | tojson }}</script>
+
+  <script src="/static/gold_war_room.js?v={{ app_version }}"></script>
+
 </body>
+
 </html>
+
+

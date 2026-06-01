@@ -131,10 +131,15 @@
   background: #0d1117;
 }
 
+.gold-tv-embed,
 .gold-tv-chart {
   width: 100%;
   height: 420px;
   min-height: 320px;
+}
+
+.gold-tv-embed .tradingview-widget-container__widget {
+  height: 100%;
 }
 
 .gold-canvas-chart {

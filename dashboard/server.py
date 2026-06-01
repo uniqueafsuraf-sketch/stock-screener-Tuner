@@ -373,15 +373,6 @@ def index():
     return render_template("index.html")
 
 
-@app.route("/gold-war-room")
-def gold_war_room_page():
-    from dashboard.brand import SITE_NAME  # noqa: PLC0415
-
-    _schedule_background_start()
-    _schedule_war_room_warmup()
-    return render_template("gold_war_room.html", site_name=SITE_NAME)
-
-
 _war_room_cache: dict = {"data": None, "ts": 0.0, "computing": False, "computing_since": 0.0}
 _war_room_lock = threading.Lock()
 WAR_ROOM_TTL = 90
