@@ -372,6 +372,7 @@ def gold_war_room_page():
     from dashboard.brand import SITE_NAME  # noqa: PLC0415
 
     _schedule_background_start()
+    _schedule_war_room_warmup()
     return render_template("gold_war_room.html", site_name=SITE_NAME)
 
 
@@ -554,6 +555,32 @@ def _schedule_background_start() -> None:
     threading.Thread(target=_start, daemon=True, name="bg-start").start()
 
 
+_war_room_warm_scheduled = False
+
+
+def _schedule_war_room_warmup() -> None:
+    """Pre-compute Gold War Room so /api/gold-war-room responds quickly."""
+    global _war_room_warm_scheduled
+    if _war_room_warm_scheduled:
+        return
+    _war_room_warm_scheduled = True
+
+    def _warm() -> None:
+        try:
+            from screener.gold_war_room import run_war_room_analysis  # noqa: PLC0415
+
+            payload = run_war_room_analysis()
+            with _war_room_lock:
+                _war_room_cache["data"] = payload
+                _war_room_cache["ts"] = time.time()
+            print("Gold War Room cache warmed", payload.get("ok"), payload.get("data_source"))
+        except Exception as e:
+            traceback.print_exc()
+            print(f"Gold War Room warmup failed: {e}")
+
+    threading.Thread(target=_warm, daemon=True, name="war-room-warm").start()
+
+
 def init_production() -> None:
     """Lightweight boot for gunicorn — Render health check must pass in seconds."""
     (ROOT / "data").mkdir(parents=True, exist_ok=True)
@@ -566,6 +593,7 @@ def init_production() -> None:
                 _scan_cache["ts"] = time.time()
             print(f"Loaded {len(seed.get('all_stocks', []))} stocks from seed_bootstrap.json")
     _schedule_background_start()
+    _schedule_war_room_warmup()
 
 
 def main(port: int | None = None) -> None:

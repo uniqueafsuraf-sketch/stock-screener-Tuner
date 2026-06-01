@@ -25,8 +25,8 @@ def run_master(
     for key in PRIMARY_AGENTS:
         a = agents.get(key, {})
         w = weights.get(key, 1.0)
-        bull_w += a.get("bullish_score", 50) * w
-        bear_w += a.get("bearish_score", 50) * w
+        bull_w += a.get("bullish_score", a.get("bull_probability", 50)) * w
+        bear_w += a.get("bearish_score", a.get("bear_probability", 50)) * w
 
     trap_bias = (trap.get("liquidity_sweep_up_prob", 50) - trap.get("liquidity_sweep_down_prob", 50)) * 0.3
     bull_w += 50 * weights["trap"] + trap_bias

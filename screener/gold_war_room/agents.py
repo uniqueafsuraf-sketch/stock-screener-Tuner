@@ -11,6 +11,14 @@ def _clamp(v: float, lo: float = 0, hi: float = 100) -> float:
     return float(max(lo, min(hi, v)))
 
 
+def _pick_frame(frames: dict[str, pd.DataFrame], *keys: str) -> pd.DataFrame | None:
+    for key in keys:
+        df = frames.get(key)
+        if isinstance(df, pd.DataFrame) and not df.empty:
+            return df
+    return None
+
+
 def _trend_score(df: pd.DataFrame) -> tuple[float, float]:
     close = df["close"]
     ma20 = close.rolling(20).mean().iloc[-1]
@@ -132,7 +140,7 @@ def agent_technical(data: GoldMarketData) -> dict:
 
 
 def agent_order_flow(data: GoldMarketData) -> dict:
-    df = data.frames.get("15M") or data.frames.get("1H") or data.frames.get("1D")
+    df = _pick_frame(data.frames, "15M", "1H", "1D")
     bull, bear = 50.0, 50.0
     liq: list[float] = []
     if df is None:
@@ -230,6 +238,7 @@ def agent_quant(data: GoldMarketData) -> dict:
     if d1 is None or len(d1) < 60:
         return {
             "id": "quant", "name": "Quant Analyst",
+            "bullish_score": 50, "bearish_score": 50,
             "bull_probability": 50, "bear_probability": 50,
             "expected_move_range": "—", "stance": "neutral",
             "summary": "Insufficient history for quant model.",
@@ -243,6 +252,8 @@ def agent_quant(data: GoldMarketData) -> dict:
     return {
         "id": "quant",
         "name": "Quant Analyst",
+        "bullish_score": _clamp(up),
+        "bearish_score": _clamp(bear_p),
         "bull_probability": _clamp(up),
         "bear_probability": _clamp(bear_p),
         "expected_move_range": f"{exp_lo} – {exp_hi}",
@@ -252,7 +263,7 @@ def agent_quant(data: GoldMarketData) -> dict:
 
 
 def agent_trap_detector(data: GoldMarketData) -> dict:
-    df = data.frames.get("1H") or data.frames.get("1D")
+    df = _pick_frame(data.frames, "1H", "1D", "15M")
     if df is None:
         base = 50.0
         return _trap_payload(base, base, base, base, base, base, base, "Limited data for trap analysis.")
@@ -318,7 +329,8 @@ def smart_money_intent(trap: dict, tech: dict, price: float) -> list[dict]:
 
 
 def liquidity_sweep_panel(trap: dict, tech: dict, price: float) -> dict:
-    up, down = trap["liquidity_sweep_up_prob"], trap["liquidity_sweep_down_prob"]
+    up = trap.get("liquidity_sweep_up_prob", 50)
+    down = trap.get("liquidity_sweep_down_prob", 50)
     if up >= down:
         res = (tech.get("key_levels") or {}).get("resistance") or [price + 12]
         return {
@@ -337,7 +349,7 @@ def liquidity_sweep_panel(trap: dict, tech: dict, price: float) -> dict:
 
 
 def stop_hunt_panel(trap: dict) -> dict:
-    p = trap["stop_hunt_prob"]
+    p = trap.get("stop_hunt_prob", 50)
     level = "Extreme" if p > 85 else "High" if p > 70 else "Medium" if p > 50 else "Low"
     return {
         "probability": p,
@@ -347,7 +359,7 @@ def stop_hunt_panel(trap: dict) -> dict:
 
 
 def fake_breakout_panel(trap: dict) -> dict:
-    fake = trap["fake_breakout_prob"]
+    fake = trap.get("fake_breakout_prob", 50)
     validity = _clamp(100 - fake)
     return {
         "breakout_validity_score": validity,
@@ -357,7 +369,7 @@ def fake_breakout_panel(trap: dict) -> dict:
 
 
 def reversal_panel(trap: dict, tech: dict) -> dict:
-    p = trap["reversal_prob"]
+    p = trap.get("reversal_prob", 50)
     sup = (tech.get("key_levels") or {}).get("support") or []
     res = (tech.get("key_levels") or {}).get("resistance") or []
     zone = f"{sup[0]:.0f} – {res[0]:.0f}" if sup and res else "Mid-range"
@@ -370,7 +382,7 @@ def reversal_panel(trap: dict, tech: dict) -> dict:
 
 
 def trend_continuation_panel(trap: dict, macro: dict, tech: dict) -> dict:
-    p = trap["trend_continuation_prob"]
+    p = trap.get("trend_continuation_prob", 50)
     factors = []
     if macro.get("stance") == "bullish":
         factors.append("Macro tailwind")

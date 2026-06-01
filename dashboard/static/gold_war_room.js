@@ -126,9 +126,39 @@
     `;
   }
 
+  function showStatusBanner(data) {
+    let el = $("war-status-banner");
+    if (!el) {
+      el = document.createElement("div");
+      el.id = "war-status-banner";
+      el.className = "war-status-banner";
+      const topbar = document.querySelector(".topbar");
+      if (topbar?.parentNode) topbar.parentNode.insertBefore(el, topbar.nextSibling);
+    }
+    const notes = data?.fetch_notes || [];
+    if (data?.data_source === "fallback" || notes.length) {
+      el.hidden = false;
+      el.className = "war-status-banner warn";
+      el.textContent = (notes.join(" ") || "Using fallback data — Yahoo may be rate-limited. Click Refresh.") +
+        (data?.error ? ` Error: ${data.error}` : "");
+    } else if (data?.error) {
+      el.hidden = false;
+      el.className = "war-status-banner error";
+      el.textContent = data.error;
+    } else {
+      el.hidden = true;
+    }
+  }
+
   function apply(data) {
-    if (!data?.ok) {
-      $("bias-why").textContent = data?.error || "Analysis failed";
+    if (!data) {
+      $("bias-why").textContent = "No response from server";
+      return;
+    }
+    showStatusBanner(data);
+
+    if (!data.ok && !(data.agents && Object.keys(data.agents).length)) {
+      $("bias-why").textContent = data.error || "Analysis failed";
       return;
     }
 
@@ -188,12 +218,16 @@
   async function load(refresh = false) {
     const btn = $("btn-war-refresh");
     if (btn) btn.disabled = true;
+    $("bias-why").textContent = "Running 7 agents + master synthesis…";
+    $("consensus-table").innerHTML = "<span class='war-muted'>Analyzing…</span>";
     try {
-      const res = await fetch(`/api/gold-war-room${refresh ? "?refresh=1" : ""}`);
+      const res = await fetch(`/api/gold-war-room${refresh ? "?refresh=1" : ""}`, { cache: "no-store" });
+      if (!res.ok) throw new Error(`Server ${res.status}`);
       const json = await res.json();
       apply(json);
     } catch (e) {
-      $("bias-why").textContent = `Network error: ${e.message}`;
+      $("bias-why").textContent = `Network error: ${e.message}. Try Refresh.`;
+      showStatusBanner({ error: e.message, fetch_notes: [] });
     } finally {
       if (btn) btn.disabled = false;
     }
