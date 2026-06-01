@@ -4,3 +4,8 @@ __pycache__/
 .env
 data/scan_cache.json
 *.log
+
+# Deploy / local tools (do not upload to GitHub)
+tools/MinGit/
+tools/cloudflared.exe
+stockstunerstation-deploy.zip
