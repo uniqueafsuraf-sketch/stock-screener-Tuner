@@ -584,6 +584,13 @@
   margin-bottom: 0.5rem;
 }
 
+#performance-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.perf-grid-inner,
 .perf-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
