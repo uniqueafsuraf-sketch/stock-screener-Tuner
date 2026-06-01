@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import time
 import urllib.request
 import xml.etree.ElementTree as ET
@@ -16,6 +17,9 @@ PROXY_TICKERS = ("UUP", "^TNX", "DX-Y.NYB")
 
 _CACHE: dict = {"data": None, "ts": 0.0}
 _CACHE_TTL = 60
+_SPOT_CACHE: dict = {"price": None, "chg": None, "sym": None, "source": None, "ts": 0.0}
+_SPOT_TTL = 25
+_DEFAULT_SYNTH_BASE = 2650.0  # only if all live feeds fail
 
 
 @dataclass
@@ -80,7 +84,10 @@ def _last_price(frames: dict[str, pd.DataFrame]) -> tuple[float, float]:
         prev = float(df["close"].iloc[-2])
         chg = ((price - prev) / prev) * 100 if prev else 0.0
         return price, chg
-    return 2650.0, 0.0
+    spot = fetch_live_spot_quote()
+    if spot:
+        return spot[0], spot[1]
+    return _DEFAULT_SYNTH_BASE, 0.0
 
 
 def _synthetic_frames(base: float = 2650.0) -> dict[str, pd.DataFrame]:
@@ -246,18 +253,103 @@ def build_chart_bundle(
     }
 
 
+def _yahoo_chart_spot(symbol: str) -> tuple[float, float] | None:
+    """Yahoo v8 chart API — works when yfinance download is rate-limited."""
+    enc = symbol.replace("=", "%3D")
+    url = f"https://query1.finance.yahoo.com/v8/finance/chart/{enc}?interval=1m&range=2d"
+    try:
+        req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0 (compatible; StocksTunerStation/2.5)"})
+        with urllib.request.urlopen(req, timeout=12) as resp:
+            payload = json.loads(resp.read())
+        result = (payload.get("chart") or {}).get("result") or []
+        if not result:
+            return None
+        meta = result[0].get("meta") or {}
+        price = meta.get("regularMarketPrice") or meta.get("previousClose")
+        prev = meta.get("chartPreviousClose") or meta.get("previousClose") or price
+        if price is None:
+            return None
+        price = float(price)
+        prev = float(prev) if prev else price
+        chg = ((price - prev) / prev) * 100 if prev else 0.0
+        return round(price, 2), round(chg, 2)
+    except Exception:
+        return None
+
+
+def _stooq_spot() -> tuple[float, float] | None:
+    try:
+        req = urllib.request.Request(
+            "https://stooq.com/q/l/?s=gc.f",
+            headers={"User-Agent": "Mozilla/5.0"},
+        )
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            line = resp.read().decode().strip().split("\n")[-1]
+        parts = line.split(",")
+        if len(parts) < 8:
+            return None
+        close = float(parts[7])
+        open_ = float(parts[4])
+        chg = ((close - open_) / open_) * 100 if open_ else 0.0
+        return round(close, 2), round(chg, 2)
+    except Exception:
+        return None
+
+
 def fetch_live_spot_quote() -> tuple[float, float, str] | None:
-    """Lightweight live gold quote (1 request) for cloud scalp levels."""
+    """Live COMEX / gold spot — Yahoo chart API, then Stooq, then yfinance."""
+    now = time.time()
+    if (
+        _SPOT_CACHE["price"] is not None
+        and (now - _SPOT_CACHE["ts"]) < _SPOT_TTL
+    ):
+        return _SPOT_CACHE["price"], _SPOT_CACHE["chg"], _SPOT_CACHE["sym"]
+
     for sym in ("GC=F", "XAUUSD=X"):
-        for period, interval in (("5d", "1h"), ("5d", "15m"), ("5d", "1d")):
+        spot = _yahoo_chart_spot(sym)
+        if spot:
+            price, chg = spot
+            _SPOT_CACHE.update({"price": price, "chg": chg, "sym": sym, "source": "yahoo_chart", "ts": now})
+            return price, chg, sym
+
+    spot = _stooq_spot()
+    if spot:
+        price, chg = spot
+        _SPOT_CACHE.update({"price": price, "chg": chg, "sym": "GC=F", "source": "stooq", "ts": now})
+        return price, chg, "GC=F (Stooq)"
+
+    for sym in ("GC=F", "XAUUSD=X"):
+        for period, interval in (("5d", "1h"), ("5d", "1d")):
             df = _download(sym, period, interval)
             if df is not None and len(df) >= 1:
                 last = float(df["close"].iloc[-1])
                 prev = float(df["close"].iloc[-2]) if len(df) > 1 else last
                 chg = ((last - prev) / prev) * 100 if prev else 0.0
-                return round(last, 2), round(chg, 2), sym
-            time.sleep(0.12)
+                price = round(last, 2)
+                _SPOT_CACHE.update({"price": price, "chg": round(chg, 2), "sym": sym, "source": "yfinance", "ts": now})
+                return price, round(chg, 2), sym
+            time.sleep(0.1)
     return None
+
+
+def _patch_live_spot(data: GoldMarketData) -> GoldMarketData:
+    """Always overlay latest spot on cached or synthetic payloads."""
+    live = fetch_live_spot_quote()
+    if not live:
+        return data
+    price, chg, sym = live
+    src = _SPOT_CACHE.get("source") or "live"
+    notes = [n for n in data.fetch_notes if "Live spot" not in n and "Yahoo chart" not in n]
+    notes.insert(0, f"Live gold ${price:,.2f} ({sym}, {src}) — matches COMEX / chart.")
+    return GoldMarketData(
+        price=price,
+        change_pct=chg,
+        frames=_synthetic_frames(base=price) if data.data_source in ("cloud_fast", "cloud_live", "fallback") else data.frames,
+        macro=data.macro,
+        news=data.news,
+        data_source="live" if src == "yahoo_chart" else data.data_source,
+        fetch_notes=notes,
+    )
 
 
 def _fetch_cloud_fast() -> GoldMarketData:
@@ -286,16 +378,32 @@ def _fetch_cloud_fast() -> GoldMarketData:
     )
     _CACHE["data"] = result
     _CACHE["ts"] = time.time()
-    return result
+    return _patch_live_spot(result)
+
+
+def fetch_spot_payload() -> dict:
+    """Lightweight spot for header polling."""
+    live = fetch_live_spot_quote()
+    if not live:
+        return {"ok": False, "price": None, "change_pct": None, "symbol": "GC=F"}
+    price, chg, sym = live
+    return {
+        "ok": True,
+        "price": price,
+        "change_pct": chg,
+        "symbol": sym,
+        "source": _SPOT_CACHE.get("source"),
+        "display": f"GC (COMEX) ${price:,.2f}",
+    }
 
 
 def fetch_gold_data(*, use_cache: bool = True) -> GoldMarketData:
     now = time.time()
     if use_cache and _CACHE["data"] is not None and (now - _CACHE["ts"]) < _CACHE_TTL:
-        return _CACHE["data"]
+        return _patch_live_spot(_CACHE["data"])
 
     if is_cloud_host():
-        return _fetch_cloud_fast()
+        return _patch_live_spot(_fetch_cloud_fast())
 
     notes: list[str] = []
     frames: dict[str, pd.DataFrame] = {}
@@ -351,6 +459,7 @@ def fetch_gold_data(*, use_cache: bool = True) -> GoldMarketData:
         data_source=data_source,
         fetch_notes=notes,
     )
+    result = _patch_live_spot(result)
     _CACHE["data"] = result
     _CACHE["ts"] = now
     return result

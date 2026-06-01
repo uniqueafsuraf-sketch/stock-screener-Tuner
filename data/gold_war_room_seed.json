@@ -1,20 +1,23 @@
 {
 "ok": true,
 "symbol": "XAUUSD (GC)",
-"price": 2649.53,
-"change_pct": 0.17,
-"data_source": "cloud_fast",
+"price": 4511.5,
+"change_pct": 0.12,
+"price_symbol": "GC=F (COMEX)",
+"price_display": "$4,511.50",
+"data_source": "live",
 "fetch_notes": [
-"Live quote unavailable \u2014 using modelled price until Yahoo responds."
+"Live gold $4,511.50 (GC=F, yahoo_chart) \u2014 matches COMEX / chart.",
+"Live gold $4,511.50 (GC=F, yahoo_chart) \u2014 matches COMEX / chart."
 ],
-"updated_at": "2026-06-01 22:34:40 UTC",
+"updated_at": "2026-06-01 22:40:35 UTC",
 "market_bias": {
 "bias": "Neutral",
 "confidence": 33.1,
 "bull_probability": 54.7,
 "bear_probability": 45.3,
 "neutral_probability": 90.6,
-"why": "Filters not met: confidence 33% (need >80), agent agreement 4/5 (need 4+), RR 0.47 (need >2.5), manipulation 48% (need <70). Data: cloud_fast. Live quote unavailable \u2014 using modelled price until Yahoo responds."
+"why": "Filters not met: confidence 33% (need >80), agent agreement 4/5 (need 4+), RR 0.28 (need >2.5), manipulation 48% (need <70). Live gold $4,511.50 (GC=F, yahoo_chart) \u2014 matches COMEX / chart. Live gold $4,511.50 (GC=F, yahoo_chart) \u2014 matches COMEX / chart."
 },
 "confidence_meter": {
 "score": 33.1,
@@ -35,7 +38,7 @@
 {
 "agent": "Order Flow",
 "view": "Bullish",
-"detail": "Recent delta bias buying; liquidity near 2707.5 / 2585.3."
+"detail": "Recent delta bias buying; liquidity near 4609.4 / 4401.3."
 },
 {
 "agent": "Sentiment",
@@ -45,7 +48,7 @@
 {
 "agent": "Quant",
 "view": "Neutral",
-"detail": "60-day up-day rate 52% \u2014 expected 1\u03c3 range 2629.7-2669.4."
+"detail": "60-day up-day rate 52% \u2014 expected 1\u03c3 range 4476.9-4544.5."
 },
 {
 "agent": "Risk",
@@ -79,85 +82,85 @@
 "stance": "bullish",
 "key_levels": {
 "resistance": [
-2675.3,
-2674.1,
-2673.9,
-2666.7
+4554.6,
+4552.5,
+4552.3,
+4539.9
 ],
 "support": [
-2607.8,
-2633.3,
-2636.4,
-2640.8
+4439.7,
+4483.0,
+4488.3,
+4495.8
 ]
 },
 "levels_by_tf": {
 "1D": {
 "resistance": [
-2675.3,
-2674.1,
-2673.9,
-2666.7
+4554.6,
+4552.5,
+4552.3,
+4539.9
 ],
 "support": [
-2607.8,
-2633.3,
-2636.4,
-2640.8
+4439.7,
+4483.0,
+4488.3,
+4495.8
 ]
 },
 "1H": {
 "resistance": [
-2658.1,
-2656.4,
-2656.3,
-2648.0
+4525.2,
+4522.5,
+4522.3,
+4508.1
 ],
 "support": [
-2612.3,
-2615.1,
-2615.3,
-2619.3
+4447.3,
+4452.2,
+4452.5,
+4459.3
 ]
 },
 "15M": {
 "resistance": [
-2668.6,
-2634.1,
-2623.3,
-2614.7
+4543.2,
+4484.5,
+4466.1,
+4451.5
 ],
 "support": [
-2538.2,
-2585.3,
-2594.5,
-2598.8
+4321.2,
+4401.3,
+4416.9,
+4424.4
 ]
 },
 "4H": {
 "resistance": [
-2658.1,
-2656.4,
-2656.3,
-2648.0
+4525.2,
+4522.5,
+4522.3,
+4508.1
 ],
 "support": [
-2612.3,
-2615.1,
-2615.3,
-2619.3
+4447.3,
+4452.2,
+4452.5,
+4459.3
 ]
 },
 "1W": {
 "resistance": [
-2673.9,
-2663.4,
-2639.6
+4552.3,
+4534.3,
+4493.8
 ],
 "support": [
-2596.0,
-2600.0,
-2624.9
+4419.6,
+4426.4,
+4468.7
 ]
 }
 },
@@ -170,10 +173,10 @@
 "bearish_score": 50.0,
 "stance": "bullish",
 "liquidity_levels": [
-2707.5,
-2585.3
+4609.4,
+4401.3
 ],
-"summary": "Recent delta bias buying; liquidity near 2707.5 / 2585.3."
+"summary": "Recent delta bias buying; liquidity near 4609.4 / 4401.3."
 },
 "sentiment": {
 "id": "sentiment",
@@ -191,9 +194,9 @@
 "bearish_score": 48.33333333333333,
 "bull_probability": 51.66666666666667,
 "bear_probability": 48.33333333333333,
-"expected_move_range": "2629.7 \u2013 2669.4",
+"expected_move_range": "4476.9 \u2013 4544.5",
 "stance": "neutral",
-"summary": "60-day up-day rate 52% \u2014 expected 1\u03c3 range 2629.7-2669.4."
+"summary": "60-day up-day rate 52% \u2014 expected 1\u03c3 range 4476.9-4544.5."
 },
 "risk": {
 "id": "risk",
@@ -231,12 +234,12 @@
 {
 "label": "Upside Liquidity Sweep",
 "probability": 52.0,
-"why": "Target zone 2675 \u2013 2682 \u2014 cluster above recent highs."
+"why": "Target zone 4555 \u2013 4562 \u2014 cluster above recent highs."
 },
 {
 "label": "Downside Stop Hunt",
 "probability": 48.0,
-"why": "Target zone 2601 \u2013 2608 \u2014 liquidity under lows."
+"why": "Target zone 4433 \u2013 4440 \u2014 liquidity under lows."
 },
 {
 "label": "Trend Continuation",
@@ -252,7 +255,7 @@
 },
 "liquidity_sweep": {
 "direction": "Upside Sweep Likely",
-"target_zone": "2675 \u2013 2682",
+"target_zone": "4555 \u2013 4562",
 "probability": 52.0,
 "explanation": "No dominant trap pattern."
 },
@@ -268,7 +271,7 @@
 },
 "reversal": {
 "probability": 40.0,
-"reversal_zone": "2608 \u2013 2675",
+"reversal_zone": "4440 \u2013 4555",
 "confidence": 34.0,
 "explanation": "Reversal more likely after liquidity grab at range extremes."
 },
@@ -290,8 +293,8 @@
 "target_2": null,
 "target_3": null,
 "risk_reward": null,
-"invalidation": 2607.8,
-"why": "Filters not met: confidence 33% (need >80), agent agreement 4/5 (need 4+), RR 0.47 (need >2.5), manipulation 48% (need <70)."
+"invalidation": 4439.7,
+"why": "Filters not met: confidence 33% (need >80), agent agreement 4/5 (need 4+), RR 0.28 (need >2.5), manipulation 48% (need <70)."
 },
 "master": {
 "market_bias": "Neutral",
@@ -308,8 +311,8 @@
 "target_2": null,
 "target_3": null,
 "risk_reward": null,
-"invalidation": 2607.8,
-"why": "Filters not met: confidence 33% (need >80), agent agreement 4/5 (need 4+), RR 0.47 (need >2.5), manipulation 48% (need <70)."
+"invalidation": 4439.7,
+"why": "Filters not met: confidence 33% (need >80), agent agreement 4/5 (need 4+), RR 0.28 (need >2.5), manipulation 48% (need <70)."
 },
 "bullish_agents": 4,
 "bearish_agents": 0
@@ -321,15 +324,39 @@
 "win_rate": 0,
 "loss_rate": 0,
 "average_rr": 0,
-"total_scans_logged": 1,
-"total_scalps_logged": 1,
+"total_scans_logged": 2,
+"total_scalps_logged": 2,
 "average_scalp_rr": 2.8,
-"last_scan_at": "2026-06-01 22:34:09 UTC",
+"last_scan_at": "2026-06-01 22:34:40 UTC",
 "accuracy_by_agent": {},
 "accuracy_by_condition": {},
 "accuracy_by_session": {},
 "recent": [],
 "recent_scalps": [
+{
+"ts": 1780353280.8385603,
+"logged_at": "2026-06-01 22:34:40 UTC",
+"market_price": 2649.53,
+"type": "scalp",
+"direction": "LONG",
+"entry": 2649.53,
+"stop": 2642.73,
+"target": 2668.57,
+"target_2": 2679.99,
+"risk_reward": 2.8,
+"confidence": 80.8,
+"leverage": 30,
+"agent_votes": 4,
+"agents_aligned": [
+"Macro",
+"Technical",
+"Order Flow",
+"Sentiment"
+],
+"status": "ACTIVE",
+"thesis": "Bullish flow / sweep \u2014 scalp from live price",
+"outcome": "open"
+},
 {
 "ts": 1780353249.7306502,
 "logged_at": "2026-06-01 22:34:09 UTC",
@@ -357,6 +384,17 @@
 ],
 "recent_scans": [
 {
+"ts": 1780353280.838504,
+"logged_at": "2026-06-01 22:34:40 UTC",
+"price": 2649.53,
+"change_pct": 0.17,
+"data_source": "cloud_fast",
+"bias": "Neutral",
+"confidence": 33.1,
+"scalps_found": 1,
+"consensus": "4 / 7 Agents Bullish"
+},
+{
 "ts": 1780353249.7305973,
 "logged_at": "2026-06-01 22:34:09 UTC",
 "price": 2649.53,
@@ -378,6 +416,12 @@
 "published": "Mon, 01 Jun 2026 12:01:53 GMT"
 },
 {
+"title": "Current price of gold as of June 1, 2026 - Fortune",
+"publisher": "Fortune",
+"link": "https://news.google.com/rss/articles/CBMibkFVX3lxTE05ZklETU5rWUpMZzA1ODZnaDdtMHJKVXQzR1BrNWVFQjJjZVV0b3k1QzI1UGU5dDZnT1lFREpvWW1WWlF3NGx4QjlGb3VBVVVoekMxRzVsSkt4OHlPWXZqLS1XOHEtSzl6eUtrRUpn?oc=5",
+"published": "Mon, 01 Jun 2026 14:13:00 GMT"
+},
+{
 "title": "Gold (XAU/USD) Price Forecast for Today, Tomorrow, Next Week, and the Next 30 Days - LiteFinance",
 "publisher": "LiteFinance",
 "link": "https://news.google.com/rss/articles/CBMioAFBVV95cUxOZ1BXeVdPR08tTmQ4MHdZMkloUzlsNjRjSE5VVmxyeVRrdDZqbDI3Tm5VVUdfYTdZM0dOYjkzVFBuMGhJUzZEM3E0RDBkc0RTUXd2VFdMdm5uenpPXzJobUNvRklvRkt0S0pfYkZ0UWRXaWRDc09MR1pBUkVDRXN2Y2FINkVmUDBlRkZHNGhzZkNyNk5LUzZrM2VUV1pVOV9N?oc=5",
@@ -388,12 +432,6 @@
 "publisher": "USA Today",
 "link": "https://news.google.com/rss/articles/CBMipgFBVV95cUxOUjdLbTUzY0Z0RG1BSEh2Zkl6V1A1UDBrU3k4ekk1T240NW9DVkprQ1NFd0pqWUprWVBiQmVBZ2hscVpVNHdDTHNGZ0diajFnVzJIcVFpdlJvU2lIZmY0TjNsYVZqbzlvNFRpMVpoYW9veXU4c3NRRmhNMWFnRHN6VU1weFZ1M2ltYmxiVUZVZmNzMnA4a0tVbUMzblIyaGphSV9TT3ln?oc=5",
 "published": "Mon, 01 Jun 2026 16:13:00 GMT"
-},
-{
-"title": "Current price of gold as of June 1, 2026 - Fortune",
-"publisher": "Fortune",
-"link": "https://news.google.com/rss/articles/CBMibkFVX3lxTE05ZklETU5rWUpMZzA1ODZnaDdtMHJKVXQzR1BrNWVFQjJjZVV0b3k1QzI1UGU5dDZnT1lFREpvWW1WWlF3NGx4QjlGb3VBVVVoekMxRzVsSkt4OHlPWXZqLS1XOHEtSzl6eUtrRUpn?oc=5",
-"published": "Mon, 01 Jun 2026 14:13:00 GMT"
 },
 {
 "title": "What is the price of gold today? - CBS News",
@@ -461,402 +499,402 @@
 "tv_symbol": "OANDA:XAUUSD",
 "yahoo_symbol": "GC=F",
 "interval": "1H",
-"last": 2649.53,
+"last": 4511.5,
 "candles": [
 {
 "t": "0",
-"o": 2649.53,
-"h": 2654.59,
-"l": 2640.01,
-"c": 2648.51,
+"o": 4510.7,
+"h": 4519.32,
+"l": 4494.48,
+"c": 4508.97,
 "v": 5406
 },
 {
 "t": "1",
-"o": 2648.51,
-"h": 2656.05,
-"l": 2639.09,
-"c": 2642.5,
+"o": 4508.97,
+"h": 4521.8,
+"l": 4492.92,
+"c": 4498.74,
 "v": 7163
 },
 {
 "t": "2",
-"o": 2642.5,
-"h": 2660.56,
-"l": 2642.46,
-"c": 2655.88,
+"o": 4498.74,
+"h": 4529.48,
+"l": 4498.67,
+"c": 4521.51,
 "v": 7959
 },
 {
 "t": "3",
-"o": 2655.88,
-"h": 2661.07,
-"l": 2647.79,
-"c": 2656.5,
+"o": 4521.51,
+"h": 4530.35,
+"l": 4507.74,
+"c": 4522.56,
 "v": 6077
 },
 {
 "t": "4",
-"o": 2656.5,
-"h": 2657.51,
-"l": 2643.59,
-"c": 2648.23,
+"o": 4522.56,
+"h": 4524.28,
+"l": 4500.59,
+"c": 4508.49,
 "v": 7765
 },
 {
 "t": "5",
-"o": 2648.23,
-"h": 2665.73,
-"l": 2640.82,
-"c": 2655.59,
+"o": 4508.49,
+"h": 4538.28,
+"l": 4495.88,
+"c": 4521.01,
 "v": 6125
 },
 {
 "t": "6",
-"o": 2655.59,
-"h": 2658.18,
-"l": 2647.26,
-"c": 2650.4,
+"o": 4521.01,
+"h": 4525.42,
+"l": 4506.84,
+"c": 4512.19,
 "v": 6727
 },
 {
 "t": "7",
-"o": 2650.4,
-"h": 2655.2,
-"l": 2648.97,
-"c": 2650.79,
+"o": 4512.19,
+"h": 4520.35,
+"l": 4509.75,
+"c": 4512.85,
 "v": 5100
 },
 {
 "t": "8",
-"o": 2650.79,
-"h": 2655.6,
-"l": 2645.83,
-"c": 2648.89,
+"o": 4512.85,
+"h": 4521.04,
+"l": 4504.41,
+"c": 4509.61,
 "v": 6510
 },
 {
 "t": "9",
-"o": 2648.89,
-"h": 2658.06,
-"l": 2648.36,
-"c": 2652.87,
+"o": 4509.61,
+"h": 4525.22,
+"l": 4508.71,
+"c": 4516.39,
 "v": 6502
 },
 {
 "t": "10",
-"o": 2652.87,
-"h": 2655.75,
-"l": 2636.09,
-"c": 2639.58,
+"o": 4516.39,
+"h": 4521.3,
+"l": 4487.81,
+"c": 4493.77,
 "v": 6141
 },
 {
 "t": "11",
-"o": 2639.58,
-"h": 2649.11,
-"l": 2624.97,
-"c": 2633.54,
+"o": 4493.77,
+"h": 4509.99,
+"l": 4468.88,
+"c": 4483.48,
 "v": 5096
 },
 {
 "t": "12",
-"o": 2633.54,
-"h": 2640.36,
-"l": 2630.18,
-"c": 2635.59,
+"o": 4483.48,
+"h": 4495.09,
+"l": 4477.75,
+"c": 4486.97,
 "v": 8323
 },
 {
 "t": "13",
-"o": 2635.59,
-"h": 2641.98,
-"l": 2631.63,
-"c": 2635.07,
+"o": 4486.97,
+"h": 4497.84,
+"l": 4480.23,
+"c": 4486.08,
 "v": 5094
 },
 {
 "t": "14",
-"o": 2635.07,
-"h": 2637.1,
-"l": 2622.98,
-"c": 2628.27,
+"o": 4486.08,
+"h": 4489.53,
+"l": 4465.5,
+"c": 4474.5,
 "v": 6153
 },
 {
 "t": "15",
-"o": 2628.27,
-"h": 2640.81,
-"l": 2625.48,
-"c": 2634.86,
+"o": 4474.5,
+"h": 4495.86,
+"l": 4469.76,
+"c": 4485.72,
 "v": 7883
 },
 {
 "t": "16",
-"o": 2634.86,
-"h": 2639.06,
-"l": 2612.3,
-"c": 2615.32,
+"o": 4485.72,
+"h": 4492.87,
+"l": 4447.32,
+"c": 4452.46,
 "v": 5406
 },
 {
 "t": "17",
-"o": 2615.32,
-"h": 2621.39,
-"l": 2614.87,
-"c": 2618.23,
+"o": 4452.46,
+"h": 4462.8,
+"l": 4451.69,
+"c": 4457.42,
 "v": 5311
 },
 {
 "t": "18",
-"o": 2618.23,
-"h": 2628.74,
-"l": 2616.46,
-"c": 2627.4,
+"o": 4457.42,
+"h": 4475.31,
+"l": 4454.41,
+"c": 4473.03,
 "v": 5823
 },
 {
 "t": "19",
-"o": 2627.4,
-"h": 2629.68,
-"l": 2621.49,
-"c": 2623.56,
+"o": 4473.03,
+"h": 4476.9,
+"l": 4462.97,
+"c": 4466.49,
 "v": 5841
 },
 {
 "t": "20",
-"o": 2623.56,
-"h": 2636.74,
-"l": 2618.99,
-"c": 2625.84,
+"o": 4466.49,
+"h": 4488.93,
+"l": 4458.71,
+"c": 4470.37,
 "v": 5652
 },
 {
 "t": "21",
-"o": 2625.84,
-"h": 2637.46,
-"l": 2615.14,
-"c": 2635.3,
+"o": 4470.37,
+"h": 4490.14,
+"l": 4452.15,
+"c": 4486.48,
 "v": 7016
 },
 {
 "t": "22",
-"o": 2635.3,
-"h": 2637.16,
-"l": 2620.42,
-"c": 2620.51,
+"o": 4486.48,
+"h": 4489.64,
+"l": 4461.14,
+"c": 4461.3,
 "v": 8352
 },
 {
 "t": "23",
-"o": 2620.51,
-"h": 2624.23,
-"l": 2616.17,
-"c": 2623.08,
+"o": 4461.3,
+"h": 4467.63,
+"l": 4453.9,
+"c": 4465.68,
 "v": 9422
 },
 {
 "t": "24",
-"o": 2623.08,
-"h": 2628.99,
-"l": 2615.33,
-"c": 2624.94,
+"o": 4465.68,
+"h": 4475.72,
+"l": 4452.47,
+"c": 4468.83,
 "v": 7287
 },
 {
 "t": "25",
-"o": 2624.94,
-"h": 2629.79,
-"l": 2621.62,
-"c": 2627.6,
+"o": 4468.83,
+"h": 4477.09,
+"l": 4463.18,
+"c": 4473.37,
 "v": 9541
 },
 {
 "t": "26",
-"o": 2627.6,
-"h": 2630.34,
-"l": 2625.19,
-"c": 2629.04,
+"o": 4473.37,
+"h": 4478.03,
+"l": 4469.26,
+"c": 4475.81,
 "v": 6699
 },
 {
 "t": "27",
-"o": 2629.04,
-"h": 2640.1,
-"l": 2628.66,
-"c": 2635.59,
+"o": 4475.81,
+"h": 4494.64,
+"l": 4475.17,
+"c": 4486.96,
 "v": 5955
 },
 {
 "t": "28",
-"o": 2635.59,
-"h": 2641.14,
-"l": 2630.12,
-"c": 2639.37,
+"o": 4486.96,
+"h": 4496.41,
+"l": 4477.65,
+"c": 4493.41,
 "v": 6020
 },
 {
 "t": "29",
-"o": 2639.37,
-"h": 2644.54,
-"l": 2634.89,
-"c": 2637.24,
+"o": 4493.41,
+"h": 4502.21,
+"l": 4485.78,
+"c": 4489.77,
 "v": 5754
 },
 {
 "t": "30",
-"o": 2637.24,
-"h": 2648.1,
-"l": 2632.65,
-"c": 2643.23,
+"o": 4489.77,
+"h": 4508.27,
+"l": 4481.96,
+"c": 4499.97,
 "v": 7711
 },
 {
 "t": "31",
-"o": 2643.23,
-"h": 2656.44,
-"l": 2639.14,
-"c": 2646.5,
+"o": 4499.97,
+"h": 4522.46,
+"l": 4493.0,
+"c": 4505.55,
 "v": 7489
 },
 {
 "t": "32",
-"o": 2646.5,
-"h": 2654.42,
-"l": 2628.94,
-"c": 2632.38,
+"o": 4505.55,
+"h": 4519.03,
+"l": 4475.64,
+"c": 4481.51,
 "v": 5111
 },
 {
 "t": "33",
-"o": 2632.38,
-"h": 2640.52,
-"l": 2619.51,
-"c": 2634.59,
+"o": 4481.51,
+"h": 4495.37,
+"l": 4459.59,
+"c": 4485.27,
 "v": 5258
 },
 {
 "t": "34",
-"o": 2634.59,
-"h": 2639.28,
-"l": 2632.06,
-"c": 2635.46,
+"o": 4485.27,
+"h": 4493.26,
+"l": 4480.96,
+"c": 4486.74,
 "v": 5447
 },
 {
 "t": "35",
-"o": 2635.46,
-"h": 2637.94,
-"l": 2619.31,
-"c": 2629.21,
+"o": 4486.74,
+"h": 4490.97,
+"l": 4459.25,
+"c": 4476.1,
 "v": 7690
 },
 {
 "t": "36",
-"o": 2629.21,
-"h": 2644.48,
-"l": 2624.0,
-"c": 2641.77,
+"o": 4476.1,
+"h": 4502.1,
+"l": 4467.24,
+"c": 4497.5,
 "v": 5251
 },
 {
 "t": "37",
-"o": 2641.77,
-"h": 2648.0,
-"l": 2632.83,
-"c": 2642.22,
+"o": 4497.5,
+"h": 4508.09,
+"l": 4482.27,
+"c": 4498.25,
 "v": 8059
 },
 {
 "t": "38",
-"o": 2642.22,
-"h": 2644.47,
-"l": 2635.62,
-"c": 2640.96,
+"o": 4498.25,
+"h": 4502.09,
+"l": 4487.02,
+"c": 4496.12,
 "v": 8309
 },
 {
 "t": "39",
-"o": 2640.96,
-"h": 2647.87,
-"l": 2634.15,
-"c": 2647.49,
+"o": 4496.12,
+"h": 4507.88,
+"l": 4484.52,
+"c": 4507.22,
 "v": 7590
 },
 {
 "t": "40",
-"o": 2647.49,
-"h": 2656.32,
-"l": 2643.45,
-"c": 2644.82,
+"o": 4507.22,
+"h": 4522.26,
+"l": 4500.34,
+"c": 4502.68,
 "v": 8006
 },
 {
 "t": "41",
-"o": 2644.82,
-"h": 2646.26,
-"l": 2628.61,
-"c": 2642.87,
+"o": 4502.68,
+"h": 4505.14,
+"l": 4475.09,
+"c": 4499.36,
 "v": 5108
 },
 {
 "t": "42",
-"o": 2642.87,
-"h": 2646.55,
-"l": 2631.27,
-"c": 2641.04,
+"o": 4499.36,
+"h": 4505.62,
+"l": 4479.62,
+"c": 4496.24,
 "v": 7253
 },
 {
 "t": "43",
-"o": 2641.04,
-"h": 2646.88,
-"l": 2625.33,
-"c": 2638.91,
+"o": 4496.24,
+"h": 4506.19,
+"l": 4469.49,
+"c": 4492.62,
 "v": 5118
 },
 {
 "t": "44",
-"o": 2638.91,
-"h": 2639.15,
-"l": 2637.86,
-"c": 2639.02,
+"o": 4492.62,
+"h": 4493.02,
+"l": 4490.84,
+"c": 4492.8,
 "v": 5288
 },
 {
 "t": "45",
-"o": 2639.02,
-"h": 2641.9,
-"l": 2634.3,
-"c": 2634.48,
+"o": 4492.8,
+"h": 4497.72,
+"l": 4484.78,
+"c": 4485.07,
 "v": 6086
 },
 {
 "t": "46",
-"o": 2634.48,
-"h": 2635.04,
-"l": 2627.5,
-"c": 2628.84,
+"o": 4485.07,
+"h": 4486.03,
+"l": 4473.2,
+"c": 4475.48,
 "v": 8007
 },
 {
 "t": "47",
-"o": 2628.84,
-"h": 2634.58,
-"l": 2601.44,
-"c": 2607.94,
+"o": 4475.48,
+"h": 4485.25,
+"l": 4428.82,
+"c": 4439.89,
 "v": 9146
 }
 ],
 "support": [
-2607.8,
-2633.3,
-2636.4
+4439.7,
+4483.0,
+4488.3
 ],
 "resistance": [
-2675.3,
-2674.1,
-2673.9
+4554.6,
+4552.5,
+4552.3
 ],
 "chart_links": {
 "tradingview": "https://www.tradingview.com/chart/?symbol=OANDA:XAUUSD",
@@ -866,19 +904,19 @@
 },
 "scalping": {
 "title": "Live Scalping Opportunities",
-"subtitle": "30x leverage \u00b7 live $2649.53 \u00b7 7 agents every 45s",
-"reference_price": 2649.53,
+"subtitle": "30x leverage \u00b7 live $4511.5 \u00b7 7 agents every 45s",
+"reference_price": 4511.5,
 "leverage": 30,
-"leverage_warning": "High leverage (30x) magnifies gains and losses. Stops are 6.8 pts from live $2649.53 \u2014 not financial advice.",
+"leverage_warning": "High leverage (30x) magnifies gains and losses. Stops are 11.6 pts from live $4511.5 \u2014 not financial advice.",
 "scanning": true,
 "setups": [
 {
 "direction": "LONG",
-"market_price": 2649.53,
-"entry": 2649.53,
-"stop": 2642.73,
-"target": 2668.57,
-"target_2": 2679.99,
+"market_price": 4511.5,
+"entry": 4511.5,
+"stop": 4499.91,
+"target": 4543.95,
+"target_2": 4563.42,
 "risk_reward": 2.8,
 "confidence": 80.8,
 "agent_votes": 4,
@@ -889,20 +927,20 @@
 "Sentiment"
 ],
 "leverage": 30,
-"margin_at_risk_pct": 7.7,
+"margin_at_risk_pct": 7.71,
 "timeframe": "15M / 1H",
 "thesis": "Bullish flow / sweep \u2014 scalp from live price",
 "status": "ACTIVE",
-"price_note": "Entry/stop/target anchored to live $2649.53"
+"price_note": "Entry/stop/target anchored to live $4511.5"
 }
 ],
 "best": {
 "direction": "LONG",
-"market_price": 2649.53,
-"entry": 2649.53,
-"stop": 2642.73,
-"target": 2668.57,
-"target_2": 2679.99,
+"market_price": 4511.5,
+"entry": 4511.5,
+"stop": 4499.91,
+"target": 4543.95,
+"target_2": 4563.42,
 "risk_reward": 2.8,
 "confidence": 80.8,
 "agent_votes": 4,
@@ -913,11 +951,11 @@
 "Sentiment"
 ],
 "leverage": 30,
-"margin_at_risk_pct": 7.7,
+"margin_at_risk_pct": 7.71,
 "timeframe": "15M / 1H",
 "thesis": "Bullish flow / sweep \u2014 scalp from live price",
 "status": "ACTIVE",
-"price_note": "Entry/stop/target anchored to live $2649.53"
+"price_note": "Entry/stop/target anchored to live $4511.5"
 },
 "total_found": 1,
 "criteria": "Live price anchor \u00b7 \u22652 agents \u00b7 RR \u22652 \u00b7 manip <75"

@@ -520,6 +520,14 @@ def api_gold_war_room():
     return jsonify(_json_safe(_war_room_warming_payload()))
 
 
+@app.route("/api/gold-spot")
+def api_gold_spot():
+    """Fast live gold quote for header + scalp alignment (Yahoo chart API)."""
+    from screener.gold_war_room.fetch import fetch_spot_payload  # noqa: PLC0415
+
+    return jsonify(fetch_spot_payload())
+
+
 @app.route("/api/ping")
 def api_ping():
     """Lightweight keep-alive for 24/7 uptime monitors (UptimeRobot, cron, etc.)."""

@@ -340,10 +340,12 @@
     $("confidence-fill").style.width = `${Math.min(100, cm.score || 0)}%`;
     $("confidence-label").textContent = cm.label || "";
 
-    $("war-price").textContent = data.price
-      ? `$${data.price}  ${data.change_pct >= 0 ? "+" : ""}${data.change_pct}%`
+    const px = data.price != null ? Number(data.price) : null;
+    $("war-price").textContent = px != null
+      ? `$${px.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}  ${data.change_pct >= 0 ? "+" : ""}${data.change_pct}%`
       : "—";
-    $("war-meta").textContent = `XAUUSD (GC) · Updated ${data.updated_at || "—"}`;
+    const sym = data.price_symbol || "GC=F (COMEX)";
+    $("war-meta").textContent = `${sym} · Updated ${data.updated_at || "—"}`;
 
     renderConsensus(data.agent_consensus);
     renderSmartMoney(data.smart_money);
@@ -461,7 +463,27 @@
     apply(boot);
   }
 
+  async function refreshLiveSpot() {
+    try {
+      const res = await fetch("/api/gold-spot", { cache: "no-store" });
+      const j = await res.json();
+      if (!j.ok || j.price == null) return;
+      const el = $("war-price");
+      if (el) {
+        el.textContent = `$${Number(j.price).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}  ${j.change_pct >= 0 ? "+" : ""}${j.change_pct}%`;
+      }
+      const meta = $("war-meta");
+      if (meta && j.symbol) {
+        const cur = meta.textContent || "";
+        const tail = cur.includes("· Updated") ? cur.slice(cur.indexOf("· Updated")) : "";
+        meta.textContent = `${j.symbol} ${tail}`.trim();
+      }
+    } catch { /* ignore */ }
+  }
+
   $("btn-war-refresh")?.addEventListener("click", () => load(true));
   load(false);
+  refreshLiveSpot();
+  setInterval(refreshLiveSpot, 20000);
   setInterval(() => load(false), 45000);
 })();

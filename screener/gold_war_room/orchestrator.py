@@ -74,6 +74,8 @@ def _build_response(
         "symbol": "XAUUSD (GC)",
         "price": data.price,
         "change_pct": data.change_pct,
+        "price_symbol": "GC=F (COMEX)",
+        "price_display": f"${data.price:,.2f}",
         "data_source": data.data_source,
         "fetch_notes": data.fetch_notes,
         "updated_at": datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S UTC"),
