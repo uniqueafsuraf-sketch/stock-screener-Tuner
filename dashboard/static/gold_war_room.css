@@ -288,6 +288,50 @@
 .scalp-votes { font-size: 0.72rem; }
 .scalp-empty { color: var(--text-secondary); font-size: 0.88rem; }
 
+.scalp-risk-badge {
+  font-size: 0.58rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  padding: 0.15rem 0.4rem;
+  border-radius: 3px;
+  background: rgba(255, 68, 102, 0.2);
+  color: #ff6688;
+  border: 1px solid rgba(255, 68, 102, 0.45);
+}
+
+.scalp-rr-pct {
+  color: var(--gold);
+  font-size: 0.72rem;
+}
+
+.perf-outcome, .perf-verdict {
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  padding: 0.12rem 0.35rem;
+  border-radius: 3px;
+  white-space: nowrap;
+}
+
+.perf-outcome.win { background: rgba(0, 255, 136, 0.15); color: var(--green); }
+.perf-outcome.loss { background: rgba(255, 68, 102, 0.15); color: var(--red); }
+.perf-outcome.open { background: rgba(255, 215, 0, 0.1); color: var(--gold); }
+.perf-outcome.expired { background: rgba(128, 128, 128, 0.2); color: var(--text-tertiary); }
+
+.perf-verdict.correct { color: var(--green); }
+.perf-verdict.wrong { color: var(--red); }
+.perf-verdict.neutral { color: var(--amber); }
+.perf-verdict.open { color: var(--text-tertiary); }
+
+.perf-log-row-scalp {
+  grid-template-columns: 1.2fr 0.7fr 1.4fr auto auto;
+  gap: 0.35rem;
+  align-items: center;
+}
+
+.perf-stat.win-stat .val { color: var(--green); }
+.perf-stat.loss-stat .val { color: var(--red); }
+
 .war-price {
   font-family: var(--mono);
   font-size: 1.25rem;

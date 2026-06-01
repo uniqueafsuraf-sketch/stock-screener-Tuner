@@ -291,25 +291,49 @@
     el.innerHTML = setups.map((s) => {
       const cls = s.direction === "LONG" ? "long" : "short";
       const st = s.status === "ACTIVE" ? "active" : "watch";
+      const risk = s.risk_profile || "HIGH";
+      const gain = s.gain_at_target_pct != null ? `+${s.gain_at_target_pct}%` : "—";
+      const loss = s.loss_at_stop_pct != null ? `-${s.loss_at_stop_pct}%` : "—";
       return `<article class="scalp-card ${cls} ${st}">
         <header>
           <span class="scalp-dir">${esc(s.direction)}</span>
+          <span class="scalp-risk-badge">${esc(risk)}</span>
           <span class="scalp-status">${esc(s.status)}</span>
           <span class="scalp-conf">${s.confidence}%</span>
         </header>
-        <p class="scalp-live-ref">Live gold: <strong>$${s.market_price ?? s.entry}</strong></p>
+        <p class="scalp-live-ref">Live gold: <strong>$${s.market_price ?? s.entry}</strong> · ${s.leverage}x</p>
         <div class="scalp-levels">
           <div><label>Entry</label><span>${s.entry}</span></div>
           <div><label>Stop</label><span>${s.stop}</span></div>
           <div><label>Target</label><span>${s.target}</span></div>
           <div><label>T2</label><span>${s.target_2}</span></div>
           <div><label>RR</label><span>${s.risk_reward}:1</span></div>
-          <div><label>${s.leverage}x</label><span>~${s.margin_at_risk_pct}% margin @ stop</span></div>
+          <div><label>@ ${s.leverage}x</label><span class="scalp-rr-pct">Win ${gain} / Lose ${loss}</span></div>
         </div>
         <p class="scalp-thesis">${esc(s.thesis)}</p>
         <p class="war-muted scalp-votes">${s.agent_votes}/5 agents: ${esc((s.agents_aligned || []).join(", "))} · ${esc(s.timeframe)}</p>
       </article>`;
     }).join("");
+  }
+
+  function outcomeBadge(outcome) {
+    const o = (outcome || "open").toLowerCase();
+    if (o === "win") return '<span class="perf-outcome win">WIN</span>';
+    if (o === "loss") return '<span class="perf-outcome loss">LOSS</span>';
+    if (o === "expired") return '<span class="perf-outcome expired">EXPIRED</span>';
+    return '<span class="perf-outcome open">OPEN</span>';
+  }
+
+  function verdictBadge(verdict, agentsCorrect) {
+    if (agentsCorrect === true) return '<span class="perf-verdict correct">Agents ✓</span>';
+    if (agentsCorrect === false || verdict === "incorrect") {
+      return '<span class="perf-verdict wrong">Agents ✗</span>';
+    }
+    const v = (verdict || "open").toLowerCase();
+    if (v === "correct") return '<span class="perf-verdict correct">Bias ✓</span>';
+    if (v === "incorrect") return '<span class="perf-verdict wrong">Bias ✗</span>';
+    if (v === "neutral") return '<span class="perf-verdict neutral">Neutral</span>';
+    return '<span class="perf-verdict open">Pending</span>';
   }
 
   function renderPerformance(p) {
@@ -319,20 +343,34 @@
     const scalps = p.recent_scalps || [];
     el.innerHTML = `
       <div class="perf-grid-inner">
-      <div class="perf-stat"><div class="val">${p.total_scans_logged ?? 0}</div><div class="lbl">Agent scans logged</div></div>
-      <div class="perf-stat"><div class="val">${p.total_scalps_logged ?? 0}</div><div class="lbl">Scalps logged</div></div>
-      <div class="perf-stat"><div class="val">${p.average_scalp_rr ?? 0}</div><div class="lbl">Avg scalp RR</div></div>
-      <div class="perf-stat"><div class="val">${p.last_scan_at ? "✓" : "—"}</div><div class="lbl">Last scan</div></div>
+      <div class="perf-stat"><div class="val">${p.scalp_win_rate ?? 0}%</div><div class="lbl">Scalp win rate</div></div>
+      <div class="perf-stat win-stat"><div class="val">${p.scalp_wins ?? 0}</div><div class="lbl">Wins</div></div>
+      <div class="perf-stat loss-stat"><div class="val">${p.scalp_losses ?? 0}</div><div class="lbl">Losses</div></div>
+      <div class="perf-stat"><div class="val">${p.agent_scalp_accuracy ?? 0}%</div><div class="lbl">Agents right (closed)</div></div>
+      <div class="perf-stat"><div class="val">${p.bias_call_accuracy ?? 0}%</div><div class="lbl">Bias calls right</div></div>
+      <div class="perf-stat"><div class="val">${p.open_scalps ?? 0}</div><div class="lbl">Open scalps</div></div>
       </div>
-      <p class="war-muted perf-log-note">Logged to <code>${esc(p.log_file || "data/gold_war_room_history.json")}</code></p>
-      <h4 class="perf-log-title">Recent scans</h4>
+      <p class="war-muted perf-log-note">Wins/losses when price hits target or stop · bias verdict after ~2 min. Log: <code>${esc(p.log_file || "data/gold_war_room_history.json")}</code></p>
+      <h4 class="perf-log-title">Recent scalps — result & agents</h4>
+      <div class="perf-log-table perf-log-scalps">${scalps.length ? scalps.map((s) =>
+        `<div class="perf-log-row perf-log-row-scalp">
+          <span>${esc(s.logged_at || "")}</span>
+          <span>${esc(s.direction)} ${s.leverage || ""}x</span>
+          <span>E ${s.entry} → T ${s.target}</span>
+          ${outcomeBadge(s.outcome)}
+          ${verdictBadge(s.agent_verdict, s.agents_correct)}
+        </div>`
+      ).join("") : "<span class='war-muted'>No scalps logged yet — runs build as scans complete</span>"}</div>
+      <h4 class="perf-log-title">Recent agent scans — bias correct?</h4>
       <div class="perf-log-table">${scans.length ? scans.map((s) =>
-        `<div class="perf-log-row"><span>${esc(s.logged_at || "")}</span><span>$${s.price}</span><span>${esc(s.bias)}</span><span>${s.scalps_found} scalps</span></div>`
+        `<div class="perf-log-row">
+          <span>${esc(s.logged_at || "")}</span>
+          <span>$${s.price}</span>
+          <span>${esc(s.bias)}</span>
+          ${verdictBadge(s.agent_verdict)}
+          <span class="war-muted">${s.price_delta_pct != null ? s.price_delta_pct + "%" : s.scalps_found + " scalps"}</span>
+        </div>`
       ).join("") : "<span class='war-muted'>No scans logged yet</span>"}</div>
-      <h4 class="perf-log-title">Recent scalps lodged</h4>
-      <div class="perf-log-table">${scalps.length ? scalps.map((s) =>
-        `<div class="perf-log-row"><span>${esc(s.logged_at || "")}</span><span>${esc(s.direction)} @ $${s.market_price}</span><span>E ${s.entry} S ${s.stop} T ${s.target}</span><span>RR ${s.risk_reward}</span></div>`
-      ).join("") : "<span class='war-muted'>No scalps logged yet</span>"}</div>
     `;
   }
 
@@ -434,7 +472,7 @@
   }
 
   let warmPolls = 0;
-  let scalpLeverage = Number($("scalp-leverage")?.value) || 30;
+  let scalpLeverage = Number($("scalp-leverage")?.value) || 100;
 
   async function load(refresh = false, retries = 0) {
     const btn = $("btn-war-refresh");

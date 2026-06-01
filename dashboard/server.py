@@ -444,7 +444,7 @@ def _refresh_war_room_async(*, force: bool = False) -> None:
         try:
             with _war_room_lock:
                 lev = int(_war_room_cache.get("leverage") or 30)
-            payload = run_war_room_analysis(leverage=max(10, min(50, lev)))
+            payload = run_war_room_analysis(leverage=max(10, min(200, lev)))
             if payload.get("ok"):
                 save_war_room_seed(payload)
             with _war_room_lock:
@@ -491,7 +491,7 @@ def api_gold_war_room():
     lev_arg = request.args.get("leverage", type=int)
     if lev_arg is not None:
         with _war_room_lock:
-            _war_room_cache["leverage"] = max(10, min(50, lev_arg))
+            _war_room_cache["leverage"] = max(10, min(200, lev_arg))
     now = time.time()
     with _war_room_lock:
         cached = _war_room_cache.get("data")
