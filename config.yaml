@@ -1,40 +1,9 @@
-# Universe: top_stocks | etfs | all | both (stocks + all ETFs incl. DRAM)
-universe: both
+# Universe: ourbit | top_stocks | etfs | all | both | watchlist
+# ourbit = every tokenized US stock/ETF on Ourbit (AAPLON, TSLAON, … → AAPL, TSLA)
+universe: ourbit
 
-# Extra symbols merged with top_stocks (your custom picks)
-watchlist:
-  - DRAM
-  - SMH
-  - SOXX
-  - AAPL
-  - MSFT
-  - NVDA
-  - AMZN
-  - GOOGL
-  - META
-  - TSLA
-  - AMD
-  - NFLX
-  - JPM
-  - BAC
-  - XOM
-  - CVX
-  - UNH
-  - LLY
-  - AVGO
-  - COST
-  - WMT
-  - DIS
-  - INTC
-  - CRM
-  - ORCL
-  - QCOM
-  - MU
-  - PLTR
-  - SOFI
-  - COIN
-  - PYPL
-  - UBER
+# Extra symbols merged into universe (empty = only Ourbit list when universe: ourbit)
+watchlist: []
 
 # How many trading days of history to pull
 lookback_days: 120

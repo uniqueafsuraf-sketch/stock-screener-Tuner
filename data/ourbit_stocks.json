@@ -1,0 +1,241 @@
+{
+  "source": "api.ourbit.com/api/v3/exchangeInfo",
+  "fetched_at": "2026-06-01 23:49:48 UTC",
+  "fetched_at_epoch": 1780357788.3489559,
+  "count": 33,
+  "stocks": [
+    {
+      "ourbit_base": "AAPLON",
+      "ourbit_symbol": "AAPLONUSDT",
+      "ticker": "AAPL",
+      "spot_allowed": false
+    },
+    {
+      "ourbit_base": "ABTON",
+      "ourbit_symbol": "ABTONUSDT",
+      "ticker": "ABT",
+      "spot_allowed": false
+    },
+    {
+      "ourbit_base": "ACNON",
+      "ourbit_symbol": "ACNONUSDT",
+      "ticker": "ACN",
+      "spot_allowed": false
+    },
+    {
+      "ourbit_base": "AMZNON",
+      "ourbit_symbol": "AMZNONUSDT",
+      "ticker": "AMZN",
+      "spot_allowed": false
+    },
+    {
+      "ourbit_base": "AVGOON",
+      "ourbit_symbol": "AVGOONUSDT",
+      "ticker": "AVGO",
+      "spot_allowed": false
+    },
+    {
+      "ourbit_base": "BABAON",
+      "ourbit_symbol": "BABAONUSDT",
+      "ticker": "BABA",
+      "spot_allowed": false
+    },
+    {
+      "ourbit_base": "COINON",
+      "ourbit_symbol": "COINONUSDT",
+      "ticker": "COIN",
+      "spot_allowed": false
+    },
+    {
+      "ourbit_base": "CRCLON",
+      "ourbit_symbol": "CRCLONUSDT",
+      "ticker": "CRCL",
+      "spot_allowed": false
+    },
+    {
+      "ourbit_base": "GOOGLON",
+      "ourbit_symbol": "GOOGLONUSDT",
+      "ticker": "GOOGL",
+      "spot_allowed": false
+    },
+    {
+      "ourbit_base": "HOODON",
+      "ourbit_symbol": "HOODONUSDT",
+      "ticker": "HOOD",
+      "spot_allowed": false
+    },
+    {
+      "ourbit_base": "IAUON",
+      "ourbit_symbol": "IAUONUSDT",
+      "ticker": "IAU",
+      "spot_allowed": false
+    },
+    {
+      "ourbit_base": "ITOTON",
+      "ourbit_symbol": "ITOTONUSDT",
+      "ticker": "ITOT",
+      "spot_allowed": false
+    },
+    {
+      "ourbit_base": "IVVON",
+      "ourbit_symbol": "IVVONUSDT",
+      "ticker": "IVV",
+      "spot_allowed": false
+    },
+    {
+      "ourbit_base": "IWMON",
+      "ourbit_symbol": "IWMONUSDT",
+      "ticker": "IWM",
+      "spot_allowed": false
+    },
+    {
+      "ourbit_base": "JDON",
+      "ourbit_symbol": "JDONUSDT",
+      "ticker": "JD",
+      "spot_allowed": false
+    },
+    {
+      "ourbit_base": "LLYON",
+      "ourbit_symbol": "LLYONUSDT",
+      "ticker": "LLY",
+      "spot_allowed": false
+    },
+    {
+      "ourbit_base": "MAON",
+      "ourbit_symbol": "MAONUSDT",
+      "ticker": "MA",
+      "spot_allowed": false
+    },
+    {
+      "ourbit_base": "MCDON",
+      "ourbit_symbol": "MCDONUSDT",
+      "ticker": "MCD",
+      "spot_allowed": false
+    },
+    {
+      "ourbit_base": "METAON",
+      "ourbit_symbol": "METAONUSDT",
+      "ticker": "META",
+      "spot_allowed": false
+    },
+    {
+      "ourbit_base": "MSFTON",
+      "ourbit_symbol": "MSFTONUSDT",
+      "ticker": "MSFT",
+      "spot_allowed": false
+    },
+    {
+      "ourbit_base": "MSTRON",
+      "ourbit_symbol": "MSTRONUSDT",
+      "ticker": "MSTR",
+      "spot_allowed": false
+    },
+    {
+      "ourbit_base": "NFLXON",
+      "ourbit_symbol": "NFLXONUSDT",
+      "ticker": "NFLX",
+      "spot_allowed": false
+    },
+    {
+      "ourbit_base": "NVDAON",
+      "ourbit_symbol": "NVDAONUSDT",
+      "ticker": "NVDA",
+      "spot_allowed": false
+    },
+    {
+      "ourbit_base": "PALLON",
+      "ourbit_symbol": "PALLONUSDT",
+      "ticker": "PALL",
+      "spot_allowed": false
+    },
+    {
+      "ourbit_base": "PEPON",
+      "ourbit_symbol": "PEPONUSDT",
+      "ticker": "PEP",
+      "spot_allowed": false
+    },
+    {
+      "ourbit_base": "PLTRON",
+      "ourbit_symbol": "PLTRONUSDT",
+      "ticker": "PLTR",
+      "spot_allowed": false
+    },
+    {
+      "ourbit_base": "QQQON",
+      "ourbit_symbol": "QQQONUSDT",
+      "ticker": "QQQ",
+      "spot_allowed": false
+    },
+    {
+      "ourbit_base": "RKLBON",
+      "ourbit_symbol": "RKLBONUSDT",
+      "ticker": "RKLB",
+      "spot_allowed": false
+    },
+    {
+      "ourbit_base": "SLVON",
+      "ourbit_symbol": "SLVONUSDT",
+      "ticker": "SLV",
+      "spot_allowed": false
+    },
+    {
+      "ourbit_base": "SPYON",
+      "ourbit_symbol": "SPYONUSDT",
+      "ticker": "SPY",
+      "spot_allowed": false
+    },
+    {
+      "ourbit_base": "TSLAON",
+      "ourbit_symbol": "TSLAONUSDT",
+      "ticker": "TSLA",
+      "spot_allowed": false
+    },
+    {
+      "ourbit_base": "UNHON",
+      "ourbit_symbol": "UNHONUSDT",
+      "ticker": "UNH",
+      "spot_allowed": false
+    },
+    {
+      "ourbit_base": "USOON",
+      "ourbit_symbol": "USOONUSDT",
+      "ticker": "USO",
+      "spot_allowed": false
+    }
+  ],
+  "tickers": [
+    "AAPL",
+    "ABT",
+    "ACN",
+    "AMZN",
+    "AVGO",
+    "BABA",
+    "COIN",
+    "CRCL",
+    "GOOGL",
+    "HOOD",
+    "IAU",
+    "ITOT",
+    "IVV",
+    "IWM",
+    "JD",
+    "LLY",
+    "MA",
+    "MCD",
+    "META",
+    "MSFT",
+    "MSTR",
+    "NFLX",
+    "NVDA",
+    "PALL",
+    "PEP",
+    "PLTR",
+    "QQQ",
+    "RKLB",
+    "SLV",
+    "SPY",
+    "TSLA",
+    "UNH",
+    "USO"
+  ]
+}

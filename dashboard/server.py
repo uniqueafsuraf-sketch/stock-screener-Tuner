@@ -585,6 +585,30 @@ def api_health():
     })
 
 
+@app.route("/api/ourbit-stocks")
+def api_ourbit_stocks():
+    """All tokenized stocks/ETFs listed on Ourbit (mapped to Yahoo tickers)."""
+    from screener.ourbit_universe import get_ourbit_universe_meta  # noqa: PLC0415
+
+    force = request.args.get("refresh") == "1"
+    try:
+        if force:
+            from screener.ourbit_universe import fetch_ourbit_stocks, save_ourbit_cache  # noqa: PLC0415
+
+            save_ourbit_cache(fetch_ourbit_stocks())
+        meta = get_ourbit_universe_meta()
+    except Exception as e:
+        return jsonify({"ok": False, "error": str(e), "stocks": [], "tickers": []})
+    return jsonify({
+        "ok": True,
+        "count": meta.get("count", 0),
+        "fetched_at": meta.get("fetched_at"),
+        "source": meta.get("source"),
+        "tickers": meta.get("tickers", []),
+        "stocks": meta.get("stocks", []),
+    })
+
+
 @app.route("/api/bootstrap")
 def api_bootstrap():
     """Fast first paint: return seed/disk cache immediately; live quotes patch in via /api/live."""

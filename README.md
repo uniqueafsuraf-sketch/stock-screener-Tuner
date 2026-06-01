@@ -67,7 +67,7 @@ Edit `config.yaml`:
 
 | Setting | What it does |
 |--------|----------------|
-| `universe` | `top_stocks`, `etfs`, `all`, `both` (stocks + ~80 ETFs incl. **DRAM**, SMH, SOXX) |
+| `universe` | `ourbit` (all tokenized stocks on Ourbit), `top_stocks`, `etfs`, `all`, `both`, `watchlist` |
 | `watchlist` | Extra symbols merged into the scan |
 | `volume_spike_ratio` | Min volume multiple (default 1.8x) |
 | `selloff_min_pct` | Min single-day drop % (e.g. -2.5) |

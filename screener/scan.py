@@ -25,8 +25,12 @@ def resolve_symbols(cfg: dict) -> list[str]:
     extra = cfg.get("watchlist", [])
     if source == "watchlist":
         return get_universe("watchlist", extra=extra or [])
-    if source == "both":
-        return get_universe("top_stocks", extra=extra)
+    if source in ("both", "all"):
+        return get_universe("all", extra=extra)
+    if source == "ourbit":
+        return get_universe("ourbit", extra=extra)
+    if source == "etfs":
+        return get_universe("etfs", extra=extra)
     return get_universe("top_stocks", extra=extra)
 
 

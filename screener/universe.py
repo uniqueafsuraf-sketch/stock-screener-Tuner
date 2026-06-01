@@ -77,6 +77,7 @@ def get_universe(source: str = "top_stocks", extra: list[str] | None = None) -> 
       - etfs: ETFs only
       - all: stocks + ETFs
       - both: same as all (stocks + ETFs), then merge watchlist from config
+      - ourbit: every tokenized stock/ETF on Ourbit (live API + cache)
       - watchlist: extra symbols only
     """
     extra_syms = [s.upper().strip() for s in (extra or []) if s]
@@ -84,7 +85,11 @@ def get_universe(source: str = "top_stocks", extra: list[str] | None = None) -> 
     if source == "watchlist":
         return _merge_symbols(extra_syms)
 
-    if source == "etfs":
+    if source == "ourbit":
+        from screener.ourbit_universe import get_ourbit_tickers  # noqa: PLC0415
+
+        base = get_ourbit_tickers()
+    elif source == "etfs":
         base = list(TOP_ETFS)
     elif source == "top_stocks":
         base = list(TOP_STOCKS)
