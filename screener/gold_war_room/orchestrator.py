@@ -33,6 +33,7 @@ from screener.gold_war_room.performance import (
     record_war_room_cycle,
 )
 from screener.gold_war_room.scalping import analyze_scalping_setups
+from screener.gold_war_room.stations import build_agent_stations
 
 
 def _safe_agent(name: str, fn, *args) -> dict:
@@ -92,6 +93,7 @@ def _build_response(
             "label": "High" if master["confidence_score"] > 75 else "Moderate" if master["confidence_score"] > 50 else "Low",
         },
         "agent_consensus": agent_consensus(agents, trap, risk),
+        "agent_stations": build_agent_stations(agents, trap, risk, data),
         "agents": agents,
         "smart_money": {
             "title": "What Smart Money Likely Wants Next",

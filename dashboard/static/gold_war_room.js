@@ -88,6 +88,50 @@
     ).join("") + `<p class="war-why" style="grid-column:1/-1;margin-top:0.75rem">${esc(t.why || "")}</p>`;
   }
 
+  function stationStatusClass(status) {
+    const s = (status || "").toLowerCase();
+    if (s === "active") return "st-active";
+    if (s === "warning" || s === "error") return "st-warn";
+    return "st-idle";
+  }
+
+  function renderAgentStations(ops) {
+    const sub = $("stations-subtitle");
+    const head = $("stations-headline");
+    const grid = $("agent-stations-grid");
+    if (!grid) return;
+    if (!ops?.stations?.length) {
+      grid.innerHTML = "<p class='war-muted'>Stations loading…</p>";
+      return;
+    }
+    if (sub) sub.textContent = ops.subtitle || "";
+    if (head) head.textContent = ops.headline || "";
+    grid.innerHTML = ops.stations.map((st) => `
+      <article class="station-card ${stationStatusClass(st.status)}">
+        <header class="station-header">
+          <span class="station-code">${esc(st.desk_code)}</span>
+          <span class="station-status-dot" title="${esc(st.status)}"></span>
+        </header>
+        <h3 class="station-name">${esc(st.station)}</h3>
+        <p class="station-agent">${esc(st.name)}</p>
+        <p class="station-role">${esc(st.role)}</p>
+        <div class="station-stance-row">
+          <span class="station-label">Stance</span>
+          <span class="station-stance ${st.stance.toLowerCase()}">${esc(st.stance)}</span>
+        </div>
+        <div class="station-work">
+          <span class="station-label">Working on</span>
+          <p>${esc(st.working_on)}</p>
+        </div>
+        <div class="station-output">
+          <span class="station-label">Latest output</span>
+          <p>${esc(st.output)}</p>
+        </div>
+        ${st.metrics ? `<p class="station-metrics">${esc(st.metrics)}</p>` : ""}
+      </article>
+    `).join("");
+  }
+
   function renderAgents(agents) {
     const order = ["macro", "technical", "order_flow", "sentiment", "quant", "risk", "trap"];
     const el = $("agent-cards");
@@ -347,6 +391,7 @@
     const sym = data.price_symbol || "GC=F (COMEX)";
     $("war-meta").textContent = `${sym} · Updated ${data.updated_at || "—"}`;
 
+    renderAgentStations(data.agent_stations);
     renderConsensus(data.agent_consensus);
     renderSmartMoney(data.smart_money);
     renderAlerts(data.alerts);

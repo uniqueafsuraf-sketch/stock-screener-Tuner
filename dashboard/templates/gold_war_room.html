@@ -248,6 +248,24 @@
 
 
 
+        <section class="war-panel war-panel-wide war-panel-stations" id="panel-stations">
+
+          <div class="war-panel-head">
+
+            <h2 class="war-panel-title">Agent Operations Center</h2>
+
+            <span id="stations-headline" class="war-chip">{% if initial and initial.agent_stations %}{{ initial.agent_stations.headline }}{% else %}7 desks online{% endif %}</span>
+
+          </div>
+
+          <p class="war-muted" id="stations-subtitle">{% if initial and initial.agent_stations %}{{ initial.agent_stations.subtitle }}{% else %}Monitor each agent station and live task{% endif %}</p>
+
+          <div id="agent-stations-grid" class="agent-stations-grid"></div>
+
+        </section>
+
+
+
         <section class="war-panel war-panel-wide" id="panel-consensus">
 
           <h2 class="war-panel-title">Agent Consensus <span id="consensus-headline" class="war-chip">{% if initial and initial.agent_consensus %}{{ initial.agent_consensus.headline }}{% endif %}</span></h2>

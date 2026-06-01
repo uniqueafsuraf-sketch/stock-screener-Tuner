@@ -419,6 +419,7 @@ def _war_room_warming_payload() -> dict:
         "chart": {"symbol": "XAUUSD", "tv_symbol": "OANDA:XAUUSD", "candles": [], "interval": "1H"},
         "scalping": {"title": "Live Scalping Opportunities", "setups": [], "scanning": True},
         "live_scan": {"active": True, "interval_sec": 45, "agents_running": 7},
+        "agent_stations": {"title": "Agent Operations Center", "stations": [], "headline": "Analyzing…"},
     }
 
 
