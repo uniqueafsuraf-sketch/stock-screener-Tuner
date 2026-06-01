@@ -12,36 +12,38 @@ YOU DO 2 THINGS (about 5 minutes total):
 PART 1 — PUBLISH TO GITHUB (GitHub Desktop)
 -------------------------------------------
 
-1. Open "GitHub Desktop" from the Start menu
-   (If you don't have it: https://desktop.github.com )
+FASTEST: Double-click COMPLETE_GITHUB_SETUP.bat in this folder.
+   (Opens GitHub Desktop, then pushes + opens Render after you publish.)
+
+OR manual:
+
+1. Double-click COMPLETE_GITHUB_SETUP.bat  OR  PUBLISH_TO_GITHUB.bat
+   (Opens GitHub Desktop on this folder automatically)
 
 2. Sign in with your GitHub account
 
-3. Menu: File → Add local repository
+3. If it says "not a Git repository", click "create a repository"
 
-4. Browse to THIS folder:
-   c:\Users\Pauly\Documents\projects cursor\stock-screener
+4. Click the blue button: "Publish repository"
 
-5. Click "Add repository"
-   (If it says "not a Git repository", click "create a repository")
-
-6. Click the blue button: "Publish repository"
-
-7. Name: stockstunerstation
+7. Name: stock-screener-Tuner  (or any name — remember it for Render)
    Uncheck "Keep this code private" (optional, for easier Render)
 
 8. Click "Publish repository"
 
-9. Wait until done — you should see your code on github.com
+9. Your code should be on github.com (e.g. uniqueafsuraf-sketch/stock-screener-Tuner)
 
 
 PART 2 — REDEPLOY ON RENDER
 ---------------------------
 
+IMPORTANT: If Render says "repository is empty", open FIX_RENDER_EMPTY_REPO.md
+Render must connect to the repo that HAS your code (stock-screener-Tuner), not an empty one.
+
 1. Go to https://dashboard.render.com
 
 2. Open your "stockstunerstation" service
-   (Or create New + → Web Service → connect GitHub repo)
+   Settings → Repository → connect: stock-screener-Tuner, branch main
 
 3. Settings — check:
    Root Directory:  (leave EMPTY)
