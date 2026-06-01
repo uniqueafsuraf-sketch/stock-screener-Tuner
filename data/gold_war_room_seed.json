@@ -5,17 +5,16 @@
 "change_pct": 0.17,
 "data_source": "cloud_fast",
 "fetch_notes": [
-"Cloud fast path \u2014 modelled gold data (Yahoo skipped on deploy host).",
-"Agents fully active; use Refresh after market hours for live quotes when available."
+"Live quote unavailable \u2014 using modelled price until Yahoo responds."
 ],
-"updated_at": "2026-06-01 22:16:10 UTC",
+"updated_at": "2026-06-01 22:34:40 UTC",
 "market_bias": {
 "bias": "Neutral",
 "confidence": 33.1,
 "bull_probability": 54.7,
 "bear_probability": 45.3,
 "neutral_probability": 90.6,
-"why": "Filters not met: confidence 33% (need >80), agent agreement 4/5 (need 4+), RR 1.19 (need >2.5), manipulation 48% (need <70). Data: cloud_fast. Cloud fast path \u2014 modelled gold data (Yahoo skipped on deploy host). Agents fully active; use Refresh after market hours for live quotes when available."
+"why": "Filters not met: confidence 33% (need >80), agent agreement 4/5 (need 4+), RR 0.47 (need >2.5), manipulation 48% (need <70). Data: cloud_fast. Live quote unavailable \u2014 using modelled price until Yahoo responds."
 },
 "confidence_meter": {
 "score": 33.1,
@@ -292,7 +291,7 @@
 "target_3": null,
 "risk_reward": null,
 "invalidation": 2607.8,
-"why": "Filters not met: confidence 33% (need >80), agent agreement 4/5 (need 4+), RR 1.19 (need >2.5), manipulation 48% (need <70)."
+"why": "Filters not met: confidence 33% (need >80), agent agreement 4/5 (need 4+), RR 0.47 (need >2.5), manipulation 48% (need <70)."
 },
 "master": {
 "market_bias": "Neutral",
@@ -310,7 +309,7 @@
 "target_3": null,
 "risk_reward": null,
 "invalidation": 2607.8,
-"why": "Filters not met: confidence 33% (need >80), agent agreement 4/5 (need 4+), RR 1.19 (need >2.5), manipulation 48% (need <70)."
+"why": "Filters not met: confidence 33% (need >80), agent agreement 4/5 (need 4+), RR 0.47 (need >2.5), manipulation 48% (need <70)."
 },
 "bullish_agents": 4,
 "bearish_agents": 0
@@ -322,10 +321,54 @@
 "win_rate": 0,
 "loss_rate": 0,
 "average_rr": 0,
+"total_scans_logged": 1,
+"total_scalps_logged": 1,
+"average_scalp_rr": 2.8,
+"last_scan_at": "2026-06-01 22:34:09 UTC",
 "accuracy_by_agent": {},
 "accuracy_by_condition": {},
 "accuracy_by_session": {},
-"recent": []
+"recent": [],
+"recent_scalps": [
+{
+"ts": 1780353249.7306502,
+"logged_at": "2026-06-01 22:34:09 UTC",
+"market_price": 2649.53,
+"type": "scalp",
+"direction": "LONG",
+"entry": 2649.53,
+"stop": 2642.73,
+"target": 2668.57,
+"target_2": 2679.99,
+"risk_reward": 2.8,
+"confidence": 80.8,
+"leverage": 30,
+"agent_votes": 4,
+"agents_aligned": [
+"Macro",
+"Technical",
+"Order Flow",
+"Sentiment"
+],
+"status": "ACTIVE",
+"thesis": "Bullish flow / sweep \u2014 scalp from live price",
+"outcome": "open"
+}
+],
+"recent_scans": [
+{
+"ts": 1780353249.7305973,
+"logged_at": "2026-06-01 22:34:09 UTC",
+"price": 2649.53,
+"change_pct": 0.17,
+"data_source": "cloud_fast",
+"bias": "Neutral",
+"confidence": 33.1,
+"scalps_found": 1,
+"consensus": "4 / 7 Agents Bullish"
+}
+],
+"log_file": "data/gold_war_room_history.json"
 },
 "news": [
 {
@@ -823,18 +866,20 @@
 },
 "scalping": {
 "title": "Live Scalping Opportunities",
-"subtitle": "30x leverage context \u00b7 7 agents scanning every 45s",
+"subtitle": "30x leverage \u00b7 live $2649.53 \u00b7 7 agents every 45s",
+"reference_price": 2649.53,
 "leverage": 30,
-"leverage_warning": "High leverage (30x) magnifies gains and losses. A 6.8pt adverse move can liquidate margin \u2014 not financial advice.",
+"leverage_warning": "High leverage (30x) magnifies gains and losses. Stops are 6.8 pts from live $2649.53 \u2014 not financial advice.",
 "scanning": true,
 "setups": [
 {
 "direction": "LONG",
-"entry": 2628.7,
-"stop": 2621.9,
-"target": 2647.7,
-"target_2": 2659.1,
-"risk_reward": 2.79,
+"market_price": 2649.53,
+"entry": 2649.53,
+"stop": 2642.73,
+"target": 2668.57,
+"target_2": 2679.99,
+"risk_reward": 2.8,
 "confidence": 80.8,
 "agent_votes": 4,
 "agents_aligned": [
@@ -844,19 +889,21 @@
 "Sentiment"
 ],
 "leverage": 30,
-"margin_at_risk_pct": 7.76,
+"margin_at_risk_pct": 7.7,
 "timeframe": "15M / 1H",
-"thesis": "Liquidity sweep / bid stack \u2014 quick bounce scalp",
-"status": "ACTIVE"
+"thesis": "Bullish flow / sweep \u2014 scalp from live price",
+"status": "ACTIVE",
+"price_note": "Entry/stop/target anchored to live $2649.53"
 }
 ],
 "best": {
 "direction": "LONG",
-"entry": 2628.7,
-"stop": 2621.9,
-"target": 2647.7,
-"target_2": 2659.1,
-"risk_reward": 2.79,
+"market_price": 2649.53,
+"entry": 2649.53,
+"stop": 2642.73,
+"target": 2668.57,
+"target_2": 2679.99,
+"risk_reward": 2.8,
 "confidence": 80.8,
 "agent_votes": 4,
 "agents_aligned": [
@@ -866,13 +913,14 @@
 "Sentiment"
 ],
 "leverage": 30,
-"margin_at_risk_pct": 7.76,
+"margin_at_risk_pct": 7.7,
 "timeframe": "15M / 1H",
-"thesis": "Liquidity sweep / bid stack \u2014 quick bounce scalp",
-"status": "ACTIVE"
+"thesis": "Bullish flow / sweep \u2014 scalp from live price",
+"status": "ACTIVE",
+"price_note": "Entry/stop/target anchored to live $2649.53"
 },
 "total_found": 1,
-"criteria": "\u22652 agents align \u00b7 RR \u22652 \u00b7 manip <75 \u00b7 15M vol/flow"
+"criteria": "Live price anchor \u00b7 \u22652 agents \u00b7 RR \u22652 \u00b7 manip <75"
 },
 "live_scan": {
 "active": true,

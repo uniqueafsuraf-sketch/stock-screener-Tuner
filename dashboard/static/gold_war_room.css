@@ -131,7 +131,41 @@
 
 .scalp-levels span { font-family: var(--mono); font-weight: 700; }
 
+.scalp-live-ref {
+  font-size: 0.78rem;
+  color: var(--gold);
+  margin-bottom: 0.35rem;
+  font-weight: 700;
+}
+
 .scalp-thesis { font-size: 0.82rem; margin: 0.5rem 0 0.25rem; line-height: 1.4; }
+
+.perf-log-note { grid-column: 1 / -1; margin-top: 0.5rem; font-size: 0.75rem; }
+.perf-log-title {
+  grid-column: 1 / -1;
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin: 1rem 0 0.35rem;
+}
+.perf-log-table {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  max-height: 200px;
+  overflow-y: auto;
+}
+.perf-log-row {
+  display: grid;
+  grid-template-columns: 1.2fr 0.7fr 0.6fr 1fr;
+  gap: 0.5rem;
+  font-size: 0.72rem;
+  padding: 0.35rem 0.5rem;
+  background: var(--bg-base);
+  border-radius: 4px;
+}
 .scalp-votes { font-size: 0.72rem; }
 .scalp-empty { color: var(--text-secondary); font-size: 0.88rem; }
 

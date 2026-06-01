@@ -27,7 +27,11 @@ from screener.gold_war_room.fetch import (
     fetch_gold_news,
 )
 from screener.gold_war_room.master import agent_consensus, build_alerts, run_master
-from screener.gold_war_room.performance import performance_summary, record_setup
+from screener.gold_war_room.performance import (
+    performance_summary,
+    record_setup,
+    record_war_room_cycle,
+)
 from screener.gold_war_room.scalping import analyze_scalping_setups
 
 
@@ -141,8 +145,10 @@ def run_war_room_analysis(*, leverage: int = 30) -> dict:
         }
 
         master = run_master(agents, trap, risk, data.price, technical)
+        payload = _build_response(data, agents, trap, risk, master, leverage=leverage)
         record_setup(master, data.price)
-        return _build_response(data, agents, trap, risk, master, leverage=leverage)
+        record_war_room_cycle(payload)
+        return payload
     except Exception as e:
         traceback.print_exc()
         try:
@@ -171,6 +177,7 @@ def run_war_room_analysis(*, leverage: int = 30) -> dict:
             payload = _build_response(data, agents, trap, risk, master, leverage=leverage)
             payload["ok"] = True
             payload["fetch_notes"] = [f"Recovered after error: {e}"]
+            record_war_room_cycle(payload)
             return payload
         except Exception as e2:
             return {

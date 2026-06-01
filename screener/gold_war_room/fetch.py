@@ -246,14 +246,34 @@ def build_chart_bundle(
     }
 
 
+def fetch_live_spot_quote() -> tuple[float, float, str] | None:
+    """Lightweight live gold quote (1 request) for cloud scalp levels."""
+    for sym in ("GC=F", "XAUUSD=X"):
+        for period, interval in (("5d", "1h"), ("5d", "15m"), ("5d", "1d")):
+            df = _download(sym, period, interval)
+            if df is not None and len(df) >= 1:
+                last = float(df["close"].iloc[-1])
+                prev = float(df["close"].iloc[-2]) if len(df) > 1 else last
+                chg = ((last - prev) / prev) * 100 if prev else 0.0
+                return round(last, 2), round(chg, 2), sym
+            time.sleep(0.12)
+    return None
+
+
 def _fetch_cloud_fast() -> GoldMarketData:
-    """Render: skip Yahoo (rate limits/timeouts) — agents run on modelled OHLC instantly."""
-    frames = _synthetic_frames()
-    price, chg = _last_price(frames)
-    notes = [
-        "Cloud fast path — modelled gold data (Yahoo skipped on deploy host).",
-        "Agents fully active; use Refresh after market hours for live quotes when available.",
-    ]
+    """Render: live spot quote when possible; model OHLC around that price."""
+    notes: list[str] = []
+    live = fetch_live_spot_quote()
+    if live:
+        price, chg, sym = live
+        frames = _synthetic_frames(base=price)
+        notes.append(f"Live spot ${price} from {sym} — scalp levels anchored to this price.")
+        data_source = "cloud_live"
+    else:
+        frames = _synthetic_frames()
+        price, chg = _last_price(frames)
+        notes.append("Live quote unavailable — using modelled price until Yahoo responds.")
+        data_source = "cloud_fast"
     news = fetch_gold_news()
     result = GoldMarketData(
         price=round(price, 2),
@@ -261,7 +281,7 @@ def _fetch_cloud_fast() -> GoldMarketData:
         frames=frames,
         macro={"uup_chg": None, "tnx_chg": None, "dxy_chg": None},
         news=news,
-        data_source="cloud_fast",
+        data_source=data_source,
         fetch_notes=notes,
     )
     _CACHE["data"] = result

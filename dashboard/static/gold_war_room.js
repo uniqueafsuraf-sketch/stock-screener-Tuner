@@ -234,7 +234,10 @@
       el.innerHTML = "<p class='war-muted'>Scalp scanner loading…</p>";
       return;
     }
-    if (sub) sub.textContent = sc.subtitle || sc.title || "";
+    if (sub) {
+      sub.textContent = sc.subtitle || sc.title || "";
+      if (sc.reference_price) sub.textContent += ` · chart/live ref $${sc.reference_price}`;
+    }
     if (warn) warn.textContent = sc.leverage_warning || "High leverage — extreme risk.";
     const setups = sc.setups || [];
     if (!setups.length) {
@@ -250,6 +253,7 @@
           <span class="scalp-status">${esc(s.status)}</span>
           <span class="scalp-conf">${s.confidence}%</span>
         </header>
+        <p class="scalp-live-ref">Live gold: <strong>$${s.market_price ?? s.entry}</strong></p>
         <div class="scalp-levels">
           <div><label>Entry</label><span>${s.entry}</span></div>
           <div><label>Stop</label><span>${s.stop}</span></div>
@@ -267,11 +271,24 @@
   function renderPerformance(p) {
     const el = $("performance-content");
     if (!el) return;
+    const scans = p.recent_scans || [];
+    const scalps = p.recent_scalps || [];
     el.innerHTML = `
-      <div class="perf-stat"><div class="val">${p.total_setups ?? 0}</div><div class="lbl">Setups logged</div></div>
-      <div class="perf-stat"><div class="val">${p.win_rate ?? 0}%</div><div class="lbl">Win rate</div></div>
-      <div class="perf-stat"><div class="val">${p.loss_rate ?? 0}%</div><div class="lbl">Loss rate</div></div>
-      <div class="perf-stat"><div class="val">${p.average_rr ?? 0}</div><div class="lbl">Avg RR</div></div>
+      <div class="perf-grid-inner">
+      <div class="perf-stat"><div class="val">${p.total_scans_logged ?? 0}</div><div class="lbl">Agent scans logged</div></div>
+      <div class="perf-stat"><div class="val">${p.total_scalps_logged ?? 0}</div><div class="lbl">Scalps logged</div></div>
+      <div class="perf-stat"><div class="val">${p.average_scalp_rr ?? 0}</div><div class="lbl">Avg scalp RR</div></div>
+      <div class="perf-stat"><div class="val">${p.last_scan_at ? "✓" : "—"}</div><div class="lbl">Last scan</div></div>
+      </div>
+      <p class="war-muted perf-log-note">Logged to <code>${esc(p.log_file || "data/gold_war_room_history.json")}</code></p>
+      <h4 class="perf-log-title">Recent scans</h4>
+      <div class="perf-log-table">${scans.length ? scans.map((s) =>
+        `<div class="perf-log-row"><span>${esc(s.logged_at || "")}</span><span>$${s.price}</span><span>${esc(s.bias)}</span><span>${s.scalps_found} scalps</span></div>`
+      ).join("") : "<span class='war-muted'>No scans logged yet</span>"}</div>
+      <h4 class="perf-log-title">Recent scalps lodged</h4>
+      <div class="perf-log-table">${scalps.length ? scalps.map((s) =>
+        `<div class="perf-log-row"><span>${esc(s.logged_at || "")}</span><span>${esc(s.direction)} @ $${s.market_price}</span><span>E ${s.entry} S ${s.stop} T ${s.target}</span><span>RR ${s.risk_reward}</span></div>`
+      ).join("") : "<span class='war-muted'>No scalps logged yet</span>"}</div>
     `;
   }
 

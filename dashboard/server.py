@@ -520,6 +520,16 @@ def api_gold_war_room():
     return jsonify(_json_safe(_war_room_warming_payload()))
 
 
+@app.route("/api/ping")
+def api_ping():
+    """Lightweight keep-alive for 24/7 uptime monitors (UptimeRobot, cron, etc.)."""
+    return jsonify({
+        "ok": True,
+        "service": "gold-war-room",
+        "ts": time.strftime("%Y-%m-%d %H:%M:%S UTC", time.gmtime()),
+    })
+
+
 @app.route("/api/health")
 def api_health():
     """Fast health check — must not block Render deploy (no heavy scan here)."""

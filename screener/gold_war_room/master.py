@@ -46,13 +46,21 @@ def run_master(
 
     confidence = _clamp((abs(bull_p - bear_p) + (100 - risk.get("risk_score", 50)) / 2) - risk.get("confidence_reduction", 0))
 
-    sup = (tech.get("key_levels") or {}).get("support") or [price * 0.995]
-    res = (tech.get("key_levels") or {}).get("resistance") or [price * 1.005]
-    entry = round((sup[0] + price) / 2, 1) if bias == "Bullish" else round((res[0] + price) / 2, 1)
-    stop = round(sup[0] - 8, 1) if bias == "Bullish" else round(res[0] + 8, 1)
-    t1 = round(price + 12, 1) if bias == "Bullish" else round(price - 12, 1)
-    t2 = round(price + 24, 1) if bias == "Bullish" else round(price - 24, 1)
-    t3 = round(price + 36, 1) if bias == "Bullish" else round(price - 36, 1)
+    live = round(float(price), 2)
+    sup = (tech.get("key_levels") or {}).get("support") or [live - 8]
+    res = (tech.get("key_levels") or {}).get("resistance") or [live + 8]
+    if bias == "Bullish":
+        entry = live
+        stop = round(min(sup[0], live - 6), 2)
+        t1 = round(live + 12, 2)
+        t2 = round(live + 24, 2)
+        t3 = round(live + 36, 2)
+    else:
+        entry = live
+        stop = round(max(res[0], live + 6), 2)
+        t1 = round(live - 12, 2)
+        t2 = round(live - 24, 2)
+        t3 = round(live - 36, 2)
     risk_pts = abs(entry - stop) or 1
     reward_pts = abs(t1 - entry)
     rr = round(reward_pts / risk_pts, 2)
