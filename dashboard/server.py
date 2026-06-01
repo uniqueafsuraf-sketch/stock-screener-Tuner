@@ -50,7 +50,7 @@ def _cfg() -> dict:
         news["workers"] = min(int(news.get("workers", 12)), 4)
         cfg = {
             **cfg,
-            "universe": "watchlist",
+            "universe": cfg.get("universe", "both"),
             "live": live,
             "news": news,
         }
@@ -218,7 +218,13 @@ def _ensure_background() -> LiveEngine:
     if not _bg_started:
         _bg_started = True
         _load_disk_cache_into_memory()
-        symbols = resolve_symbols(_cfg())
+        symbols = list(resolve_symbols(_cfg()))
+        with _scan_lock:
+            cached = _scan_cache.get("data") or {}
+            for row in cached.get("all_stocks") or []:
+                sym = (row.get("symbol") or "").upper().strip()
+                if sym and sym not in symbols:
+                    symbols.append(sym)
         _live_engine.set_symbols(symbols)
         if _live_cfg().get("enabled", True):
             _live_engine.start()
