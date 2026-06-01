@@ -1,0 +1,82 @@
+# Universe: top_stocks | etfs | all | both (stocks + all ETFs incl. DRAM)
+universe: both
+
+# Extra symbols merged with top_stocks (your custom picks)
+watchlist:
+  - DRAM
+  - SMH
+  - SOXX
+  - AAPL
+  - MSFT
+  - NVDA
+  - AMZN
+  - GOOGL
+  - META
+  - TSLA
+  - AMD
+  - NFLX
+  - JPM
+  - BAC
+  - XOM
+  - CVX
+  - UNH
+  - LLY
+  - AVGO
+  - COST
+  - WMT
+  - DIS
+  - INTC
+  - CRM
+  - ORCL
+  - QCOM
+  - MU
+  - PLTR
+  - SOFI
+  - COIN
+  - PYPL
+  - UBER
+
+# How many trading days of history to pull
+lookback_days: 120
+
+# Volume spike: today vs 20-day average
+volume_spike_ratio: 1.8
+
+# Sell-off: single-day drop % (negative number, e.g. -3 = down 3%)
+selloff_min_pct: -2.5
+selloff_volume_ratio: 1.3
+
+# Trendline: price within this % of computed support/resistance line
+trendline_proximity_pct: 1.5
+# Swing points used to build trendlines (higher = smoother, fewer touches)
+swing_window: 5
+
+# Minimum average daily dollar volume (price * avg vol) to filter illiquid names
+min_avg_dollar_volume: 50_000_000
+
+# RSI for oversold bounce context on sell-offs
+rsi_period: 14
+rsi_oversold: 35
+
+# News & chart links (fetched after scan)
+news:
+  max_headlines: 6        # latest raw headlines per stock (newest first)
+  wire_fetch_for: all     # all scanned symbols | opportunities (faster)
+  wire_max_total: 200     # max items in News wire panel
+  workers: 12
+
+# Unusual activity scanner
+unusual:
+  min_score: 25           # minimum unusual score to list
+
+# Live raw quotes (price / change / volume) — updates every second
+live:
+  enabled: true
+  interval_sec: 0.5
+  poll_ms: 400          # browser poll /api/live (dashboard)
+  market_poll_ms: 4000  # tape rebuild only when rankings change
+  full_scan_interval_sec: 300   # signals, trendlines, news refresh
+
+# Proprietary edge engine
+edge:
+  gap_min_pct: 1.5              # gap scanner threshold

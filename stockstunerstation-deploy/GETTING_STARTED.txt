@@ -1,0 +1,59 @@
+STOCKSTUNERSTATION - START HERE (beginner guide)
+===============================================
+
+ON YOUR PC (easiest - do this first)
+------------------------------------
+
+1. Double-click:  START.bat
+   (First time it installs everything automatically.)
+
+2. Wait for the black window to say "Running on http://127.0.0.1:5050"
+   Your browser should open by itself.
+
+3. Use the dashboard:
+   - Left menu: Unusual activity, Gainers, News wire, etc.
+   - Click "Refresh scan" after 1-2 minutes if the table is empty.
+
+4. To stop: close the black command window, or run stop_dashboard.bat
+
+5. To start again later: double-click START.bat
+
+
+IF SOMETHING GOES WRONG
+-----------------------
+
+- Blank page or "URL not found":
+    Run stop_dashboard.bat, then START.bat again.
+    Use the URL printed in the black window (not an old bookmark).
+
+- "Python is not installed":
+    Install from https://www.python.org/downloads/
+    Check "Add python.exe to PATH" during install.
+    Then double-click install.bat, then START.bat
+
+
+PUT IT ON A FREE LIVE WEBSITE
+-----------------------------
+
+INSTANT (today, free link):
+  Double-click GO_LIVE_INSTANT.bat
+  Copy the https://....trycloudflare.com URL from the tunnel window
+
+PERMANENT (free Render site):
+  Double-click DEPLOY_NOW.bat
+  Follow the 4 steps (opens GitHub + Render for you)
+
+Full guide: GO_LIVE_FREE.md
+VPS + own domain: DEPLOY.md
+
+
+FILES YOU NEED
+--------------
+
+  START.bat          <- double-click this every day
+  install.bat        <- runs automatically on first START
+  stop_dashboard.bat <- stops the server
+  config.yaml        <- edit watchlist / settings
+
+
+Not financial advice. Data from Yahoo Finance (may be delayed).

@@ -1,0 +1,503 @@
+#!/usr/bin/env python3
+"""Local web dashboard — reliable loading with live bootstrap + scan cache."""
+
+from __future__ import annotations
+
+import json
+import sys
+import threading
+import time
+import traceback
+from pathlib import Path
+
+from flask import Flask, Response, jsonify, render_template, request, stream_with_context
+
+ROOT = Path(__file__).resolve().parent.parent
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+from screener.alerts import create_alert, delete_alert, evaluate_alerts, load_alerts  # noqa: E402
+from screener.cache_io import load_scan_cache, save_scan_cache  # noqa: E402
+from screener.live import LiveEngine  # noqa: E402
+from screener.scan import load_config, resolve_symbols, scan_full  # noqa: E402
+
+app = Flask(
+    __name__,
+    template_folder=str(Path(__file__).parent / "templates"),
+    static_folder=str(Path(__file__).parent / "static"),
+)
+
+CONFIG_PATH = ROOT / "config.yaml"
+_scan_cache: dict = {"data": None, "ts": 0.0, "scanning": False, "last_error": None}
+_scan_lock = threading.Lock()
+_live_engine: LiveEngine | None = None
+_bg_started = False
+_alert_history: list[dict] = []
+_alert_lock = threading.Lock()
+_pulse_cache: dict = {"data": [], "ts": 0.0}
+
+
+def _cfg() -> dict:
+    return load_config(CONFIG_PATH)
+
+
+def _live_cfg() -> dict:
+    return _cfg().get("live", {})
+
+
+def _scan_interval() -> int:
+    return int(_live_cfg().get("full_scan_interval_sec", 300))
+
+
+def _json_safe(obj):
+    """Ensure Flask jsonify won't fail on numpy types."""
+    return json.loads(json.dumps(obj, default=str))
+
+
+def _default_chart_links(sym: str) -> dict:
+    return {
+        "tradingview": f"https://www.tradingview.com/chart/?symbol={sym}",
+        "yahoo": f"https://finance.yahoo.com/quote/{sym}/chart/",
+        "finviz": f"https://finviz.com/quote.ashx?t={sym}",
+        "yahoo_news": f"https://finance.yahoo.com/quote/{sym}/news/",
+    }
+
+
+def _stock_from_quote(sym: str, q: dict) -> dict:
+    chg = float(q.get("change_pct") or 0)
+    vol = float(q.get("volume_ratio") or 0)
+    return {
+        "symbol": sym,
+        "price": float(q.get("price") or 0),
+        "change_pct": chg,
+        "volume_ratio": vol,
+        "rsi": 50.0,
+        "score": 0,
+        "edge_score": min(100, round(vol * 15 + abs(chg) * 3, 1)),
+        "edge_grade": "—",
+        "signals": [],
+        "notes": [],
+        "news": [],
+        "thesis": "Live quote — full scan loading…",
+        "unusual_activity": ["ELEVATED_VOLUME"] if vol >= 1.8 else [],
+        "unusual_score": min(100, round(vol * 20 + abs(chg) * 2, 1)),
+        "dollar_volume_m": 0,
+        "chart_links": _default_chart_links(sym),
+        "live": True,
+        "has_opportunity": False,
+    }
+
+
+def _bootstrap_from_live() -> dict:
+    """Instant table data from live quotes while full scan runs."""
+    engine = _ensure_background()
+    live = engine.get_payload()
+    quotes = live.get("quotes", {})
+
+    if not quotes:
+        return {
+            "ok": True,
+            "scanning": True,
+            "scanned_at": "",
+            "symbols_scanned": 0,
+            "universe_size": len(resolve_symbols(_cfg())),
+            "opportunities": [],
+            "all_stocks": [],
+            "edge_plays": [],
+            "unusual_activity": [],
+            "gainers": [],
+            "losers": [],
+            "gaps": [],
+            "high_rvol": [],
+            "rel_strength": [],
+            "earnings_watch": [],
+            "market_pulse": _get_market_pulse(),
+            "stats": {},
+            "proprietary_signals": [],
+            "live": live,
+            "message": "Fetching live quotes…",
+        }
+
+    stocks = [_stock_from_quote(sym, q) for sym, q in quotes.items()]
+    stocks.sort(key=lambda s: (-s["unusual_score"], -abs(s["change_pct"])))
+    unusual = [s for s in stocks if s["unusual_score"] >= 20][:30]
+    gainers = sorted(stocks, key=lambda s: -s["change_pct"])[:15]
+    losers = sorted(stocks, key=lambda s: s["change_pct"])[:15]
+
+    return {
+        "ok": True,
+        "scanning": _scan_cache.get("scanning", True),
+        "scanned_at": "",
+        "symbols_scanned": len(stocks),
+        "universe_size": len(resolve_symbols(_cfg())),
+        "opportunities": [],
+        "all_stocks": stocks,
+        "edge_plays": stocks[:25],
+        "unusual_activity": unusual,
+        "gainers": gainers,
+        "losers": losers,
+        "gaps": [],
+        "high_rvol": sorted(stocks, key=lambda s: -s["volume_ratio"])[:15],
+        "rel_strength": [],
+        "earnings_watch": [],
+        "market_pulse": _get_market_pulse(),
+        "stats": {
+            "unusual_active": len(unusual),
+            "gainers": sum(1 for s in stocks if s["change_pct"] > 0),
+        },
+        "proprietary_signals": [],
+        "live": live,
+        "message": "Live mode — full scan running in background",
+    }
+
+
+def _build_movers_tape() -> list[dict]:
+    """Top gainers / losers by change % only (for header ticker)."""
+    from screener.movers import movers_tape_list
+
+    engine = _ensure_background()
+    quotes = engine.get_payload().get("quotes", {}) or {}
+
+    with _scan_lock:
+        cached = _scan_cache.get("data") or {}
+
+    stocks = cached.get("all_stocks") or []
+    return movers_tape_list(stocks, quotes, top_n=15)
+
+
+def _get_market_pulse() -> list:
+    pulse = _build_movers_tape()
+    if pulse:
+        _pulse_cache["data"] = pulse
+        _pulse_cache["ts"] = time.time()
+    return pulse or _pulse_cache["data"] or []
+
+
+def _load_disk_cache_into_memory() -> None:
+    disk = load_scan_cache()
+    if disk:
+        with _scan_lock:
+            if _scan_cache["data"] is None:
+                _scan_cache["data"] = disk
+                _scan_cache["ts"] = time.time()
+                print(f"Loaded {len(disk.get('all_stocks', []))} stocks from cache")
+
+
+def _ensure_background() -> LiveEngine:
+    global _live_engine, _bg_started
+    if _live_engine is None:
+        _live_engine = LiveEngine(interval_sec=float(_live_cfg().get("interval_sec", 1)))
+
+    if not _bg_started:
+        _bg_started = True
+        _load_disk_cache_into_memory()
+        symbols = resolve_symbols(_cfg())
+        _live_engine.set_symbols(symbols)
+        if _live_cfg().get("enabled", True):
+            _live_engine.start()
+        threading.Thread(target=_scan_loop, daemon=True, name="scan-loop").start()
+        threading.Thread(target=lambda: _run_scan(force=True), daemon=True, name="initial-scan").start()
+
+    return _live_engine
+
+
+def _patch_row_with_quote(row: dict, quote: dict | None) -> dict:
+    if not quote:
+        return row
+    row = dict(row)
+    if quote.get("price") is not None:
+        row["price"] = quote["price"]
+    if quote.get("change_pct") is not None:
+        row["change_pct"] = quote["change_pct"]
+    if quote.get("volume_ratio") is not None:
+        row["volume_ratio"] = quote["volume_ratio"]
+    row["live"] = True
+    return row
+
+
+def _merge_scan_with_live(scan_data: dict) -> dict:
+    engine = _ensure_background()
+    live = engine.get_payload()
+    quotes = live.get("quotes", {})
+
+    data = dict(scan_data)
+    for key in (
+        "opportunities", "all_stocks", "edge_plays", "gainers", "losers",
+        "gaps", "high_rvol", "rel_strength", "unusual_activity",
+    ):
+        if key in data and isinstance(data[key], list):
+            data[key] = [
+                _patch_row_with_quote(r, quotes.get(r.get("symbol", "")))
+                for r in data[key]
+            ]
+
+    if not data.get("all_stocks") and quotes:
+        boot = _bootstrap_from_live()
+        data.update(boot)
+
+    data["market_pulse"] = _get_market_pulse()
+    data["live"] = live
+    data["alerts"] = load_alerts().to_dict()
+    with _alert_lock:
+        data["alert_feed"] = list(_alert_history)
+    if _scan_cache.get("last_error"):
+        data["last_error"] = _scan_cache["last_error"]
+    data["scanning"] = _scan_cache.get("scanning", False)
+    return data
+
+
+def _run_scan(force: bool = False) -> None:
+    with _scan_lock:
+        if _scan_cache["scanning"] and not force:
+            return
+        _scan_cache["scanning"] = True
+        _scan_cache["last_error"] = None
+
+    print("Starting full market scan…")
+    try:
+        cfg = _cfg()
+        result = scan_full(config=cfg, use_batch=True)
+        payload = {
+            **result.to_dict(),
+            "ok": True,
+            "scanning": False,
+            "universe_size": len(resolve_symbols(cfg)),
+        }
+        save_scan_cache(payload)
+        with _scan_lock:
+            _scan_cache["data"] = payload
+            _scan_cache["ts"] = time.time()
+            _scan_cache["scanning"] = False
+            _scan_cache["last_error"] = None
+
+        syms = [s["symbol"] for s in payload.get("all_stocks", [])]
+        if syms:
+            _ensure_background().set_symbols(syms)
+        print(f"Scan complete: {len(syms)} stocks")
+    except Exception as e:
+        traceback.print_exc()
+        with _scan_lock:
+            _scan_cache["scanning"] = False
+            _scan_cache["last_error"] = str(e)
+        print(f"Scan failed: {e}")
+
+
+def _scan_loop() -> None:
+    while True:
+        time.sleep(_scan_interval())
+        _run_scan(force=True)
+
+
+def _scan_response(force: bool = False) -> dict:
+    _ensure_background()
+
+    if force:
+        with _scan_lock:
+            already = _scan_cache["scanning"]
+        if not already:
+            threading.Thread(target=lambda: _run_scan(force=True), daemon=True).start()
+
+    with _scan_lock:
+        cached = _scan_cache["data"]
+        scanning = _scan_cache["scanning"]
+
+    if cached and cached.get("all_stocks"):
+        merged = _merge_scan_with_live(cached)
+        merged["ok"] = True
+        merged["scanning"] = scanning
+        return merged
+
+    # No full scan yet — return live bootstrap immediately
+    boot = _bootstrap_from_live()
+    boot["scanning"] = scanning or not boot.get("all_stocks")
+    return _merge_scan_with_live(boot)
+
+
+@app.route("/")
+def index():
+    _schedule_background_start()
+    return render_template("index.html")
+
+
+@app.route("/api/health")
+def api_health():
+    """Fast health check — must not block Render deploy (no heavy scan here)."""
+    from dashboard.brand import SITE_NAME  # noqa: PLC0415
+    from dashboard.launch import APP_VERSION  # noqa: PLC0415
+
+    with _scan_lock:
+        n = len((_scan_cache.get("data") or {}).get("all_stocks", []))
+        scanning = _scan_cache["scanning"]
+        err = _scan_cache["last_error"]
+    live_n = 0
+    if _live_engine is not None:
+        try:
+            live_n = _live_engine.get_payload().get("count", 0)
+        except Exception:
+            pass
+
+    return jsonify({
+        "ok": True,
+        "site": SITE_NAME,
+        "version": APP_VERSION,
+        "stocks_cached": n,
+        "live_quotes": live_n,
+        "scanning": scanning,
+        "error": err,
+        "bg_started": _bg_started,
+    })
+
+
+@app.route("/api/bootstrap")
+def api_bootstrap():
+    try:
+        data = _bootstrap_from_live()
+        data = _merge_scan_with_live(data)
+        return jsonify(_json_safe(data))
+    except Exception as e:
+        traceback.print_exc()
+        return jsonify({"ok": True, "error": str(e), "all_stocks": [], "scanning": True})
+
+
+@app.route("/api/live")
+def api_live():
+    engine = _ensure_background()
+    return jsonify({"ok": True, **engine.get_payload()})
+
+
+@app.route("/api/market")
+def api_market():
+    """Live top gainers + losers for the header ticker."""
+    try:
+        pulse = _build_movers_tape()
+        return jsonify({
+            "ok": True,
+            "pulse": pulse,
+            "updated_at": time.strftime("%H:%M:%S"),
+        })
+    except Exception as e:
+        traceback.print_exc()
+        return jsonify({"ok": False, "pulse": [], "error": str(e)})
+
+
+@app.route("/api/scan")
+def api_scan():
+    force = request.args.get("refresh") == "1"
+    try:
+        data = _scan_response(force=force)
+        return jsonify(_json_safe(data))
+    except Exception as e:
+        traceback.print_exc()
+        boot = _bootstrap_from_live()
+        boot["error"] = str(e)
+        return jsonify(_json_safe(boot))
+
+
+@app.route("/api/alerts", methods=["GET"])
+def api_alerts_get():
+    store = load_alerts()
+    with _alert_lock:
+        feed = list(_alert_history)
+    return jsonify({"ok": True, **store.to_dict(), "feed": feed})
+
+
+@app.route("/api/alerts", methods=["POST"])
+def api_alerts_post():
+    body = request.get_json(silent=True) or {}
+    symbol = (body.get("symbol") or "").upper().strip()
+    alert_type = body.get("alert_type", "price_above")
+    value = body.get("value")
+    if not symbol or value is None:
+        return jsonify({"ok": False, "error": "symbol and value required"}), 400
+    valid = {
+        "price_above", "price_below", "change_above", "change_below",
+        "volume_above", "unusual_score_above",
+    }
+    if alert_type not in valid:
+        return jsonify({"ok": False, "error": "invalid alert_type"}), 400
+    alert = create_alert(symbol, alert_type, float(value), note=body.get("note", ""))
+    return jsonify({"ok": True, "alert": alert.to_dict()})
+
+
+@app.route("/api/alerts/<alert_id>", methods=["DELETE"])
+def api_alerts_delete(alert_id: str):
+    if delete_alert(alert_id):
+        return jsonify({"ok": True})
+    return jsonify({"ok": False, "error": "not found"}), 404
+
+
+@app.route("/api/stream")
+def api_stream():
+    def generate():
+        engine = _ensure_background()
+        while True:
+            payload = engine.get_payload()
+            yield f"data: {json.dumps({'ok': True, **payload})}\n\n"
+            time.sleep(float(_live_cfg().get("interval_sec", 1)))
+
+    return Response(
+        stream_with_context(generate()),
+        mimetype="text/event-stream",
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+    )
+
+
+def _schedule_background_start() -> None:
+    """Start live engine + scan in background (never block HTTP responses)."""
+    global _bg_started
+    if _bg_started:
+        return
+
+    def _start() -> None:
+        try:
+            _ensure_background()
+        except Exception as e:
+            traceback.print_exc()
+            with _scan_lock:
+                _scan_cache["last_error"] = str(e)
+
+    threading.Thread(target=_start, daemon=True, name="bg-start").start()
+
+
+def init_production() -> None:
+    """Lightweight boot for gunicorn — Render health check must pass in seconds."""
+    (ROOT / "data").mkdir(parents=True, exist_ok=True)
+    _load_disk_cache_into_memory()
+    _schedule_background_start()
+
+
+def main(port: int | None = None) -> None:
+    import os
+
+    from dashboard.brand import SITE_NAME  # noqa: PLC0415
+    from dashboard.launch import APP_VERSION, resolve_port  # noqa: PLC0415
+
+    init_production()
+
+    if os.environ.get("PORT"):
+        print(f"{SITE_NAME} — use gunicorn in production (see GO_LIVE_FREE.md)")
+        return
+
+    listen_port = port if port is not None else resolve_port()
+    if os.environ.get("STS_PORT"):
+        listen_port = int(os.environ["STS_PORT"])
+    host = os.environ.get("STS_HOST", "127.0.0.1")
+    public_url = os.environ.get("STS_PUBLIC_URL", f"http://127.0.0.1:{listen_port}")
+    try:
+        (ROOT / "data" / "dashboard.url").write_text(public_url.rstrip("/") + "\n", encoding="utf-8")
+    except OSError:
+        pass
+    print("=" * 50)
+    print(SITE_NAME)
+    print(f"Local:  http://127.0.0.1:{listen_port}")
+    if public_url != f"http://127.0.0.1:{listen_port}":
+        print(f"Public: {public_url}")
+    print(f"Health: http://127.0.0.1:{listen_port}/api/health")
+    if listen_port != 5050 and not os.environ.get("STS_PORT"):
+        print(f"(Port 5050 was busy — using {listen_port} instead)")
+    print("=" * 50)
+    app.run(host=host, port=listen_port, debug=False, threaded=True)
+
+
+if __name__ == "__main__":
+    main()

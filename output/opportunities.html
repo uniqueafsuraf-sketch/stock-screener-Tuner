@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Stock Opportunity Screener</title>
+  <style>
+    :root { font-family: system-ui, sans-serif; background: #0f1419; color: #e7e9ea; }
+    body { max-width: 1100px; margin: 2rem auto; padding: 0 1rem; }
+    h1 { font-size: 1.5rem; margin-bottom: 0.25rem; }
+    .meta { color: #71767b; margin-bottom: 1.5rem; font-size: 0.9rem; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+    th, td { padding: 0.6rem 0.5rem; text-align: left; border-bottom: 1px solid #2f3336; }
+    th { color: #71767b; font-weight: 600; }
+    .tag {
+      display: inline-block; background: #1d3a5c; color: #7ec8e3;
+      padding: 0.15rem 0.4rem; border-radius: 4px; margin: 0.1rem; font-size: 0.75rem;
+    }
+    .up { color: #00ba7c; }
+    .down { color: #f4212e; }
+    .notes { color: #aab8c2; font-size: 0.85rem; }
+    .empty { text-align: center; padding: 2rem; color: #71767b; }
+    .legend { margin-top: 2rem; font-size: 0.85rem; color: #71767b; line-height: 1.6; }
+  </style>
+</head>
+<body>
+  <h1>Stocks Open to Opportunity</h1>
+  <p class="meta">Scanned at 2026-06-01 15:35 · Sorted by conviction score</p>
+  <table>
+    <thead>
+      <tr>
+        <th>Symbol</th><th>Price</th><th>Change</th><th>Vol vs Avg</th>
+        <th>RSI</th><th>Score</th><th>Signals</th><th>Notes</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td><strong>INTC</strong></td>
+          <td>$110.46</td>
+          <td class="down">-3.68%</td>
+          <td>0.4x</td>
+          <td>31.2</td>
+          <td>2</td>
+          <td><span class="tag">AT SUPPORT</span></td>
+          <td class="notes">Price near rising support trendline (~$110.14)</td>
+        </tr>
+        <tr>
+          <td><strong>CVX</strong></td>
+          <td>$187.31</td>
+          <td class="up">+2.66%</td>
+          <td>0.2x</td>
+          <td>55.9</td>
+          <td>1</td>
+          <td><span class="tag">AT RESISTANCE</span></td>
+          <td class="notes">Price near resistance trendline (~$188.04)</td>
+        </tr></tbody>
+  </table>
+  <div class="legend">
+    <strong>Signals:</strong>
+    VOLUME SPIKE — unusual participation;
+    SELLOFF — sharp drop on volume (often capitulation);
+    AT SUPPORT / AT RESISTANCE — price at computed trendline;
+    SELLOFF AT SUPPORT — bounce candidate;
+    BREAKOUT SETUP — volume into resistance;
+    OVERSOLD — RSI below threshold on sell-off.
+    <br><em>Not financial advice. Verify charts before trading.</em>
+  </div>
+</body>
+</html>
