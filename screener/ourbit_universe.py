@@ -10,6 +10,9 @@ from pathlib import Path
 
 OURBIT_EXCHANGE_INFO = "https://api.ourbit.com/api/v3/exchangeInfo"
 CACHE_PATH = Path(__file__).resolve().parent.parent / "data" / "ourbit_stocks.json"
+STATIC_CACHE_PATH = (
+    Path(__file__).resolve().parent.parent / "dashboard" / "static" / "ourbit_stocks.json"
+)
 CACHE_TTL_SEC = 3600
 
 # Base assets that end in ON but are not Ourbit tokenized equities
@@ -95,19 +98,24 @@ def save_ourbit_cache(rows: list[dict]) -> Path:
     return CACHE_PATH
 
 
-def load_ourbit_cache(*, max_age_sec: int = CACHE_TTL_SEC) -> dict | None:
-    if not CACHE_PATH.exists():
+def _read_ourbit_cache_file(path: Path, *, max_age_sec: int) -> dict | None:
+    if not path.exists():
         return None
     try:
-        data = json.loads(CACHE_PATH.read_text(encoding="utf-8"))
+        data = json.loads(path.read_text(encoding="utf-8"))
         fetched = data.get("fetched_at_epoch") or 0
-        if not fetched:
-            return data
-        if time.time() - fetched > max_age_sec:
+        if fetched and time.time() - fetched > max_age_sec:
             return None
         return data
     except (json.JSONDecodeError, OSError):
         return None
+
+
+def load_ourbit_cache(*, max_age_sec: int = CACHE_TTL_SEC) -> dict | None:
+    data = _read_ourbit_cache_file(CACHE_PATH, max_age_sec=max_age_sec)
+    if data and data.get("stocks"):
+        return data
+    return _read_ourbit_cache_file(STATIC_CACHE_PATH, max_age_sec=86400 * 365)
 
 
 def get_ourbit_tickers(*, refresh: bool = False) -> list[str]:
@@ -133,18 +141,25 @@ def get_ourbit_tickers(*, refresh: bool = False) -> list[str]:
         raise RuntimeError(f"Ourbit symbol fetch failed: {e}") from e
 
 
-def get_ourbit_lookup(*, refresh: bool = False) -> dict[str, dict]:
+def get_ourbit_lookup(*, refresh: bool = False, allow_fetch: bool = True) -> dict[str, dict]:
     """Map Yahoo ticker → Ourbit pair metadata."""
-    if refresh:
+    if refresh and allow_fetch:
         rows = fetch_ourbit_stocks()
         save_ourbit_cache(rows)
-    else:
-        cached = load_ourbit_cache()
-        if cached and cached.get("stocks"):
-            rows = cached["stocks"]
-        else:
+        return {r["ticker"].upper(): r for r in rows}
+
+    cached = load_ourbit_cache(max_age_sec=86400 * 7)
+    if cached and cached.get("stocks"):
+        rows = cached["stocks"]
+    elif allow_fetch:
+        try:
             rows = fetch_ourbit_stocks()
             save_ourbit_cache(rows)
+        except Exception:
+            rows = []
+    else:
+        rows = []
+
     return {r["ticker"].upper(): r for r in rows}
 
 

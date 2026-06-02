@@ -742,6 +742,14 @@
   }
 
   async function onDataLoaded(json) {
+    if (!json) return;
+    const incoming = (json.all_stocks || []).length;
+    const existing = (data?.all_stocks || []).length;
+    if (!incoming && !json.opportunities?.length && existing > 0) {
+      if (json.scanning) data.scanning = true;
+      updateStatusBanner();
+      return;
+    }
     const live = data?.live;
     data = await enrichOurbitPayload(json);
     if (live && !data.live) data.live = live;
@@ -777,29 +785,74 @@
     }
   }
 
-  async function fetchJsonWithFallback(primary, fallback) {
-    const res = await fetch(primary);
-    if (res.ok) return res.json();
-    if (res.status === 404 && fallback) {
-      const res2 = await fetch(fallback);
-      if (res2.ok) return res2.json();
-    }
-    if (res.status === 404) {
-      throw new Error(
-        "API not found — an old dashboard is still running. Close all terminal windows, then double-click start_dashboard.bat in the stock-screener folder."
-      );
-    }
-    throw new Error(`Server returned ${res.status}`);
+  async function loadStaticSeedFallback() {
+    try {
+      const res = await fetch("/static/seed_bootstrap.json", { cache: "no-store" });
+      if (!res.ok) return null;
+      const json = await res.json();
+      if (json?.all_stocks?.length || json?.opportunities?.length) return json;
+    } catch (_) { /* ignore */ }
+    return null;
   }
 
-  async function waitForServer(maxMs = 120000) {
-    const deadline = Date.now() + maxMs;
+  async function fetchJsonWithFallback(primary, fallback) {
+    try {
+      const res = await fetch(primary, { cache: "no-store" });
+      if (res.ok) {
+        const json = await res.json();
+        if (json?.all_stocks?.length || json?.opportunities?.length) return json;
+      } else if (res.status !== 404) {
+        throw new Error(`Server returned ${res.status}`);
+      }
+    } catch (e) {
+      if (!fallback) throw e;
+    }
+    if (fallback) {
+      try {
+        const res2 = await fetch(fallback, { cache: "no-store" });
+        if (res2.ok) {
+          const json = await res2.json();
+          if (json?.all_stocks?.length || json?.opportunities?.length) return json;
+        }
+      } catch (_) { /* try static */ }
+    }
+    const seed = await loadStaticSeedFallback();
+    if (seed) return seed;
+    if (primary === "/api/bootstrap") {
+      throw new Error("Server returned no stock data yet");
+    }
+    throw new Error(
+      "API not found — an old dashboard is still running. Close all terminal windows, then double-click start_dashboard.bat in the stock-screener folder."
+    );
+  }
+
+  async function fetchHubData() {
+    const sources = [
+      () => fetch("/api/bootstrap", { cache: "no-store" }).then((r) => (r.ok ? r.json() : null)),
+      () => fetch("/static/seed_bootstrap.json", { cache: "no-store" }).then((r) => (r.ok ? r.json() : null)),
+      () => fetch("/api/scan", { cache: "no-store" }).then((r) => (r.ok ? r.json() : null)),
+    ];
+    for (const load of sources) {
+      try {
+        const json = await load();
+        if (json?.all_stocks?.length || json?.opportunities?.length) return json;
+      } catch (_) { /* try next */ }
+    }
+    return null;
+  }
+
+  async function waitForServer(maxMs = 60000) {
+    const seen = sessionStorage.getItem("sts-server-ok");
+    const deadline = Date.now() + (seen ? 15000 : maxMs);
     while (Date.now() < deadline) {
       try {
         const res = await fetch("/api/health", { cache: "no-store" });
         if (res.ok) {
           const j = await res.json();
-          if (j.ok) return true;
+          if (j.ok) {
+            sessionStorage.setItem("sts-server-ok", String(Date.now()));
+            return true;
+          }
         }
       } catch (_) {}
       const banner = $("status-banner");
@@ -814,28 +867,52 @@
   }
 
   async function loadBootstrap() {
+    const staticPromise = fetch("/static/seed_bootstrap.json", { cache: "no-store" })
+      .then((r) => (r.ok ? r.json() : null))
+      .catch(() => null);
+
     const up = await waitForServer();
     if (!up) {
+      const seed = await staticPromise;
+      if (seed?.all_stocks?.length) {
+        await onDataLoaded(seed);
+        return true;
+      }
       showServerError("Server not responding. On Render free tier, open the site once and wait ~1 minute, then refresh.");
-      return;
+      return false;
     }
-    for (let attempt = 0; attempt < 8; attempt++) {
+
+    for (let attempt = 0; attempt < 6; attempt++) {
       try {
-        const json = await fetchJsonWithFallback("/api/bootstrap", "/api/scan");
+        const json = await Promise.race([
+          fetchHubData(),
+          staticPromise,
+        ]);
         if (json?.all_stocks?.length || json?.opportunities?.length) {
           await onDataLoaded(json);
-          return;
+          return true;
         }
         if (json?.message && $("meta")) $("meta").textContent = json.message;
       } catch (e) {
-        if (attempt === 7) {
+        if (attempt === 5) {
+          const seed = await staticPromise;
+          if (seed?.all_stocks?.length) {
+            await onDataLoaded(seed);
+            return true;
+          }
           showServerError(`Cannot load data: ${e.message}`);
-          return;
+          return false;
         }
       }
-      await new Promise((r) => setTimeout(r, 3000));
+      await new Promise((r) => setTimeout(r, 2000));
+    }
+    const seed = await staticPromise;
+    if (seed?.all_stocks?.length) {
+      await onDataLoaded(seed);
+      return true;
     }
     showServerError("No stock data yet. Click Refresh scan or wait for the background scan to finish.");
+    return false;
   }
 
   function scheduleScanPoll() {
@@ -926,5 +1003,7 @@
   renderFilters();
   setTableHeader();
   startLivePolling();
-  loadBootstrap().then(() => loadScan(false));
+  loadBootstrap().then((loaded) => {
+    if (!loaded) loadScan(false);
+  });
 })();

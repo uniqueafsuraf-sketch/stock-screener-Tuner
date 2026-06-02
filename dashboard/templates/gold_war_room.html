@@ -22,6 +22,12 @@
 
   <link rel="stylesheet" href="/static/gold_war_room.css?v={{ app_version }}">
 
+  <link rel="prefetch" href="/api/bootstrap">
+
+  <link rel="prefetch" href="/static/seed_bootstrap.json">
+
+  <link rel="prefetch" href="/">
+
 </head>
 
 <body>
@@ -106,7 +112,9 @@
 
         </header>
 
-        <p class="war-muted ops-intro" id="stations-subtitle">{% if initial and initial.agent_stations %}{{ initial.agent_stations.subtitle }}{% else %}Live desk map — each crewmate is working their station{% endif %}</p>
+        <p class="war-muted ops-intro" id="stations-subtitle">Live trading floor — each analyst station reports task, metrics, and desk output in real time.</p>
+
+        <div id="ops-health" class="ops-health-bar" aria-live="polite"></div>
 
         <div class="ops-map-layout">
 
@@ -114,25 +122,25 @@
 
             <div class="ops-floor-title-row">
 
-              <h2 class="ops-floor-title">Live floor map <span id="stations-headline" class="war-chip">{% if initial and initial.agent_stations %}{{ initial.agent_stations.headline }}{% else %}Crew deploying…{% endif %}</span></h2>
+              <h2 class="ops-floor-title">Desk floor <span id="stations-headline" class="war-chip">Loading…</span></h2>
 
-              <span class="au-map-legend"><span class="au-legend-dot active"></span> Working</span>
+              <span class="au-map-legend"><span class="au-legend-dot active"></span> Active</span>
 
-              <span class="au-map-legend"><span class="au-legend-dot idle"></span> Idle</span>
+              <span class="au-map-legend"><span class="au-legend-dot idle"></span> Standby</span>
 
               <span class="au-map-legend"><span class="au-legend-dot warn"></span> Alert</span>
 
             </div>
 
-            <div id="ops-map" class="au-map">
-
-              <div class="au-map-corridors" aria-hidden="true"></div>
+            <div id="ops-map" class="au-map au-map-pro">
 
               <div id="ops-map-rooms" class="au-map-rooms"></div>
 
               <div id="ops-map-crew" class="au-map-crew"></div>
 
             </div>
+
+            <div id="ops-desk-grid" class="ops-desk-grid" aria-label="Agent desk detail"></div>
 
           </section>
 

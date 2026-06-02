@@ -13,6 +13,7 @@ if str(ROOT) not in sys.path:
 
 CACHE = ROOT / "data" / "scan_cache.json"
 SEED = ROOT / "data" / "seed_bootstrap.json"
+STATIC_SEED = ROOT / "dashboard" / "static" / "seed_bootstrap.json"
 
 
 def _slim_row(row: dict) -> dict:
@@ -62,8 +63,12 @@ def main() -> int:
     if isinstance(out.get("news_wire"), list) and len(out["news_wire"]) > 150:
         out["news_wire"] = out["news_wire"][:150]
 
-    SEED.write_text(json.dumps(out, separators=(",", ":")), encoding="utf-8")
-    print(f"Wrote {SEED} — {len(stocks)} symbols, {SEED.stat().st_size:,} bytes")
+    payload = json.dumps(out, separators=(",", ":"))
+    SEED.write_text(payload, encoding="utf-8")
+    STATIC_SEED.write_text(payload, encoding="utf-8")
+    print(
+        f"Wrote {SEED} and {STATIC_SEED} — {len(stocks)} symbols, {SEED.stat().st_size:,} bytes"
+    )
     return 0
 
 

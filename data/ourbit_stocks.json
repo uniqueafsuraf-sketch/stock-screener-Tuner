@@ -1,7 +1,7 @@
 {
   "source": "api.ourbit.com/api/v3/exchangeInfo",
-  "fetched_at": "2026-06-01 23:56:35 UTC",
-  "fetched_at_epoch": 1780358195.8493905,
+  "fetched_at": "2026-06-02 17:35:35 UTC",
+  "fetched_at_epoch": 1780421735.6394556,
   "count": 33,
   "stocks": [
     {

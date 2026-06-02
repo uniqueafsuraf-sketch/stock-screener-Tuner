@@ -99,6 +99,43 @@ def scan_full(
         _tag_ourbit(snap)
         all_stocks.append(snap)
 
+    present = {s.symbol.upper() for s in all_stocks}
+    for ticker, info in sorted(ourbit_lookup.items()):
+        if ticker in present:
+            continue
+        df = frames.get(ticker)
+        if df is None:
+            try:
+                df = fetch_history(ticker, min(lookback, 30))
+            except Exception:
+                df = None
+        if df is not None and len(df) >= 2:
+            adv = avg_dollar_volume(df)
+            snap = evaluate(ticker, df, avg_dollar_volume_m=adv / 1_000_000, **eval_kw)
+            snap = augment_snapshot(snap, df, spy_5d=spy_5d)
+            _tag_ourbit(snap)
+            all_stocks.append(snap)
+            present.add(ticker)
+            continue
+        snap = StockSnapshot(
+            symbol=ticker,
+            price=0.0,
+            change_pct=0.0,
+            volume_ratio=0.0,
+            rsi=50.0,
+            thesis="Ourbit-listed — quote pending",
+            on_ourbit=True,
+            ourbit_symbol=info.get("ourbit_symbol", ""),
+            chart_links={
+                "tradingview": f"https://www.tradingview.com/chart/?symbol={ticker}",
+                "yahoo": f"https://finance.yahoo.com/quote/{ticker}/chart/",
+                "finviz": f"https://finviz.com/quote.ashx?t={ticker}",
+                "yahoo_news": f"https://finance.yahoo.com/quote/{ticker}/news/",
+            },
+        )
+        all_stocks.append(snap)
+        present.add(ticker)
+
     # Earnings — non-fatal if slow/fails
     earn_list: list[dict] = []
     try:

@@ -97,31 +97,70 @@
 
   function renderCrewmate(st) {
     const cls = stationStatusClass(st.status);
-    const activity = st.activity || (cls === "st-active" ? "working" : "patrol");
     const color = st.crew_color || "#7f8c8d";
     const x = st.map_x != null ? st.map_x : 50;
     const y = st.map_y != null ? st.map_y : 70;
     const room = st.map_room || st.id;
     const isBoss = st.tier === "command" || st.id === "boss";
+    const tier = st.tier === "command" ? "CMD" : st.tier === "ops" ? "OPS" : "ANL";
     return `
-      <div class="au-crew ${cls} activity-${activity}${isBoss ? " au-crew-boss" : ""}"
+      <div class="ops-agent-pin ${cls}${isBoss ? " ops-agent-pin-boss" : ""}"
            data-room="${esc(room)}"
            data-agent="${esc(st.id)}"
-           style="--crew-color:${color};left:${x}%;top:${y}%"
-           title="${esc(st.character)} — ${esc(st.task_label)}">
-        <div class="au-speech">
-          <strong>${esc(st.task_label)}</strong>
-          <span>${esc(st.intel || st.working_on)}</span>
-        </div>
-        <div class="au-crewmate" aria-hidden="true">
-          <div class="au-body"></div>
-          <div class="au-visor"></div>
-          <div class="au-backpack"></div>
-          ${activity === "working" ? '<div class="au-sparkles"></div>' : ""}
-        </div>
-        <span class="au-crew-label">${esc(st.character || st.name)}</span>
-        <span class="au-crew-stance ${(st.stance || "").toLowerCase()}">${esc(st.stance)}</span>
+           style="--pin-color:${color};left:${x}%;top:${y}%"
+           title="${esc(st.character || st.name)} — ${esc(st.task_label)}">
+        <span class="ops-pin-badge">${esc(tier)}</span>
+        <span class="ops-pin-name">${esc(st.character || st.name)}</span>
+        <span class="ops-pin-stance ${(st.stance || "").toLowerCase()}">${esc(st.stance)}</span>
       </div>`;
+  }
+
+  function renderOpsHealth(health, ops) {
+    const el = $("ops-health");
+    if (!el || !health) return;
+    const online = health.online ?? 0;
+    const total = health.total ?? 7;
+    const errs = health.errors || [];
+    const warns = health.warnings || [];
+    el.innerHTML = `
+      <div class="ops-health-stat"><label>Agents online</label><strong>${online}/${total}</strong></div>
+      <div class="ops-health-stat"><label>Floor</label><strong>${esc(ops?.floor_status || "—")}</strong></div>
+      <div class="ops-health-stat"><label>Scan cadence</label><strong>${ops?.scan_interval_sec || 45}s</strong></div>
+      <div class="ops-health-stat"><label>Alerts</label><strong>${errs.length ? `${errs.length} error(s)` : warns.length ? `${warns.length} warning(s)` : "Clear"}</strong></div>`;
+  }
+
+  function renderOpsDeskCard(st) {
+    const cls = stationStatusClass(st.status);
+    const warns = (st.warnings || []).map((w) => `<li>${esc(w)}</li>`).join("");
+    const tierLabel = st.tier === "command" ? "Commander" : st.tier === "ops" ? "Operations" : "Analyst";
+    return `
+      <article class="ops-desk-card ${cls}" data-agent="${esc(st.id)}">
+        <header class="ops-desk-head">
+          <span class="ops-desk-dot" style="background:${st.crew_color || '#888'}"></span>
+          <div>
+            <h3>${esc(st.character || st.name)}</h3>
+            <span class="ops-desk-tier">${esc(tierLabel)} · ${esc(st.map_room || st.id)}</span>
+          </div>
+          <span class="ops-desk-status">${esc(st.status)}</span>
+          <span class="ops-desk-stance ${(st.stance || "").toLowerCase()}">${esc(st.stance)}</span>
+        </header>
+        <dl class="ops-desk-meta">
+          <div><dt>Task</dt><dd>${esc(st.task_label)}</dd></div>
+          <div><dt>Working on</dt><dd>${esc(st.working_on)}</dd></div>
+          <div><dt>Intel</dt><dd>${esc(st.intel)}</dd></div>
+          <div><dt>Metrics</dt><dd>${esc(st.metrics || "—")}</dd></div>
+        </dl>
+        <p class="ops-desk-output">${esc(st.output || "")}</p>
+        ${warns ? `<ul class="ops-desk-warns">${warns}</ul>` : ""}
+      </article>`;
+  }
+
+  function renderOpsDeskGrid(crew) {
+    const grid = $("ops-desk-grid");
+    if (!grid) return;
+    const order = ["boss", "ops", "macro", "technical", "order_flow", "sentiment", "quant", "risk", "trap"];
+    const sorted = [...crew].sort((a, b) => order.indexOf(a.id) - order.indexOf(b.id));
+    grid.innerHTML = sorted.map((st) => renderOpsDeskCard(st)).join("");
   }
 
   function renderMapRoom(room, crewInRoom) {
@@ -140,6 +179,7 @@
 
   function renderHudCard(st) {
     const cls = stationStatusClass(st.status);
+    const warns = (st.warnings || []).slice(0, 2).map((w) => `<li>${esc(w)}</li>`).join("");
     return `
       <article class="au-hud-card ${cls}" data-agent="${esc(st.id)}">
         <header>
@@ -148,9 +188,11 @@
           <span class="au-hud-status">${esc(st.status)}</span>
         </header>
         <p class="au-hud-task">${esc(st.task_label)}</p>
+        <p class="au-hud-metrics">${esc(st.metrics || "")}</p>
         <p class="au-hud-intel">${esc(st.intel || st.working_on)}</p>
         <p class="au-hud-detail">${esc(st.working_on)}</p>
-        <p class="au-hud-report">${esc(st.output)}</p>
+        <p class="au-hud-report">${esc(st.output || "")}</p>
+        ${warns ? `<ul class="au-hud-warns">${warns}</ul>` : ""}
       </article>`;
   }
 
@@ -168,13 +210,16 @@
 
     if (!crew.length) {
       if (mapCrew) mapCrew.innerHTML = "";
-      if (mapRooms) mapRooms.innerHTML = "<p class='au-map-loading'>Deploying crew to floor…</p>";
+      if (mapRooms) mapRooms.innerHTML = "<p class='au-map-loading'>Loading analyst stations…</p>";
       if (hudList) hudList.innerHTML = "";
+      const grid = $("ops-desk-grid");
+      if (grid) grid.innerHTML = "<p class='war-muted'>Waiting for desk data…</p>";
       return;
     }
-    if (sub) sub.textContent = ops.subtitle || "";
+    if (sub) sub.textContent = ops.subtitle || sub.textContent;
     if (head) head.textContent = ops.headline || "";
     if (chip) chip.textContent = ops.floor_status || "Floor status";
+    renderOpsHealth(ops.health, ops);
     const updated = document.querySelector("#war-meta")?.textContent || "";
     if (meta) meta.textContent = updated.includes("Updated") ? updated : `XAUUSD desk · ${ops.scan_interval_sec || 45}s refresh`;
 
@@ -188,6 +233,8 @@
     if (mapCrew) {
       mapCrew.innerHTML = crew.map((st) => renderCrewmate(st)).join("");
     }
+
+    renderOpsDeskGrid(crew);
 
     if (hudList) {
       const order = ["boss", "ops", "macro", "technical", "order_flow", "sentiment", "quant", "risk", "trap"];
@@ -709,6 +756,37 @@
     }
   }
 
+  async function fetchWarDeskJson(refresh) {
+    const urls = refresh
+      ? [`/api/gold-war-room?refresh=1`]
+      : [
+          "/api/gold-war-room/bootstrap",
+          "/api/gold-war-room",
+          "/static/gold_war_room_seed.json",
+        ];
+    let lastErr = null;
+    for (const url of urls) {
+      try {
+        const res = await fetch(url, { cache: "no-store" });
+        if (res.status === 502 || res.status === 503) {
+          lastErr = new Error(`Server ${res.status}`);
+          continue;
+        }
+        if (!res.ok) {
+          lastErr = new Error(`Server ${res.status}`);
+          continue;
+        }
+        const json = await res.json();
+        if (json?.ok && json.agents && Object.keys(json.agents).length) return json;
+        if (json?.ok && json.agent_stations?.crew?.length) return json;
+        if (json?.warming) return json;
+      } catch (e) {
+        lastErr = e;
+      }
+    }
+    throw lastErr || new Error("War room unavailable");
+  }
+
   async function load(refresh = false, retries = 0) {
     const btn = $("btn-war-refresh");
     if (btn) btn.disabled = true;
@@ -720,28 +798,20 @@
       $("consensus-table").innerHTML = "<span class='war-muted'>Analyzing…</span>";
     }
     try {
-      const q = new URLSearchParams();
-      if (refresh) q.set("refresh", "1");
-      q.set("leverage", String(scalpLeverage));
-      const res = await fetch(`/api/gold-war-room?${q}`, { cache: "no-store" });
-      if (res.status === 502 || res.status === 503) {
-        if (retries < 8) {
-          showStatusBanner({ error: `Server ${res.status} — retrying…`, fetch_notes: [] });
-          setTimeout(() => load(refresh, retries + 1), 4000);
-          return;
-        }
-        throw new Error(`Server ${res.status}`);
+      const json = await fetchWarDeskJson(refresh);
+      if (!refresh && json?.warming && retries < 8) {
+        warmPolls += 1;
+        setTimeout(() => load(false, retries + 1), 2500);
+        return;
       }
-      if (!res.ok) throw new Error(`Server ${res.status}`);
-      const json = await res.json();
-      if (json.warming) {
+      if (json.warming && !json.agents) {
         warmPolls += 1;
         renderMarketBias({
           headline: "Analyzing gold…",
           meaning: json.message || "Agents analyzing…",
         }, {});
         if (warmPolls < 40) {
-          setTimeout(() => load(false), 3000);
+          setTimeout(() => load(false, retries + 1), 3000);
         } else {
           renderMarketBias({
             headline: "Still loading",
@@ -752,10 +822,12 @@
       }
       warmPolls = 0;
       lastWarPayload = json;
-      apply(json);
-      if (json.scalping && (json.scalping.leverage || 0) !== scalpLeverage) {
-        updateScalpForLeverage();
+      const deskLev = json.scalping?.leverage;
+      if (deskLev && levSelect) {
+        scalpLeverage = Number(deskLev);
+        levSelect.value = String(scalpLeverage);
       }
+      apply(json);
     } catch (e) {
       renderMarketBias({
         headline: "Connection issue",
@@ -791,10 +863,11 @@
   const boot = readBootstrap();
   if (boot?.ok && boot.agents && Object.keys(boot.agents).length) {
     lastWarPayload = boot;
-    apply(boot);
-    if ((boot.scalping?.leverage || 0) !== scalpLeverage) {
-      updateScalpForLeverage();
+    if (boot.scalping?.leverage && levSelect) {
+      scalpLeverage = Number(boot.scalping.leverage);
+      levSelect.value = String(scalpLeverage);
     }
+    apply(boot);
   }
 
   async function refreshLiveSpot() {

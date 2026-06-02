@@ -153,7 +153,7 @@ def _apply_ourbit_payload(data: dict, *, live_quotes: dict | None = None) -> dic
     """Tag rows with Ourbit metadata and build a dedicated ourbit_stocks list."""
     from screener.ourbit_universe import get_ourbit_lookup  # noqa: PLC0415
 
-    lookup = get_ourbit_lookup()
+    lookup = get_ourbit_lookup(allow_fetch=False)
     if not lookup:
         return data
 
@@ -186,6 +186,17 @@ def _apply_ourbit_payload(data: dict, *, live_quotes: dict | None = None) -> dic
     stats["ourbit_count"] = len(ourbit_stocks)
     out["stats"] = stats
     out["ourbit_payload_version"] = _OURBIT_PAYLOAD_VERSION
+
+    # Every Ourbit ticker must appear in Full universe (all_stocks), not only the Ourbit tab.
+    merged_all = list(out.get("all_stocks") or [])
+    seen_syms = {(r.get("symbol") or "").upper() for r in merged_all if isinstance(r, dict)}
+    for row in ourbit_stocks:
+        sym = (row.get("symbol") or "").upper()
+        if sym and sym not in seen_syms:
+            merged_all.append(row)
+            seen_syms.add(sym)
+    merged_all.sort(key=lambda r: (r.get("symbol") or ""))
+    out["all_stocks"] = merged_all
     return out
 
 
@@ -325,12 +336,14 @@ def _load_disk_cache_into_memory() -> None:
         )
         disk = _apply_ourbit_payload(disk)
         with _scan_lock:
-            if _scan_cache["data"] is None:
+            cur = _scan_cache.get("data")
+            empty = not (cur and cur.get("all_stocks"))
+            if cur is None or empty:
                 _scan_cache["data"] = disk
                 _scan_cache["ts"] = time.time()
                 n_ob = len(disk.get("ourbit_stocks") or [])
                 print(f"Loaded {len(disk.get('all_stocks', []))} stocks from {src} ({n_ob} Ourbit)")
-                if stale_ourbit:
+                if stale_ourbit and is_cloud_host():
                     threading.Thread(
                         target=lambda: _run_scan(force=True),
                         daemon=True,
@@ -472,7 +485,11 @@ def _scan_loop() -> None:
 
 
 def _scan_response(force: bool = False) -> dict:
-    _ensure_background()
+    _schedule_background_start()
+    with _scan_lock:
+        has_stocks = bool((_scan_cache.get("data") or {}).get("all_stocks"))
+    if not has_stocks:
+        _load_disk_cache_into_memory()
 
     if force:
         with _scan_lock:
@@ -485,10 +502,18 @@ def _scan_response(force: bool = False) -> dict:
         scanning = _scan_cache["scanning"]
 
     if cached and cached.get("all_stocks"):
-        merged = _merge_scan_with_live(cached)
-        merged["ok"] = True
-        merged["scanning"] = scanning
-        return merged
+        if force:
+            merged = _merge_scan_with_live(cached)
+            merged["ok"] = True
+            merged["scanning"] = scanning
+            return merged
+        data = dict(cached)
+        data["ok"] = True
+        data["scanning"] = scanning
+        data["live"] = _live_payload_safe()
+        if _scan_cache.get("last_error"):
+            data["last_error"] = _scan_cache["last_error"]
+        return data
 
     # No full scan yet — return live bootstrap immediately
     boot = _bootstrap_from_live()
@@ -500,8 +525,31 @@ def _scan_response(force: bool = False) -> dict:
 def index():
     from dashboard.launch import APP_VERSION  # noqa: PLC0415
 
-    _schedule_background_start()
     return render_template("index.html", app_version=APP_VERSION)
+
+
+def _slim_hub_payload(data: dict) -> dict:
+    """Trim heavy news fields for fast hub first paint (keeps all stock rows)."""
+    out = dict(data)
+    wire = out.get("news_wire")
+    if isinstance(wire, list) and len(wire) > 100:
+        out["news_wire"] = wire[:100]
+    for key in _ROW_LIST_KEYS:
+        rows = out.get(key)
+        if not isinstance(rows, list):
+            continue
+        slim: list = []
+        for row in rows:
+            if not isinstance(row, dict):
+                slim.append(row)
+                continue
+            r = dict(row)
+            news = r.get("news")
+            if isinstance(news, list) and len(news) > 2:
+                r["news"] = news[:2]
+            slim.append(r)
+        out[key] = slim
+    return out
 
 
 _war_room_cache: dict = {
@@ -631,24 +679,29 @@ def _refresh_war_room_async(*, force: bool = False) -> None:
     threading.Thread(target=_run, daemon=True, name="war-room-refresh").start()
 
 
+_WAR_ROOM_PAGE_BOOTSTRAP: dict = {
+    "ok": True,
+    "warming": True,
+    "message": "Loading desk via API…",
+    "market_bias": {"headline": "Loading…", "meaning": "Agents connect in a few seconds."},
+    "confidence_meter": {"score": 0, "label": "—"},
+    "agents": {},
+    "agent_consensus": {"rows": [], "headline": "—"},
+    "news": [],
+}
+
+
 @app.route("/gold-war-room")
 def gold_war_room_page():
     from dashboard.brand import SITE_NAME  # noqa: PLC0415
     from dashboard.launch import APP_VERSION  # noqa: PLC0415
-    from screener.gold_war_room.stability import slim_war_room_payload  # noqa: PLC0415
 
     try:
-        _schedule_background_start()
-        initial = load_war_room_seed() or _war_room_warming_payload()
-        with _war_room_lock:
-            cached = _war_room_cache.get("data")
-            if _war_room_ready(cached):
-                initial = cached
         return render_template(
             "gold_war_room.html",
             site_name=SITE_NAME,
             app_version=APP_VERSION,
-            initial=slim_war_room_payload(initial),
+            initial=_WAR_ROOM_PAGE_BOOTSTRAP,
         )
     except Exception as e:
         traceback.print_exc()
@@ -656,11 +709,11 @@ def gold_war_room_page():
             "gold_war_room.html",
             site_name=SITE_NAME,
             app_version=APP_VERSION,
-            initial=slim_war_room_payload({
+            initial={
                 "ok": True,
                 "error": str(e),
                 "market_bias": {"headline": "War Room recovering", "meaning": "Reload in a few seconds."},
-            }),
+            },
         ), 200
 
 
@@ -720,13 +773,47 @@ def api_gold_war_room_scalp():
         return jsonify({"ok": False, "error": str(e), "scalping": cached.get("scalping", {})})
 
 
+def _war_room_api_payload(payload: dict) -> dict:
+    """Strip chart candles for faster JSON (client uses TradingView embed)."""
+    out = dict(payload)
+    chart = dict(out.get("chart") or {})
+    chart["candles"] = []
+    out["chart"] = chart
+    return out
+
+
+@app.route("/api/gold-war-room/ping")
+def api_gold_war_room_ping():
+    with _war_room_lock:
+        ready = _war_room_ready(_war_room_cache.get("data"))
+        computing = bool(_war_room_cache.get("computing"))
+    return jsonify({"ok": True, "ready": ready, "computing": computing})
+
+
+@app.route("/api/gold-war-room/bootstrap")
+def api_gold_war_room_bootstrap():
+    """Instant desk JSON from bundled seed (never blocks on agent run)."""
+    with _war_room_lock:
+        cached = _war_room_cache.get("data")
+    if _war_room_ready(cached):
+        return jsonify(_json_safe(_war_room_api_payload(cached)))
+    seed = load_war_room_seed()
+    if seed and seed.get("ok"):
+        with _war_room_lock:
+            _war_room_cache["data"] = seed
+            _war_room_cache["ts"] = time.time()
+            _war_room_cache["computing"] = False
+        return jsonify(_json_safe(_war_room_api_payload(seed)))
+    return jsonify(_json_safe(_war_room_warming_payload()))
+
+
 @app.route("/api/gold-war-room")
 def api_gold_war_room():
     try:
         force = request.args.get("refresh") == "1"
         lev_only = request.args.get("leverage_only") == "1"
         lev_arg = request.args.get("leverage", type=int)
-        if lev_arg is not None:
+        if lev_arg is not None and lev_only:
             with _war_room_lock:
                 _war_room_cache["leverage"] = max(10, min(200, lev_arg))
         now = time.time()
@@ -741,40 +828,28 @@ def api_gold_war_room():
             _reset_war_room_compute_lock()
             computing = False
 
-        if _war_room_ready(cached) and lev_arg is not None:
-            cached_lev = (cached.get("scalping") or {}).get("leverage")
-            if lev_only or cached_lev != requested_lev:
-                try:
-                    patched = _patch_cached_scalping_for_leverage(cached, requested_lev)
-                    with _war_room_lock:
-                        _war_room_cache["data"] = patched
-                    return jsonify(_json_safe(patched))
-                except Exception:
-                    traceback.print_exc()
-
-        if _war_room_ready(cached) and age < WAR_ROOM_TTL and not force:
-            return jsonify(_json_safe(cached))
+        if _war_room_ready(cached) and lev_only and lev_arg is not None:
+            try:
+                patched = _patch_cached_scalping_for_leverage(cached, requested_lev)
+                with _war_room_lock:
+                    _war_room_cache["data"] = patched
+                return jsonify(_json_safe(_war_room_api_payload(patched)))
+            except Exception:
+                traceback.print_exc()
 
         if _war_room_ready(cached) and not force:
-            return jsonify(_json_safe(cached))
+            return jsonify(_json_safe(_war_room_api_payload(cached)))
 
-        if not computing:
-            _refresh_war_room_async(force=force)
+        if not computing and force and not is_cloud_host():
+            _refresh_war_room_async(force=True)
 
         if _war_room_ready(cached):
             out = dict(cached)
-            if lev_arg is not None and (out.get("scalping") or {}).get("leverage") != requested_lev:
-                try:
-                    out = _patch_cached_scalping_for_leverage(out, requested_lev)
-                except Exception:
-                    traceback.print_exc()
             if force or age >= WAR_ROOM_TTL:
                 out["stale"] = True
-            return jsonify(_json_safe(out))
+            return jsonify(_json_safe(_war_room_api_payload(out)))
 
         warm = _war_room_warming_payload()
-        if _war_room_ready(cached):
-            warm["partial"] = _json_safe(cached)
         return jsonify(_json_safe(warm))
     except Exception as e:
         traceback.print_exc()
@@ -954,6 +1029,7 @@ def api_bootstrap():
     """Fast first paint: return seed/disk cache immediately; live quotes patch in via /api/live."""
     _schedule_background_start()
     try:
+        _load_disk_cache_into_memory()
         with _scan_lock:
             cached = _scan_cache.get("data")
             scanning = _scan_cache.get("scanning", False)
@@ -962,9 +1038,15 @@ def api_bootstrap():
             data["ok"] = True
             data["scanning"] = scanning
             data["message"] = data.get("message") or "Data loaded — live quotes updating…"
-            return jsonify(_json_safe(_merge_scan_with_live(data, start_bg=False)))
+            try:
+                data = _apply_ourbit_payload(data)
+            except Exception:
+                traceback.print_exc()
+            return jsonify(_json_safe(_slim_hub_payload(data)))
         data = _bootstrap_from_live()
-        return jsonify(_json_safe(_merge_scan_with_live(data, start_bg=False)))
+        data["ok"] = True
+        data["scanning"] = scanning or not data.get("all_stocks")
+        return jsonify(_json_safe(data))
     except Exception as e:
         traceback.print_exc()
         return jsonify({"ok": True, "error": str(e), "all_stocks": [], "scanning": True})
@@ -1116,7 +1198,11 @@ def _schedule_war_room_watchdog() -> None:
                     print(f"War room stability: {', '.join(report['actions'])}")
                 with _war_room_lock:
                     computing = _war_room_cache.get("computing", False)
-                if not computing and not _war_room_ready(_war_room_cache.get("data")):
+                if (
+                    not is_cloud_host()
+                    and not computing
+                    and not _war_room_ready(_war_room_cache.get("data"))
+                ):
                     _refresh_war_room_async()
             except Exception as e:
                 print(f"War room watchdog: {e}")
@@ -1126,6 +1212,8 @@ def _schedule_war_room_watchdog() -> None:
 
 def _schedule_war_room_loop() -> None:
     """Re-run all agents on a fixed interval for live scalp / bias updates."""
+    if is_cloud_host():
+        return
     global _war_room_loop_started
     if _war_room_loop_started:
         return
@@ -1145,14 +1233,14 @@ def _schedule_war_room_loop() -> None:
 
 def _schedule_war_room_warmup() -> None:
     """Pre-compute Gold War Room so /api/gold-war-room responds quickly."""
+    if is_cloud_host():
+        return
     global _war_room_warm_scheduled
     if _war_room_warm_scheduled:
         return
     _war_room_warm_scheduled = True
 
     def _delayed() -> None:
-        if is_cloud_host():
-            time.sleep(30)
         _refresh_war_room_async()
 
     threading.Thread(target=_delayed, daemon=True, name="war-room-warm").start()
@@ -1162,9 +1250,15 @@ def init_production() -> None:
     """Lightweight boot for gunicorn — Render health check must pass in seconds."""
     (ROOT / "data").mkdir(parents=True, exist_ok=True)
     _load_disk_cache_into_memory()
-    if is_cloud_host() and _scan_cache.get("data") is None:
+    with _scan_lock:
+        has_stocks = bool((_scan_cache.get("data") or {}).get("all_stocks"))
+    if is_cloud_host() and not has_stocks:
         seed = load_seed_bootstrap()
         if seed:
+            try:
+                seed = _apply_ourbit_payload(seed)
+            except Exception:
+                traceback.print_exc()
             with _scan_lock:
                 _scan_cache["data"] = seed
                 _scan_cache["ts"] = time.time()
