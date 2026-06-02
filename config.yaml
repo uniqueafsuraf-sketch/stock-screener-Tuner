@@ -42,8 +42,9 @@ ourbit:
 
 # STOCK Act politician disclosures (Senate + House)
 congress:
-  sync_interval_sec: 3600
+  sync_interval_sec: 1800
   lookback_days: 180
+  min_buy_usd: 5000
 
 # How many trading days of history to pull
 lookback_days: 120

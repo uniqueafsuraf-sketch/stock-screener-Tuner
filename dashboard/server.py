@@ -253,6 +253,8 @@ def _apply_congress_payload(data: dict) -> dict:
         "stats": payload.get("stats") or {},
         "fetched_at": payload.get("fetched_at"),
         "source": payload.get("source"),
+        "sources_active": payload.get("sources_active") or [],
+        "min_buy_usd": payload.get("min_buy_usd") or 5000,
         "stale": payload.get("stale", False),
     }
     stats = dict(out.get("stats") or {})

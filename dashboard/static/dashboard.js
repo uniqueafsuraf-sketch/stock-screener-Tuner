@@ -241,6 +241,8 @@
             stats: raw.stats || {},
             fetched_at: raw.fetched_at,
             source: raw.source,
+            sources_active: raw.sources_active || [],
+            min_buy_usd: raw.min_buy_usd || raw.stats?.min_buy_usd || 5000,
             stale: raw.stale,
           },
           stats: {
@@ -654,7 +656,7 @@
       return;
     }
     if (activeTab === "congress") {
-      thead.innerHTML = `<th>Symbol</th><th>Date</th><th>Politician</th><th>Trade</th><th>Disclosed</th><th>Price</th><th>Chg</th><th>Edge</th><th>Setups</th>`;
+      thead.innerHTML = `<th>Symbol</th><th>Date</th><th>Politician</th><th>Trade</th><th>Disclosed</th><th>Sources</th><th>Price</th><th>Chg</th><th>Edge</th><th>Setups</th>`;
       return;
     }
     const cols = [
@@ -697,10 +699,12 @@
     const priceMap = {};
     (data?.all_stocks || []).forEach((r) => { priceMap[r.symbol] = r; });
 
-    $("row-count").textContent = recent.length ? `${recent.length} recent buys` : "";
+    $("row-count").textContent = recent.length
+      ? `${recent.length} buys ≥ $${(data?.congress_trades?.min_buy_usd || 5000).toLocaleString()}`
+      : "";
 
     if (!recent.length) {
-      tbody.innerHTML = `<tr><td colspan="10" class="state-cell"><div class="state-box"><p>No politician buys loaded — refresh or check /api/congress-trades</p></div></td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="11" class="state-cell"><div class="state-box"><p>No politician buys ≥ $5,000 — try Refresh or check /api/congress-trades?refresh=1</p></div></td></tr>`;
       return;
     }
 
@@ -719,12 +723,14 @@
       const link = t.ptr_link
         ? `<a href="${esc(t.ptr_link)}" target="_blank" rel="noopener" class="chart-link">PTR</a>`
         : "";
+      const src = (t.sources || []).join(", ") || "—";
       return `<tr>
         <td class="col-symbol"><span class="sym-ticker">${esc(t.symbol)}</span> ${link}</td>
         <td class="muted">${esc(t.when || t.transaction_date || "—")}</td>
         <td>${pols} <span class="muted">(${esc(t.chamber || "—")})</span></td>
         <td>${side} · ${amt}</td>
         <td class="muted">${t.days_ago != null ? `${t.days_ago}d ago` : "—"}</td>
+        <td class="muted" style="font-size:0.75rem">${esc(src)}</td>
         <td class="col-num">${row.price != null ? fmtPrice(row.price) : "—"}</td>
         <td class="col-num ${(row.change_pct || 0) >= 0 ? "pos" : "neg"}">${row.change_pct != null ? `${row.change_pct.toFixed(2)}%` : "—"}</td>
         <td class="col-num">${row.edge_score != null ? row.edge_score : "—"}</td>
@@ -796,7 +802,11 @@
     const ob = data.ourbit_listed ?? data.stats?.ourbit_count ?? (data.ourbit_stocks || []).length;
     if (ob) t += ` · ${ob} Ourbit stocks`;
     const cb = data.stats?.congress_buys ?? data.congress_trades?.recent_buys?.length;
-    if (cb) t += ` · ${cb} Congress buys (90d)`;
+    if (cb) {
+      const min = data.congress_trades?.min_buy_usd || data.stats?.min_buy_usd || 5000;
+      const src = (data.congress_trades?.sources_active || []).length || 2;
+      t += ` · ${cb} Congress buys ≥$${Number(min).toLocaleString()} (${src} sources)`;
+    }
     $("meta").textContent = t;
     updateStatusBanner();
   }

@@ -1,4 +1,4 @@
-"""Congressional stock disclosures (STOCK Act) — Senate + House, edge scoring."""
+"""Congressional stock disclosures (STOCK Act) — multi-source, min-size buys."""
 
 from __future__ import annotations
 
@@ -14,13 +14,11 @@ CACHE_PATH = Path(__file__).resolve().parent.parent / "data" / "congress_trades.
 STATIC_PATH = (
     Path(__file__).resolve().parent.parent / "dashboard" / "static" / "congress_trades.json"
 )
-CACHE_TTL_SEC = 3600
+CACHE_TTL_SEC = 1800
+MIN_BUY_USD_DEFAULT = 5000
 
 CONGRESSINVESTS_URL = "https://congressinfor-production.up.railway.app/trades"
-SENATE_ARCHIVE_URL = (
-    "https://raw.githubusercontent.com/timothycarambat/senate-stock-watcher-data/"
-    "master/aggregate/all_transactions.json"
-)
+CAPITOL_EXPOSED_URL = "https://www.capitolexposed.com/api/v1/trades"
 
 AMOUNT_TIERS = (
     "$1,001 - $15,000",
@@ -38,10 +36,27 @@ AMOUNT_TIERS = (
 _TICKER_RE = re.compile(r"^[A-Z]{1,5}$")
 
 
+def _congress_cfg() -> dict:
+    try:
+        from screener.scan import load_config  # noqa: PLC0415
+
+        return load_config().get("congress") or {}
+    except Exception:
+        return {}
+
+
+def min_buy_usd() -> int:
+    return int(_congress_cfg().get("min_buy_usd", MIN_BUY_USD_DEFAULT))
+
+
+def lookback_days_default() -> int:
+    return int(_congress_cfg().get("lookback_days", 180))
+
+
 def _fetch_json(url: str, *, timeout: int = 90) -> list | dict | None:
     req = urllib.request.Request(
         url,
-        headers={"User-Agent": "StocksTunerStation/4.0 (+congress-trades)"},
+        headers={"User-Agent": "StocksTunerStation/4.3 (+congress-trades)"},
     )
     try:
         with urllib.request.urlopen(req, timeout=timeout) as resp:
@@ -53,9 +68,16 @@ def _fetch_json(url: str, *, timeout: int = 90) -> list | dict | None:
 def _parse_date(raw: str | None) -> datetime | None:
     if not raw or not str(raw).strip():
         return None
+    s = str(raw).strip()
+    if s.endswith("Z"):
+        s = s[:-1] + "+00:00"
+    try:
+        return datetime.fromisoformat(s.replace("Z", "+00:00")).replace(tzinfo=None)
+    except ValueError:
+        pass
     for fmt in ("%m/%d/%Y", "%Y-%m-%d", "%m/%d/%y"):
         try:
-            return datetime.strptime(str(raw).strip(), fmt)
+            return datetime.strptime(s, fmt)
         except ValueError:
             continue
     return None
@@ -70,30 +92,6 @@ def _norm_ticker(raw: str | None) -> str:
     return t
 
 
-def _is_purchase(tx_type: str | None) -> bool:
-    t = (tx_type or "").lower()
-    return "purchase" in t or t.startswith("buy")
-
-
-def _is_sale(tx_type: str | None) -> bool:
-    t = (tx_type or "").lower()
-    return "sale" in t or "sell" in t
-
-
-def _amount_score(amount: str | None) -> int:
-    cleaned = _clean_amount(amount)
-    if not cleaned or cleaned == "—":
-        return 1
-    try:
-        idx = AMOUNT_TIERS.index(cleaned)
-    except ValueError:
-        for i, tier in enumerate(AMOUNT_TIERS):
-            if tier.split()[0] in cleaned and tier.split()[-1] in cleaned:
-                return min(10, 1 + i)
-        return 1
-    return min(10, 1 + idx)
-
-
 def _clean_amount(raw: str | None) -> str:
     if not raw:
         return "—"
@@ -104,10 +102,51 @@ def _clean_amount(raw: str | None) -> str:
     m = re.search(r"\$[\d,]+ - \$[\d,]+", s)
     if m:
         return m.group(0)
+    if "$50,000,001" in s or "$50,000,001 +" in s:
+        return "$50,000,001 +"
     return s[:48] or "—"
 
 
+def _amount_bounds(amount: str | None) -> tuple[int, int | None]:
+    cleaned = _clean_amount(amount)
+    if cleaned == "$50,000,001 +":
+        return 50_000_001, None
+    nums = [int(x.replace(",", "")) for x in re.findall(r"\$?([\d,]+)", cleaned) if x]
+    if len(nums) >= 2:
+        return nums[0], nums[1]
+    if len(nums) == 1:
+        return nums[0], nums[0]
+    return 0, None
+
+
+def _amount_score(amount: str | None) -> int:
+    lo, _ = _amount_bounds(amount)
+    if lo >= 1_000_001:
+        return 10
+    if lo >= 250_001:
+        return 8
+    if lo >= 100_001:
+        return 7
+    if lo >= 50_001:
+        return 6
+    if lo >= 15_001:
+        return 4
+    if lo >= 5_000:
+        return 2
+    return 1
+
+
+def _meets_min_buy(*, amount: str | None = None, amount_min: int | None = None) -> bool:
+    floor = min_buy_usd()
+    if amount_min is not None:
+        return int(amount_min) >= floor
+    lo, _ = _amount_bounds(amount)
+    return lo >= floor
+
+
 def _norm_cinvests(row: dict) -> dict | None:
+    if (row.get("trade_type") or "").strip().lower() != "buy":
+        return None
     ticker = _norm_ticker(row.get("ticker"))
     if not ticker:
         return None
@@ -121,16 +160,20 @@ def _norm_cinvests(row: dict) -> dict | None:
         return None
     if when > datetime.now() + timedelta(days=3):
         return None
-    trade_type = (row.get("trade_type") or "").strip()
     amount = _clean_amount(row.get("amount"))
+    lo, hi = _amount_bounds(amount)
+    if not _meets_min_buy(amount=amount, amount_min=lo):
+        return None
     return {
         "symbol": ticker,
         "politician": politician,
         "chamber": row.get("chamber") or "Congress",
         "owner": "—",
-        "type": trade_type,
-        "side": "buy" if trade_type == "buy" else "sell" if trade_type == "sell" else "other",
+        "type": "buy",
+        "side": "buy",
         "amount": amount,
+        "amount_min_usd": lo,
+        "amount_max_usd": hi,
         "amount_score": _amount_score(amount),
         "transaction_date": row.get("tx_date") or "",
         "disclosure_date": row.get("disclosed") or "",
@@ -138,16 +181,63 @@ def _norm_cinvests(row: dict) -> dict | None:
         "days_ago": max(0, (datetime.now() - when).days),
         "ptr_link": row.get("link") or "",
         "asset_description": (row.get("asset") or "")[:120],
+        "sources": ["congressinvests"],
+    }
+
+
+def _norm_capitolexposed(row: dict) -> dict | None:
+    if (row.get("transaction_type") or "").lower() != "purchase":
+        return None
+    ticker = _norm_ticker(row.get("ticker"))
+    if not ticker:
+        return None
+    politician = (row.get("member_name") or "").strip()
+    if not politician:
+        return None
+    try:
+        lo = int(row.get("amount_min") or 0)
+        hi = int(row.get("amount_max") or 0) if row.get("amount_max") else None
+    except (TypeError, ValueError):
+        lo, hi = 0, None
+    if not _meets_min_buy(amount_min=lo):
+        return None
+    tx_date = _parse_date(row.get("transaction_date"))
+    disc_date = _parse_date(row.get("disclosure_date"))
+    when = tx_date or disc_date
+    if not when:
+        return None
+    if when > datetime.now() + timedelta(days=3):
+        return None
+    amount = f"${lo:,}" + (f" - ${hi:,}" if hi else "")
+    trade_id = row.get("id") or ""
+    chamber = "Senate" if "senate" in trade_id else "House"
+    return {
+        "symbol": ticker,
+        "politician": politician,
+        "chamber": chamber,
+        "owner": row.get("owner") or "—",
+        "type": "purchase",
+        "side": "buy",
+        "amount": amount,
+        "amount_min_usd": lo,
+        "amount_max_usd": hi,
+        "amount_score": _amount_score(amount),
+        "transaction_date": (tx_date.strftime("%Y-%m-%d") if tx_date else ""),
+        "disclosure_date": (disc_date.strftime("%Y-%m-%d") if disc_date else ""),
+        "when": when.strftime("%Y-%m-%d"),
+        "days_ago": max(0, (datetime.now() - when).days),
+        "ptr_link": row.get("source_url") or "",
+        "asset_description": (row.get("asset_description") or "")[:120],
+        "sources": ["capitolexposed"],
     }
 
 
 def _fetch_congressinvests(*, lookback_days: int = 180) -> list[dict]:
-    """Live Senate + House PTR feed (CongressInvests public API)."""
     cutoff = datetime.now() - timedelta(days=lookback_days)
     out: list[dict] = []
     offset = 0
     limit = 200
-    max_batches = 8
+    max_batches = 12
 
     for _ in range(max_batches):
         url = f"{CONGRESSINVESTS_URL}?limit={limit}&offset={offset}"
@@ -176,101 +266,109 @@ def _fetch_congressinvests(*, lookback_days: int = 180) -> list[dict]:
     return out
 
 
-def _norm_tx(row: dict, *, chamber: str) -> dict | None:
-    ticker = _norm_ticker(row.get("ticker"))
-    if not ticker:
-        desc = row.get("asset_description") or ""
-        m = re.search(r"\b([A-Z]{1,5})\s+-", desc)
-        if m:
-            ticker = _norm_ticker(m.group(1))
-    if not ticker:
-        return None
-
-    asset_type = (row.get("asset_type") or "").lower()
-    if asset_type and "stock" not in asset_type and "option" not in asset_type:
-        if "bond" in asset_type or "note" in asset_type:
-            return None
-
-    politician = (
-        row.get("senator")
-        or row.get("representative")
-        or row.get("politician")
-        or ""
-    ).strip()
-    if not politician:
-        return None
-
-    tx_date = _parse_date(row.get("transaction_date"))
-    disc_date = _parse_date(row.get("disclosure_date"))
-    when = tx_date or disc_date
-    if not when:
-        return None
-
-    tx_type = row.get("type") or ""
-    return {
-        "symbol": ticker,
-        "politician": politician,
-        "chamber": chamber,
-        "owner": row.get("owner") or "—",
-        "type": tx_type,
-        "side": "buy" if _is_purchase(tx_type) else "sell" if _is_sale(tx_type) else "other",
-        "amount": row.get("amount") or "—",
-        "amount_score": _amount_score(row.get("amount")),
-        "transaction_date": row.get("transaction_date") or "",
-        "disclosure_date": row.get("disclosure_date") or "",
-        "when": when.strftime("%Y-%m-%d"),
-        "days_ago": (datetime.now() - when).days,
-        "ptr_link": row.get("ptr_link") or row.get("ptr_url") or "",
-        "asset_description": (row.get("asset_description") or "")[:120],
-    }
-
-
-def fetch_congress_trades(*, lookback_days: int = 180) -> list[dict]:
-    """Pull Senate + House STOCK Act filings from public sources."""
-    live = _fetch_congressinvests(lookback_days=lookback_days)
-    if live:
-        return live
-
+def _fetch_capitolexposed(*, lookback_days: int = 180) -> list[dict]:
+    cutoff = datetime.now() - timedelta(days=lookback_days)
     out: list[dict] = []
-    senate = _fetch_json(SENATE_ARCHIVE_URL)
-    if isinstance(senate, list):
-        cutoff = datetime.now() - timedelta(days=lookback_days)
-        for row in senate:
+    page = 1
+    per_page = 50
+    max_pages = 8
+
+    while page <= max_pages:
+        url = f"{CAPITOL_EXPOSED_URL}?per_page={per_page}&page={page}"
+        data = _fetch_json(url, timeout=45)
+        if not isinstance(data, dict):
+            break
+        batch = data.get("data") or []
+        if not batch:
+            break
+        stop_early = False
+        for row in batch:
             if not isinstance(row, dict):
                 continue
-            tx = _norm_tx(row, chamber="Senate")
-            if tx and _parse_date(tx.get("when")) and _parse_date(tx["when"]) >= cutoff:
+            tx = _norm_capitolexposed(row)
+            if not tx:
+                continue
+            when = _parse_date(tx["when"])
+            if when and when >= cutoff:
                 out.append(tx)
+            elif when and when < cutoff:
+                stop_early = True
+                break
+        meta = data.get("meta") or {}
+        if stop_early or not meta.get("has_more"):
+            break
+        page += 1
     return out
+
+
+def _trade_key(tx: dict) -> tuple:
+    return (
+        tx.get("symbol", ""),
+        (tx.get("politician") or "").lower().strip(),
+        tx.get("when", ""),
+        int(tx.get("amount_min_usd") or 0),
+    )
+
+
+def _merge_trade_lists(*groups: list[dict]) -> list[dict]:
+    merged: dict[tuple, dict] = {}
+    for trades in groups:
+        for tx in trades:
+            key = _trade_key(tx)
+            if key in merged:
+                cur = merged[key]
+                src = set(cur.get("sources") or [])
+                src.update(tx.get("sources") or [])
+                cur["sources"] = sorted(src)
+                if not cur.get("ptr_link") and tx.get("ptr_link"):
+                    cur["ptr_link"] = tx["ptr_link"]
+            else:
+                merged[key] = dict(tx)
+    return sorted(merged.values(), key=lambda x: x.get("when", ""), reverse=True)
+
+
+def fetch_congress_trades(*, lookback_days: int | None = None) -> tuple[list[dict], dict]:
+    """Pull qualifying politician stock buys from all live sources."""
+    days = lookback_days or lookback_days_default()
+    source_stats: dict[str, int | bool] = {}
+
+    cinvests = _fetch_congressinvests(lookback_days=days)
+    source_stats["congressinvests"] = len(cinvests)
+    source_stats["congressinvests_ok"] = bool(cinvests)
+
+    capitol = _fetch_capitolexposed(lookback_days=days)
+    source_stats["capitolexposed"] = len(capitol)
+    source_stats["capitolexposed_ok"] = bool(capitol)
+
+    merged = _merge_trade_lists(cinvests, capitol)
+    source_stats["merged_buys"] = len(merged)
+    return merged, source_stats
 
 
 def _score_ticker(trades: list[dict], *, lookback_days: int = 90) -> dict:
     cutoff = datetime.now() - timedelta(days=lookback_days)
     buys: list[dict] = []
-    sells: list[dict] = []
     politicians: set[str] = set()
     chambers: set[str] = set()
     score = 0.0
 
     for t in trades:
+        if t.get("side") != "buy":
+            continue
         when = _parse_date(t.get("when"))
         if not when or when < cutoff:
             continue
         politicians.add(t["politician"])
         chambers.add(t["chamber"])
         recency = max(0.3, 1.0 - (t.get("days_ago", 90) / max(lookback_days, 1)))
-        if t["side"] == "buy":
-            buys.append(t)
-            score += t["amount_score"] * 2.5 * recency
-        elif t["side"] == "sell":
-            sells.append(t)
-            score -= t["amount_score"] * 0.8 * recency
+        buys.append(t)
+        score += t["amount_score"] * 2.5 * recency
 
     if len(politicians) >= 2:
         score += 6
     if len(politicians) >= 3:
         score += 8
-    if chambers == {"Senate", "House"}:
+    if {"Senate", "House"}.issubset(chambers):
         score += 10
 
     score = round(min(100, max(0, score)), 1)
@@ -278,16 +376,19 @@ def _score_ticker(trades: list[dict], *, lookback_days: int = 90) -> dict:
     return {
         "congress_edge": score,
         "congress_buys": len(buys),
-        "congress_sells": len(sells),
+        "congress_sells": 0,
         "congress_politicians": sorted(politicians),
         "congress_chambers": sorted(chambers),
         "congress_last_buy": last_buy,
-        "congress_trades": sorted(buys + sells, key=lambda x: x["when"], reverse=True)[:12],
+        "congress_trades": sorted(buys, key=lambda x: x["when"], reverse=True)[:12],
     }
 
 
-def build_congress_payload(*, lookback_days: int = 180) -> dict:
-    trades = fetch_congress_trades(lookback_days=lookback_days)
+def build_congress_payload(*, lookback_days: int | None = None) -> dict:
+    days = lookback_days or lookback_days_default()
+    min_usd = min_buy_usd()
+    trades, source_stats = fetch_congress_trades(lookback_days=days)
+
     by_symbol: dict[str, list[dict]] = {}
     for t in trades:
         by_symbol.setdefault(t["symbol"], []).append(t)
@@ -296,26 +397,35 @@ def build_congress_payload(*, lookback_days: int = 180) -> dict:
     for sym, sym_trades in by_symbol.items():
         ticker_edges[sym] = _score_ticker(sym_trades, lookback_days=90)
 
-    recent = sorted(trades, key=lambda x: x["when"], reverse=True)
-    buy_recent = [t for t in recent if t["side"] == "buy"][:80]
+    buy_recent = trades[:100]
     edge_leaders = sorted(
         (
-            {
-                "symbol": sym,
-                **meta,
-            }
+            {"symbol": sym, **meta}
             for sym, meta in ticker_edges.items()
             if meta["congress_buys"] > 0
         ),
         key=lambda x: (-x["congress_edge"], -x["congress_buys"]),
     )[:40]
 
+    active_sources = [
+        name for name in ("congressinvests", "capitolexposed")
+        if source_stats.get(f"{name}_ok")
+    ]
+
     return {
-        "ok": True,
-        "source": "CongressInvests API · official Senate EFD + House Clerk PTR filings",
+        "ok": bool(trades),
+        "source": " · ".join(
+            s for s in (
+                "CongressInvests (Senate EFD + House Clerk PTR)",
+                "CapitolExposed (House + Senate filings)",
+            )
+            if s
+        ),
+        "sources_active": active_sources,
+        "min_buy_usd": min_usd,
         "fetched_at": time.strftime("%Y-%m-%d %H:%M:%S UTC", time.gmtime()),
         "fetched_at_epoch": time.time(),
-        "lookback_days": lookback_days,
+        "lookback_days": days,
         "total_trades": len(trades),
         "recent_buys": buy_recent,
         "edge_leaders": edge_leaders,
@@ -323,8 +433,10 @@ def build_congress_payload(*, lookback_days: int = 180) -> dict:
         "stats": {
             "symbols_with_buys": sum(1 for m in ticker_edges.values() if m["congress_buys"] > 0),
             "recent_buy_count": len(buy_recent),
-            "senate_trades": sum(1 for t in trades if t["chamber"] == "Senate"),
-            "house_trades": sum(1 for t in trades if t["chamber"] == "House"),
+            "senate_trades": sum(1 for t in trades if t.get("chamber") == "Senate"),
+            "house_trades": sum(1 for t in trades if t.get("chamber") == "House"),
+            "min_buy_usd": min_usd,
+            **source_stats,
         },
     }
 
@@ -343,18 +455,18 @@ def load_congress_cache(*, max_age_sec: int = CACHE_TTL_SEC) -> dict | None:
         try:
             data = json.loads(path.read_text(encoding="utf-8"))
             age = time.time() - (data.get("fetched_at_epoch") or 0)
-            if data.get("by_symbol") and age <= max_age_sec:
+            if data.get("by_symbol") is not None and age <= max_age_sec:
                 return data
-            if data.get("by_symbol"):
+            if data.get("by_symbol") is not None:
                 return data
         except (json.JSONDecodeError, OSError):
             continue
     return None
 
 
-def get_congress_payload(*, refresh: bool = False, lookback_days: int = 180) -> dict:
+def get_congress_payload(*, refresh: bool = False, lookback_days: int | None = None) -> dict:
     if not refresh:
-        cached = load_congress_cache(max_age_sec=86400 * 7)
+        cached = load_congress_cache(max_age_sec=CACHE_TTL_SEC)
         if cached:
             return cached
     try:
@@ -373,7 +485,7 @@ def get_congress_payload(*, refresh: bool = False, lookback_days: int = 180) -> 
             "recent_buys": [],
             "edge_leaders": [],
             "by_symbol": {},
-            "stats": {},
+            "stats": {"min_buy_usd": min_buy_usd()},
         }
 
 
@@ -397,7 +509,7 @@ def tag_row_with_congress(row: dict, lookup: dict[str, dict]) -> dict:
         signals.append("CONGRESS_BUY")
     out["signals"] = signals
     pols = ", ".join(meta.get("congress_politicians", [])[:2])
-    note = f"Congress buy: {meta['congress_buys']} purchase(s) · {pols}"
+    note = f"Congress buy ≥${min_buy_usd():,}: {meta['congress_buys']} filing(s) · {pols}"
     notes = list(out.get("notes") or [])
     if note not in notes:
         notes.insert(0, note)

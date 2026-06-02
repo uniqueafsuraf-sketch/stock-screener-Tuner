@@ -19,9 +19,9 @@ def main() -> int:
     save_congress_cache(payload)
     stats = payload.get("stats") or {}
     print(
-        f"Congress trades: {payload.get('total_trades')} total, "
-        f"{stats.get('recent_buy_count', 0)} recent buys, "
-        f"{stats.get('symbols_with_buys', 0)} symbols with buys"
+        f"Congress trades: {payload.get('total_trades')} qualifying buys (>={stats.get('min_buy_usd', 5000):,}), "
+        f"sources: {payload.get('sources_active')}, "
+        f"{stats.get('symbols_with_buys', 0)} symbols"
     )
     return 0
 
