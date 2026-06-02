@@ -722,6 +722,29 @@
   align-items: center;
 }
 
+.perf-log-signals {
+  max-height: 280px;
+  overflow-y: auto;
+}
+
+.perf-log-row-signal {
+  grid-template-columns: 0.55fr 0.5fr 1.6fr auto;
+  gap: 0.35rem;
+  align-items: center;
+}
+
+.perf-log-row-signal.sig-scalp { border-left: 3px solid var(--gold, #e8c547); }
+.perf-log-row-signal.sig-agent { border-left: 3px solid #6eb5ff; }
+.perf-log-row-signal.sig-alert { border-left: 3px solid #ff9f43; }
+.perf-log-row-signal.sig-swing { border-left: 3px solid var(--green); }
+
+.perf-grid-inner {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
 .perf-stat.win-stat .val { color: var(--green); }
 .perf-stat.loss-stat .val { color: var(--red); }
 

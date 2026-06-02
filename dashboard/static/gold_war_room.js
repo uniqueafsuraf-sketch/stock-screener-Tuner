@@ -510,42 +510,76 @@
     return '<span class="perf-verdict open">Pending</span>';
   }
 
+  function signalCategoryClass(cat) {
+    const c = (cat || "").toLowerCase();
+    if (c === "alert") return "sig-alert";
+    if (c === "agent") return "sig-agent";
+    if (c === "scalp") return "sig-scalp";
+    if (c === "swing") return "sig-swing";
+    return "sig-desk";
+  }
+
   function renderPerformance(p) {
     const el = $("performance-content");
     if (!el) return;
     const scans = p.recent_scans || [];
     const scalps = p.recent_scalps || [];
+    const signals = p.recent_signals || [];
     el.innerHTML = `
       <div class="perf-grid-inner">
-      <div class="perf-stat"><div class="val">${p.scalp_win_rate ?? 0}%</div><div class="lbl">Scalp win rate</div></div>
+      <div class="perf-stat"><div class="val">${p.total_signals_logged ?? 0}</div><div class="lbl">Signals logged</div></div>
+      <div class="perf-stat"><div class="val">${p.total_scans_logged ?? 0}</div><div class="lbl">Agent scans</div></div>
+      <div class="perf-stat"><div class="val">${p.total_scalps_logged ?? 0}</div><div class="lbl">Scalp trades</div></div>
       <div class="perf-stat win-stat"><div class="val">${p.scalp_wins ?? 0}</div><div class="lbl">Wins</div></div>
       <div class="perf-stat loss-stat"><div class="val">${p.scalp_losses ?? 0}</div><div class="lbl">Losses</div></div>
-      <div class="perf-stat"><div class="val">${p.agent_scalp_accuracy ?? 0}%</div><div class="lbl">Agents right (closed)</div></div>
-      <div class="perf-stat"><div class="val">${p.bias_call_accuracy ?? 0}%</div><div class="lbl">Bias calls right</div></div>
+      <div class="perf-stat"><div class="val">${p.scalp_expired ?? 0}</div><div class="lbl">Expired</div></div>
       <div class="perf-stat"><div class="val">${p.open_scalps ?? 0}</div><div class="lbl">Open scalps</div></div>
+      <div class="perf-stat"><div class="val">${p.open_signals ?? 0}</div><div class="lbl">Open signals</div></div>
+      <div class="perf-stat"><div class="val">${p.scalp_win_rate ?? 0}%</div><div class="lbl">Scalp win rate</div></div>
+      <div class="perf-stat"><div class="val">${p.bias_call_accuracy ?? 0}%</div><div class="lbl">Bias accuracy</div></div>
       </div>
-      <p class="war-muted perf-log-note">Wins/losses when price hits target or stop · bias verdict after ~2 min. Log: <code>${esc(p.log_file || "data/gold_war_room_history.json")}</code></p>
-      <h4 class="perf-log-title">Recent scalps — result & agents</h4>
+      <p class="war-muted perf-log-note">Every ~45s scan logs alerts, agent views, desk panels, and each scalp card. Trades resolve vs live XAU when price hits stop/target (checked every ~20s). On Render free tier the log resets after redeploy.</p>
+      <h4 class="perf-log-title">Live signal feed (${signals.length} recent)</h4>
+      <div class="perf-log-table perf-log-signals">${signals.length ? signals.map((s) =>
+        `<div class="perf-log-row perf-log-row-signal ${signalCategoryClass(s.category)}">
+          <span class="sig-time">${esc((s.logged_at || "").slice(11, 19) || s.logged_at || "")}</span>
+          <span class="sig-cat">${esc(s.category || "")}</span>
+          <span class="sig-label">${esc(s.label || "")}</span>
+          ${s.track_trade ? outcomeBadge(s.outcome) : '<span class="perf-outcome open">SIGNAL</span>'}
+        </div>`
+      ).join("") : "<span class='war-muted'>Signals appear as agents run — keep this page open or refresh analysis</span>"}</div>
+      <h4 class="perf-log-title">Scalp trades — tracked positions</h4>
       <div class="perf-log-table perf-log-scalps">${scalps.length ? scalps.map((s) =>
         `<div class="perf-log-row perf-log-row-scalp">
-          <span>${esc(s.logged_at || "")}</span>
-          <span>${esc(s.direction)} ${s.leverage || ""}x</span>
+          <span>${esc((s.logged_at || "").slice(11, 19) || "")}</span>
+          <span>${esc(s.direction)} ${s.leverage || ""}x · ${esc(s.status || "")}</span>
           <span>E ${s.entry} → T ${s.target}</span>
           ${outcomeBadge(s.outcome)}
           ${verdictBadge(s.agent_verdict, s.agents_correct)}
         </div>`
-      ).join("") : "<span class='war-muted'>No scalps logged yet — runs build as scans complete</span>"}</div>
-      <h4 class="perf-log-title">Recent agent scans — bias correct?</h4>
+      ).join("") : "<span class='war-muted'>No scalp trades yet</span>"}</div>
+      <h4 class="perf-log-title">Agent scans (bias track)</h4>
       <div class="perf-log-table">${scans.length ? scans.map((s) =>
         `<div class="perf-log-row">
-          <span>${esc(s.logged_at || "")}</span>
+          <span>${esc((s.logged_at || "").slice(11, 19) || "")}</span>
           <span>$${s.price}</span>
           <span>${esc(s.bias)}</span>
           ${verdictBadge(s.agent_verdict)}
-          <span class="war-muted">${s.price_delta_pct != null ? s.price_delta_pct + "%" : s.scalps_found + " scalps"}</span>
+          <span class="war-muted">${s.signals_logged != null ? s.signals_logged + " sig" : s.scalps_found + " scalp"}</span>
         </div>`
       ).join("") : "<span class='war-muted'>No scans logged yet</span>"}</div>
     `;
+  }
+
+  async function refreshPerformancePanel() {
+    try {
+      const res = await fetch("/api/gold-war-room/performance", { cache: "no-store" });
+      const json = await res.json();
+      if (json.ok && json.performance) {
+        if (lastWarPayload) lastWarPayload.performance = json.performance;
+        renderPerformance(json.performance);
+      }
+    } catch (_) { /* ignore */ }
   }
 
   function showStatusBanner(data) {
@@ -786,4 +820,6 @@
   refreshLiveSpot();
   setInterval(refreshLiveSpot, 15000);
   setInterval(() => load(false), 45000);
+  setInterval(refreshPerformancePanel, 20000);
+  refreshPerformancePanel();
 })();

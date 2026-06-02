@@ -759,9 +759,32 @@ def api_gold_war_room():
 def api_gold_spot():
     """Multi-feed XAUUSD spot median for header + scalping (Stooq, Yahoo, ETF-implied)."""
     from screener.gold_war_room.fetch import fetch_spot_payload  # noqa: PLC0415
+    from screener.gold_war_room.performance import resolve_open_trades  # noqa: PLC0415
 
     force = request.args.get("force") == "1"
-    return jsonify(fetch_spot_payload(force=force))
+    spot = fetch_spot_payload(force=force)
+    if spot.get("ok") and spot.get("price") is not None:
+        resolve_open_trades(float(spot["price"]))
+    return jsonify(spot)
+
+
+@app.route("/api/gold-war-room/performance")
+def api_gold_war_room_performance():
+    """Fresh performance + signal log; resolves open trades vs live spot first."""
+    from screener.gold_war_room.fetch import fetch_spot_payload  # noqa: PLC0415
+    from screener.gold_war_room.performance import performance_summary, resolve_open_trades  # noqa: PLC0415
+
+    spot = fetch_spot_payload()
+    px = float(spot["price"]) if spot.get("ok") and spot.get("price") is not None else None
+    resolve_open_trades(px)
+    perf = performance_summary()
+    with _war_room_lock:
+        cached = _war_room_cache.get("data")
+        if isinstance(cached, dict):
+            cached = dict(cached)
+            cached["performance"] = perf
+            _war_room_cache["data"] = cached
+    return jsonify(_json_safe({"ok": True, "performance": perf, "spot_price": px}))
 
 
 @app.route("/api/ping")
@@ -961,6 +984,31 @@ def _schedule_background_start() -> None:
 
 _war_room_warm_scheduled = False
 _war_room_loop_started = False
+_war_room_resolve_started = False
+
+
+def _schedule_war_room_resolve_loop() -> None:
+    """Resolve open scalps/signals every ~20s against live XAU spot."""
+    global _war_room_resolve_started
+    if _war_room_resolve_started:
+        return
+    _war_room_resolve_started = True
+
+    def _loop() -> None:
+        while True:
+            time.sleep(20)
+            try:
+                from screener.gold_war_room.fetch import fetch_spot_payload  # noqa: PLC0415
+                from screener.gold_war_room.performance import resolve_open_trades  # noqa: PLC0415
+
+                spot = fetch_spot_payload()
+                px = spot.get("price") if spot.get("ok") else None
+                if px is not None:
+                    resolve_open_trades(float(px))
+            except Exception as e:
+                print(f"War room trade resolve: {e}")
+
+    threading.Thread(target=_loop, daemon=True, name="war-room-resolve").start()
 
 
 def _schedule_war_room_loop() -> None:
@@ -1013,6 +1061,7 @@ def init_production() -> None:
         _war_room_cache.setdefault("leverage", 100)
     _schedule_background_start()
     _schedule_war_room_loop()
+    _schedule_war_room_resolve_loop()
     if not _war_room_ready(_war_room_cache.get("data")):
         _schedule_war_room_warmup()
 
