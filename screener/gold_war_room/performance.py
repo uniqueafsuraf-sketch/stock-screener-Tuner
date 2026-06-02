@@ -1,11 +1,13 @@
 from __future__ import annotations
 
 import json
+import threading
 import time
 from datetime import datetime, timezone
 from pathlib import Path
 
 STORE = Path(__file__).resolve().parent.parent.parent / "data" / "gold_war_room_history.json"
+_STORE_LOCK = threading.Lock()
 MAX_SCANS = 2000
 MAX_SCALPS = 2000
 MAX_SWING = 500
@@ -17,23 +19,25 @@ SIGNAL_DEDUPE_SEC = 45
 
 
 def _load() -> dict:
-    if not STORE.exists():
-        return {"scans": [], "scalps": [], "setups": [], "signals": [], "stats": {}}
-    try:
-        data = json.loads(STORE.read_text(encoding="utf-8"))
-        data.setdefault("scans", [])
-        data.setdefault("scalps", [])
-        data.setdefault("setups", [])
-        data.setdefault("signals", [])
-        data.setdefault("stats", {})
-        return data
-    except (json.JSONDecodeError, OSError):
-        return {"scans": [], "scalps": [], "setups": [], "signals": [], "stats": {}}
+    with _STORE_LOCK:
+        if not STORE.exists():
+            return {"scans": [], "scalps": [], "setups": [], "signals": [], "stats": {}}
+        try:
+            data = json.loads(STORE.read_text(encoding="utf-8"))
+            data.setdefault("scans", [])
+            data.setdefault("scalps", [])
+            data.setdefault("setups", [])
+            data.setdefault("signals", [])
+            data.setdefault("stats", {})
+            return data
+        except (json.JSONDecodeError, OSError):
+            return {"scans": [], "scalps": [], "setups": [], "signals": [], "stats": {}}
 
 
 def _save(data: dict) -> None:
-    STORE.parent.mkdir(parents=True, exist_ok=True)
-    STORE.write_text(json.dumps(data, indent=0), encoding="utf-8")
+    with _STORE_LOCK:
+        STORE.parent.mkdir(parents=True, exist_ok=True)
+        STORE.write_text(json.dumps(data, separators=(",", ":")), encoding="utf-8")
 
 
 def _utc_now() -> str:
@@ -152,14 +156,19 @@ def resolve_open_trades(price: float | None, *, payload: dict | None = None) -> 
         price = _live_price(payload)
     if price is None:
         return
-    data = _load()
+    try:
+        data = _load()
+    except Exception:
+        return
     now = time.time()
-    for trade in data.get("scalps") or []:
-        _resolve_trade(trade, price, now)
-    for trade in data.get("setups") or []:
-        _resolve_trade(trade, price, now)
+    for trade in (data.get("scalps") or [])[-80:]:
+        if trade.get("outcome") == "open":
+            _resolve_trade(trade, price, now)
+    for trade in (data.get("setups") or [])[-40:]:
+        if trade.get("outcome") == "open":
+            _resolve_trade(trade, price, now)
 
-    for sig in data.get("signals") or []:
+    for sig in (data.get("signals") or [])[-120:]:
         if sig.get("track_trade") and sig.get("outcome") == "open":
             _resolve_trade(sig, price, now)
 

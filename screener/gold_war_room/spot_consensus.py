@@ -9,7 +9,7 @@ import urllib.request
 from dataclasses import dataclass
 
 _SPOT_CACHE: dict = {"payload": None, "ts": 0.0}
-_SPOT_TTL = 12
+_SPOT_TTL = 30
 _OUTLIER_PCT = 1.25  # drop quotes >1.25% from median
 
 

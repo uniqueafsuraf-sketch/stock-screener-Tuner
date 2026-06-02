@@ -260,8 +260,14 @@ def run_war_room_analysis(*, leverage: int = 30, ctx_out: dict | None = None) ->
             ctx_out.update(
                 build_war_room_ctx(data, agents, trap, agents["technical"], spot_px)
             )
-        record_setup(master, spot_px)
-        record_war_room_cycle(payload)
+        try:
+            record_setup(master, spot_px)
+        except Exception:
+            traceback.print_exc()
+        try:
+            record_war_room_cycle(payload)
+        except Exception:
+            traceback.print_exc()
         return payload
     except Exception as e:
         traceback.print_exc()
@@ -301,7 +307,10 @@ def run_war_room_analysis(*, leverage: int = 30, ctx_out: dict | None = None) ->
                 ctx_out.update(
                     build_war_room_ctx(data, agents, trap, agents["technical"], spot_px)
                 )
-            record_war_room_cycle(payload)
+            try:
+                record_war_room_cycle(payload)
+            except Exception:
+                traceback.print_exc()
             return payload
         except Exception as e2:
             return {

@@ -514,8 +514,12 @@ _war_room_cache: dict = {
 }
 _war_room_lock = threading.Lock()
 WAR_ROOM_TTL = 45
-WAR_ROOM_SCAN_INTERVAL = 45
+WAR_ROOM_SCAN_INTERVAL = 90 if is_cloud_host() else 45
+WAR_ROOM_RESOLVE_INTERVAL = 60 if is_cloud_host() else 30
 WAR_ROOM_COMPUTE_MAX = 75
+_war_room_heavy_lock = threading.Lock()
+_war_room_watchdog_started = False
+_last_spot_for_resolve: dict = {"price": None, "ts": 0.0}
 
 
 def _war_room_ready(cached: dict | None) -> bool:
@@ -595,6 +599,9 @@ def _refresh_war_room_async(*, force: bool = False) -> None:
     def _run() -> None:
         from screener.gold_war_room import run_war_room_analysis  # noqa: PLC0415
 
+        if not _war_room_heavy_lock.acquire(blocking=False):
+            _reset_war_room_compute_lock()
+            return
         try:
             ctx_holder: dict = {}
             with _war_room_lock:
@@ -619,6 +626,7 @@ def _refresh_war_room_async(*, force: bool = False) -> None:
                 _war_room_cache["ts"] = time.time()
         finally:
             _reset_war_room_compute_lock()
+            _war_room_heavy_lock.release()
 
     threading.Thread(target=_run, daemon=True, name="war-room-refresh").start()
 
@@ -627,21 +635,33 @@ def _refresh_war_room_async(*, force: bool = False) -> None:
 def gold_war_room_page():
     from dashboard.brand import SITE_NAME  # noqa: PLC0415
     from dashboard.launch import APP_VERSION  # noqa: PLC0415
+    from screener.gold_war_room.stability import slim_war_room_payload  # noqa: PLC0415
 
-    _schedule_background_start()
-    _schedule_war_room_warmup()
-    _schedule_war_room_loop()
-    initial = load_war_room_seed() or {}
-    with _war_room_lock:
-        cached = _war_room_cache.get("data")
-        if _war_room_ready(cached):
-            initial = cached
-    return render_template(
-        "gold_war_room.html",
-        site_name=SITE_NAME,
-        app_version=APP_VERSION,
-        initial=initial,
-    )
+    try:
+        _schedule_background_start()
+        initial = load_war_room_seed() or _war_room_warming_payload()
+        with _war_room_lock:
+            cached = _war_room_cache.get("data")
+            if _war_room_ready(cached):
+                initial = cached
+        return render_template(
+            "gold_war_room.html",
+            site_name=SITE_NAME,
+            app_version=APP_VERSION,
+            initial=slim_war_room_payload(initial),
+        )
+    except Exception as e:
+        traceback.print_exc()
+        return render_template(
+            "gold_war_room.html",
+            site_name=SITE_NAME,
+            app_version=APP_VERSION,
+            initial=slim_war_room_payload({
+                "ok": True,
+                "error": str(e),
+                "market_bias": {"headline": "War Room recovering", "meaning": "Reload in a few seconds."},
+            }),
+        ), 200
 
 
 def _war_room_leverage() -> int:
@@ -702,89 +722,152 @@ def api_gold_war_room_scalp():
 
 @app.route("/api/gold-war-room")
 def api_gold_war_room():
-    force = request.args.get("refresh") == "1"
-    lev_only = request.args.get("leverage_only") == "1"
-    lev_arg = request.args.get("leverage", type=int)
-    if lev_arg is not None:
+    try:
+        force = request.args.get("refresh") == "1"
+        lev_only = request.args.get("leverage_only") == "1"
+        lev_arg = request.args.get("leverage", type=int)
+        if lev_arg is not None:
+            with _war_room_lock:
+                _war_room_cache["leverage"] = max(10, min(200, lev_arg))
+        now = time.time()
         with _war_room_lock:
-            _war_room_cache["leverage"] = max(10, min(200, lev_arg))
-    now = time.time()
-    with _war_room_lock:
-        cached = _war_room_cache.get("data")
-        age = now - (_war_room_cache.get("ts") or 0)
-        computing = _war_room_cache.get("computing", False)
-        started = _war_room_cache.get("computing_since") or 0.0
-        requested_lev = _war_room_leverage()
+            cached = _war_room_cache.get("data")
+            age = now - (_war_room_cache.get("ts") or 0)
+            computing = _war_room_cache.get("computing", False)
+            started = _war_room_cache.get("computing_since") or 0.0
+            requested_lev = _war_room_leverage()
 
-    if computing and started and (now - started) > WAR_ROOM_COMPUTE_MAX:
-        _reset_war_room_compute_lock()
-        computing = False
+        if computing and started and (now - started) > WAR_ROOM_COMPUTE_MAX:
+            _reset_war_room_compute_lock()
+            computing = False
 
-    # Leverage change: return updated scalp immediately (no stale 100x data while recomputing)
-    if _war_room_ready(cached) and lev_arg is not None:
-        cached_lev = (cached.get("scalping") or {}).get("leverage")
-        if lev_only or cached_lev != requested_lev:
-            try:
-                patched = _patch_cached_scalping_for_leverage(cached, requested_lev)
-                with _war_room_lock:
-                    _war_room_cache["data"] = patched
-                return jsonify(_json_safe(patched))
-            except Exception:
-                traceback.print_exc()
+        if _war_room_ready(cached) and lev_arg is not None:
+            cached_lev = (cached.get("scalping") or {}).get("leverage")
+            if lev_only or cached_lev != requested_lev:
+                try:
+                    patched = _patch_cached_scalping_for_leverage(cached, requested_lev)
+                    with _war_room_lock:
+                        _war_room_cache["data"] = patched
+                    return jsonify(_json_safe(patched))
+                except Exception:
+                    traceback.print_exc()
 
-    if _war_room_ready(cached) and age < WAR_ROOM_TTL and not force:
-        return jsonify(_json_safe(cached))
+        if _war_room_ready(cached) and age < WAR_ROOM_TTL and not force:
+            return jsonify(_json_safe(cached))
 
-    if _war_room_ready(cached) and not force:
-        return jsonify(_json_safe(cached))
+        if _war_room_ready(cached) and not force:
+            return jsonify(_json_safe(cached))
 
-    if not computing:
-        _refresh_war_room_async(force=force)
+        if not computing:
+            _refresh_war_room_async(force=force)
 
-    if _war_room_ready(cached):
-        out = dict(cached)
-        if lev_arg is not None and (out.get("scalping") or {}).get("leverage") != requested_lev:
-            try:
-                out = _patch_cached_scalping_for_leverage(out, requested_lev)
-            except Exception:
-                traceback.print_exc()
-        if force or age >= WAR_ROOM_TTL:
-            out["stale"] = True
+        if _war_room_ready(cached):
+            out = dict(cached)
+            if lev_arg is not None and (out.get("scalping") or {}).get("leverage") != requested_lev:
+                try:
+                    out = _patch_cached_scalping_for_leverage(out, requested_lev)
+                except Exception:
+                    traceback.print_exc()
+            if force or age >= WAR_ROOM_TTL:
+                out["stale"] = True
+            return jsonify(_json_safe(out))
+
+        warm = _war_room_warming_payload()
+        if _war_room_ready(cached):
+            warm["partial"] = _json_safe(cached)
+        return jsonify(_json_safe(warm))
+    except Exception as e:
+        traceback.print_exc()
+        out = _war_room_warming_payload()
+        out["ok"] = False
+        out["error"] = str(e)
         return jsonify(_json_safe(out))
 
-    return jsonify(_json_safe(_war_room_warming_payload()))
+
+def _schedule_async_resolve() -> None:
+    """Resolve trades in background — never block HTTP (prevents 502 on Render)."""
+    def _run() -> None:
+        if not _war_room_heavy_lock.acquire(blocking=False):
+            return
+        try:
+            from screener.gold_war_room.performance import resolve_open_trades  # noqa: PLC0415
+
+            px = _cached_spot_price()
+            if px is not None:
+                resolve_open_trades(px)
+        except Exception as e:
+            print(f"Async resolve: {e}")
+        finally:
+            try:
+                _war_room_heavy_lock.release()
+            except RuntimeError:
+                pass
+
+    threading.Thread(target=_run, daemon=True, name="war-room-resolve-async").start()
+
+
+def _cached_spot_price(*, max_age: float = 25.0) -> float | None:
+    now = time.time()
+    if (now - (_last_spot_for_resolve.get("ts") or 0)) < max_age:
+        return _last_spot_for_resolve.get("price")
+    try:
+        from screener.gold_war_room.fetch import fetch_spot_payload  # noqa: PLC0415
+
+        spot = fetch_spot_payload()
+        if spot.get("ok") and spot.get("price") is not None:
+            _last_spot_for_resolve["price"] = float(spot["price"])
+            _last_spot_for_resolve["ts"] = now
+            return _last_spot_for_resolve["price"]
+    except Exception:
+        pass
+    return _last_spot_for_resolve.get("price")
 
 
 @app.route("/api/gold-spot")
 def api_gold_spot():
     """Multi-feed XAUUSD spot median for header + scalping (Stooq, Yahoo, ETF-implied)."""
     from screener.gold_war_room.fetch import fetch_spot_payload  # noqa: PLC0415
-    from screener.gold_war_room.performance import resolve_open_trades  # noqa: PLC0415
 
     force = request.args.get("force") == "1"
-    spot = fetch_spot_payload(force=force)
-    if spot.get("ok") and spot.get("price") is not None:
-        resolve_open_trades(float(spot["price"]))
-    return jsonify(spot)
+    try:
+        spot = fetch_spot_payload(force=force)
+        if spot.get("ok") and spot.get("price") is not None:
+            _last_spot_for_resolve["price"] = float(spot["price"])
+            _last_spot_for_resolve["ts"] = time.time()
+            _schedule_async_resolve()
+        return jsonify(spot)
+    except Exception as e:
+        traceback.print_exc()
+        return jsonify({"ok": False, "error": str(e), "price": _last_spot_for_resolve.get("price")})
 
 
 @app.route("/api/gold-war-room/performance")
 def api_gold_war_room_performance():
-    """Fresh performance + signal log; resolves open trades vs live spot first."""
-    from screener.gold_war_room.fetch import fetch_spot_payload  # noqa: PLC0415
-    from screener.gold_war_room.performance import performance_summary, resolve_open_trades  # noqa: PLC0415
+    """Fast performance log — resolve runs in background only."""
+    from screener.gold_war_room.performance import performance_summary  # noqa: PLC0415
 
-    spot = fetch_spot_payload()
-    px = float(spot["price"]) if spot.get("ok") and spot.get("price") is not None else None
-    resolve_open_trades(px)
-    perf = performance_summary()
-    with _war_room_lock:
-        cached = _war_room_cache.get("data")
-        if isinstance(cached, dict):
-            cached = dict(cached)
-            cached["performance"] = perf
-            _war_room_cache["data"] = cached
-    return jsonify(_json_safe({"ok": True, "performance": perf, "spot_price": px}))
+    _schedule_async_resolve()
+    try:
+        perf = performance_summary()
+    except Exception as e:
+        traceback.print_exc()
+        perf = {"total_signals_logged": 0, "recent_signals": [], "recent_scalps": [], "error": str(e)}
+    return jsonify(_json_safe({"ok": True, "performance": perf}))
+
+
+@app.route("/api/gold-war-room/stability")
+def api_gold_war_room_stability():
+    """Stability agent status (auto-heal tick)."""
+    from screener.gold_war_room.stability import run_watchdog_tick  # noqa: PLC0415
+
+    report = run_watchdog_tick(
+        war_room_cache=_war_room_cache,
+        war_room_lock=_war_room_lock,
+        reset_compute_fn=_reset_war_room_compute_lock,
+        load_seed_fn=_load_war_room_seed_into_cache,
+        war_room_ready_fn=_war_room_ready,
+    )
+    return jsonify(_json_safe({"ok": True, "report": report}))
 
 
 @app.route("/api/ping")
@@ -822,6 +905,11 @@ def api_health():
     except Exception:
         pass
 
+    war_ok = False
+    with _war_room_lock:
+        war_ok = _war_room_ready(_war_room_cache.get("data"))
+        war_computing = _war_room_cache.get("computing", False)
+
     return jsonify({
         "ok": True,
         "site": SITE_NAME,
@@ -832,6 +920,8 @@ def api_health():
         "scanning": scanning,
         "error": err,
         "bg_started": _bg_started,
+        "war_room_ready": war_ok,
+        "war_room_computing": war_computing,
     })
 
 
@@ -988,7 +1078,7 @@ _war_room_resolve_started = False
 
 
 def _schedule_war_room_resolve_loop() -> None:
-    """Resolve open scalps/signals every ~20s against live XAU spot."""
+    """Background trade resolution — does not block user requests."""
     global _war_room_resolve_started
     if _war_room_resolve_started:
         return
@@ -996,19 +1086,42 @@ def _schedule_war_room_resolve_loop() -> None:
 
     def _loop() -> None:
         while True:
-            time.sleep(20)
-            try:
-                from screener.gold_war_room.fetch import fetch_spot_payload  # noqa: PLC0415
-                from screener.gold_war_room.performance import resolve_open_trades  # noqa: PLC0415
-
-                spot = fetch_spot_payload()
-                px = spot.get("price") if spot.get("ok") else None
-                if px is not None:
-                    resolve_open_trades(float(px))
-            except Exception as e:
-                print(f"War room trade resolve: {e}")
+            time.sleep(WAR_ROOM_RESOLVE_INTERVAL)
+            _schedule_async_resolve()
 
     threading.Thread(target=_loop, daemon=True, name="war-room-resolve").start()
+
+
+def _schedule_war_room_watchdog() -> None:
+    """Stability agent: unstuck compute, reload seed, trim history."""
+    global _war_room_watchdog_started
+    if _war_room_watchdog_started:
+        return
+    _war_room_watchdog_started = True
+
+    def _loop() -> None:
+        from screener.gold_war_room.stability import run_watchdog_tick  # noqa: PLC0415
+
+        while True:
+            time.sleep(60 if is_cloud_host() else 45)
+            try:
+                report = run_watchdog_tick(
+                    war_room_cache=_war_room_cache,
+                    war_room_lock=_war_room_lock,
+                    reset_compute_fn=_reset_war_room_compute_lock,
+                    load_seed_fn=_load_war_room_seed_into_cache,
+                    war_room_ready_fn=_war_room_ready,
+                )
+                if report.get("actions"):
+                    print(f"War room stability: {', '.join(report['actions'])}")
+                with _war_room_lock:
+                    computing = _war_room_cache.get("computing", False)
+                if not computing and not _war_room_ready(_war_room_cache.get("data")):
+                    _refresh_war_room_async()
+            except Exception as e:
+                print(f"War room watchdog: {e}")
+
+    threading.Thread(target=_loop, daemon=True, name="war-room-watchdog").start()
 
 
 def _schedule_war_room_loop() -> None:
@@ -1062,6 +1175,7 @@ def init_production() -> None:
     _schedule_background_start()
     _schedule_war_room_loop()
     _schedule_war_room_resolve_loop()
+    _schedule_war_room_watchdog()
     if not _war_room_ready(_war_room_cache.get("data")):
         _schedule_war_room_warmup()
 

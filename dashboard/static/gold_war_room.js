@@ -592,7 +592,11 @@
       if (topbar?.parentNode) topbar.parentNode.insertBefore(el, topbar.nextSibling);
     }
     const notes = data?.fetch_notes || [];
-    if (data?.data_source === "fallback" || notes.length) {
+    if (data?.warming && !data?.agents?.macro) {
+      el.hidden = false;
+      el.className = "war-status-banner scanning";
+      el.textContent = data.message || "Agents analyzing — desk loads in a few seconds…";
+    } else if (data?.data_source === "fallback" || notes.length) {
       el.hidden = false;
       el.className = "war-status-banner warn";
       el.textContent = (notes.join(" ") || "Using fallback data — Yahoo may be rate-limited. Click Refresh.") +
@@ -818,8 +822,8 @@
   initWarNavigation();
   load(false);
   refreshLiveSpot();
-  setInterval(refreshLiveSpot, 15000);
-  setInterval(() => load(false), 45000);
-  setInterval(refreshPerformancePanel, 20000);
-  refreshPerformancePanel();
+  setInterval(refreshLiveSpot, 20000);
+  setInterval(() => load(false), 50000);
+  setInterval(refreshPerformancePanel, 50000);
+  setTimeout(refreshPerformancePanel, 8000);
 })();
