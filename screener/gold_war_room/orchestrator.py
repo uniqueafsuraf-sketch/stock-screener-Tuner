@@ -33,8 +33,75 @@ from screener.gold_war_room.performance import (
     record_setup,
     record_war_room_cycle,
 )
-from screener.gold_war_room.scalping import analyze_scalping_setups
+from screener.gold_war_room.scalping import analyze_scalping_setups, rescale_scalping_payload
 from screener.gold_war_room.stations import build_agent_stations
+
+
+def build_war_room_ctx(
+    data: GoldMarketData,
+    agents: dict,
+    trap: dict,
+    technical: dict,
+    price: float,
+) -> dict:
+    """In-memory context for fast leverage-only scalp recomputation."""
+    return {
+        "data": data,
+        "agents": agents,
+        "trap": trap,
+        "technical": technical,
+        "price": price,
+    }
+
+
+def recompute_scalping_leverage(ctx: dict, leverage: int) -> dict:
+    """Re-run scalp desk with new leverage (same agent/trap data, fresh spot)."""
+    from screener.gold_war_room.spot_consensus import fetch_consensus_spot
+
+    live_spot = fetch_consensus_spot()
+    price = ctx["price"]
+    if live_spot.get("ok") and live_spot.get("price") is not None:
+        price = float(live_spot["price"])
+    return analyze_scalping_setups(
+        ctx["data"],
+        ctx["agents"],
+        ctx["trap"],
+        ctx["technical"],
+        price,
+        leverage=leverage,
+        live_spot=live_spot,
+    )
+
+
+def patch_payload_scalping(payload: dict, leverage: int, ctx: dict | None) -> dict:
+    """Apply leverage to cached war-room payload (full recompute or rescale fallback)."""
+    lev = max(10, min(200, int(leverage)))
+    if ctx:
+        scalping = recompute_scalping_leverage(ctx, lev)
+    else:
+        scalping = rescale_scalping_payload(payload.get("scalping"), lev)
+    out = dict(payload)
+    out["scalping"] = scalping
+    out["leverage_callout"] = _leverage_callout_text(scalping, lev)
+    return out
+
+
+def _leverage_callout_text(scalping: dict, leverage: int) -> str:
+    tier = (scalping or {}).get("tier", "standard").upper()
+    best = (scalping or {}).get("best")
+    if best:
+        dirn = best.get("direction", "—")
+        gain = best.get("gain_at_target_pct")
+        loss = best.get("loss_at_stop_pct")
+        return (
+            f"{dirn} scalp @ {leverage}x ({tier}): entry ${best.get('entry')} · "
+            f"stop ${best.get('stop')} · target ${best.get('target')} · "
+            f"illustrative +{gain}% / −{loss}%"
+        )
+    n = (scalping or {}).get("total_found") or 0
+    if n:
+        return f"{leverage}x {tier} — {n} scalp setup(s) on desk · check cards below"
+    return f"{leverage}x {tier} — no scalp passes filters at this leverage; agents still watching"
 
 
 def _safe_agent(name: str, fn, *args) -> dict:
@@ -159,7 +226,7 @@ def _build_response(
     }
 
 
-def run_war_room_analysis(*, leverage: int = 30) -> dict:
+def run_war_room_analysis(*, leverage: int = 30, ctx_out: dict | None = None) -> dict:
     try:
         data = fetch_gold_data()
         macro = _safe_agent("macro", agent_macro, data)
@@ -187,6 +254,12 @@ def run_war_room_analysis(*, leverage: int = 30) -> dict:
         payload = _build_response(
             data, agents, trap, risk, master, leverage=leverage, live_spot=live_spot,
         )
+        payload["leverage_callout"] = _leverage_callout_text(payload.get("scalping"), leverage)
+        if ctx_out is not None:
+            ctx_out.clear()
+            ctx_out.update(
+                build_war_room_ctx(data, agents, trap, agents["technical"], spot_px)
+            )
         record_setup(master, spot_px)
         record_war_room_cycle(payload)
         return payload
@@ -222,6 +295,12 @@ def run_war_room_analysis(*, leverage: int = 30) -> dict:
             )
             payload["ok"] = True
             payload["fetch_notes"] = [f"Recovered after error: {e}"]
+            payload["leverage_callout"] = _leverage_callout_text(payload.get("scalping"), leverage)
+            if ctx_out is not None:
+                ctx_out.clear()
+                ctx_out.update(
+                    build_war_room_ctx(data, agents, trap, agents["technical"], spot_px)
+                )
             record_war_room_cycle(payload)
             return payload
         except Exception as e2:

@@ -115,6 +115,10 @@ def _build_scalp(
         "thesis": thesis,
         "status": "ACTIVE" if confidence >= active_thresh else "WATCH",
         "price_note": f"Tight stop {scalp_stop:.1f} pts · RR {rr}:1 @ ${entry}",
+        "callout": (
+            f"{direction} @ {leverage}x ({risk_labels[tier]}): entry ${entry} · "
+            f"stop ${stop} · T1 ${target} · ~+{gain_pct}% / ~−{loss_pct}% (illustrative)"
+        ),
     }
 
 
@@ -233,4 +237,73 @@ def analyze_scalping_setups(
         "best": best,
         "total_found": len(setups),
         "criteria": tier_note[tier],
+        "leverage_callout": (
+            f"Desk set to {leverage}x {tier} — "
+            + (
+                f"lead {best['direction']} @ ${best['entry']} (stop ${best['stop']}, T1 ${best['target']})"
+                if best
+                else "no qualifying scalp; widen agents or wait for next scan"
+            )
+        ),
+    }
+
+
+def rescale_scalping_payload(sc: dict | None, leverage: int) -> dict:
+    """Fast leverage update when full market frames are not in memory (seed/cache only)."""
+    if not sc:
+        return {
+            "title": "Live Scalping · High Risk / High Reward",
+            "setups": [],
+            "scanning": True,
+            "leverage": leverage,
+            "tier": _leverage_tier(leverage),
+            "leverage_warning": "Run Refresh analysis for full scalp recompute.",
+            "leverage_callout": f"{leverage}x — waiting for agent data",
+        }
+    leverage = max(10, min(200, int(leverage)))
+    tier = _leverage_tier(leverage)
+    live = float(sc.get("reference_price") or 2650.0)
+    setups_out: list[dict] = []
+    for s in sc.get("setups") or []:
+        entry = float(s.get("entry") or live)
+        stop = float(s.get("stop") or entry)
+        target = float(s.get("target") or entry)
+        row = dict(s)
+        row["leverage"] = leverage
+        row["tier"] = tier
+        row["risk_profile"] = {"standard": "HIGH", "aggressive": "VERY HIGH", "extreme": "EXTREME"}[tier]
+        row["gain_at_target_pct"] = _pct_move(entry, target, leverage)
+        row["loss_at_stop_pct"] = _pct_move(entry, stop, leverage)
+        risk = abs(entry - stop) or 0.1
+        row["margin_at_risk_pct"] = round((risk / entry) * leverage * 100, 2) if entry else 0
+        row["callout"] = (
+            f"{row.get('direction', '—')} @ {leverage}x ({row['risk_profile']}): "
+            f"entry ${entry} · stop ${stop} · T1 ${target} · "
+            f"~+{row['gain_at_target_pct']}% / ~−{row['loss_at_stop_pct']}%"
+        )
+        setups_out.append(row)
+    best = setups_out[0] if setups_out else sc.get("best")
+    scalp_stop = abs((setups_out[0]["entry"] - setups_out[0]["stop"]) if setups_out else 3.0)
+    scalp_target = abs((setups_out[0]["target"] - setups_out[0]["entry"]) if setups_out else 8.0)
+    return {
+        **sc,
+        "leverage": leverage,
+        "tier": tier,
+        "subtitle": f"{leverage}x · {tier.upper()} · {sc.get('reference_label', 'XAUUSD spot')} ${live:,.2f}",
+        "setups": setups_out,
+        "best": best,
+        "leverage_warning": (
+            f"{leverage}x {tier} scalps: ~{scalp_stop:.1f} pt stop, ~{scalp_target:.1f} pt target. "
+            f"At stop ≈{round((scalp_stop / live) * leverage * 100, 0)}% risk; "
+            f"at target ≈{round((scalp_target / live) * leverage * 100, 0)}% gain (illustrative). "
+            "Liquidation risk is real — not financial advice."
+        ),
+        "leverage_callout": (
+            f"{leverage}x {tier.upper()} — "
+            + (
+                f"{best['direction']} entry ${best['entry']} · stop ${best['stop']} · target ${best['target']}"
+                if best
+                else "no setups in cache at this leverage"
+            )
+        ),
     }

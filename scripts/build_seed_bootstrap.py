@@ -8,6 +8,9 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
 CACHE = ROOT / "data" / "scan_cache.json"
 SEED = ROOT / "data" / "seed_bootstrap.json"
 
@@ -52,6 +55,10 @@ def main() -> int:
     out["universe_size"] = len(stocks)
     out["message"] = "Full universe loaded — live quotes updating…"
     out.pop("live", None)
+
+    from dashboard.server import _apply_ourbit_payload  # noqa: PLC0415
+
+    out = _apply_ourbit_payload(out)
     if isinstance(out.get("news_wire"), list) and len(out["news_wire"]) > 150:
         out["news_wire"] = out["news_wire"][:150]
 

@@ -4,6 +4,10 @@ __pycache__/
 .env
 data/scan_cache.json
 data/gold_war_room_history.json
+data/*.log
+data/server_err.log
+data/server.log
+data/tunnel_err.log
 *.log
 
 # Deploy / local tools (do not upload to GitHub)

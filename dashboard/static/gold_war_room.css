@@ -506,6 +506,42 @@
   box-shadow: 0 0 24px rgba(255, 68, 102, 0.08);
 }
 
+.scalp-leverage-callout {
+  margin: 0.5rem 0 0.35rem;
+  padding: 0.65rem 0.85rem;
+  border-radius: 8px;
+  font-size: 0.86rem;
+  font-weight: 600;
+  line-height: 1.45;
+  background: rgba(255, 215, 0, 0.12);
+  border: 1px solid rgba(255, 215, 0, 0.35);
+  color: #f5e6a8;
+}
+
+.scalp-leverage-callout.updating {
+  background: rgba(100, 160, 255, 0.12);
+  border-color: rgba(100, 160, 255, 0.35);
+  color: #b8d4ff;
+}
+
+.scalp-leverage-callout.error {
+  background: rgba(255, 80, 80, 0.12);
+  border-color: rgba(255, 80, 80, 0.35);
+  color: #ffb3b3;
+}
+
+.scalp-position-callout {
+  margin: 0.35rem 0 0.2rem;
+  padding: 0.45rem 0.55rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  line-height: 1.4;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.25);
+  color: var(--gold, #e8c547);
+  font-family: var(--mono, monospace);
+}
+
 .scalp-warning {
   font-size: 0.75rem;
   color: var(--amber);

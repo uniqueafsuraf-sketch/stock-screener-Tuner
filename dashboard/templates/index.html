@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/static/dashboard.css">
+  <link rel="stylesheet" href="/static/dashboard.css?v={{ app_version | default('3.4') }}">
 </head>
 <body>
   <div class="app">
@@ -38,6 +38,10 @@
         <button type="button" class="nav-item" data-tab="all">
           <span>Full universe</span>
           <span class="nav-count" id="count-all">—</span>
+        </button>
+        <button type="button" class="nav-item" data-tab="ourbit">
+          <span>Ourbit stocks</span>
+          <span class="nav-count" id="count-ourbit">—</span>
         </button>
         <p class="nav-section-label">Premium</p>
         <a href="/gold-war-room" class="nav-item nav-link nav-premium">
@@ -107,6 +111,10 @@
               <span class="kpi-label">Unusual flow</span>
               <span class="kpi-value" id="stat-unusual">—</span>
             </article>
+            <article class="kpi">
+              <span class="kpi-label">Ourbit listed</span>
+              <span class="kpi-value" id="stat-ourbit">—</span>
+            </article>
           </section>
 
           <section class="panel">
@@ -171,6 +179,6 @@
       StocksTunerStation domain after deployment.
     </p>
   </noscript>
-  <script src="/static/dashboard.js"></script>
+  <script src="/static/dashboard.js?v={{ app_version | default('3.4') }}"></script>
 </body>
 </html>

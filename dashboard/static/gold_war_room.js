@@ -426,6 +426,20 @@
     });
   }
 
+  function setScalpCallout(text, state) {
+    const callout = $("scalp-leverage-callout");
+    if (!callout) return;
+    if (!text) {
+      callout.hidden = true;
+      callout.textContent = "";
+      callout.className = "scalp-leverage-callout";
+      return;
+    }
+    callout.hidden = false;
+    callout.className = `scalp-leverage-callout${state ? ` ${state}` : ""}`;
+    callout.textContent = text;
+  }
+
   function renderScalping(sc) {
     const sub = $("scalp-subtitle");
     const warn = $("scalp-warning");
@@ -440,6 +454,8 @@
     renderSpotFeeds(spot);
     if (sub) sub.textContent = sc.subtitle || sc.title || "";
     if (warn) warn.textContent = sc.leverage_warning || "High leverage — extreme risk.";
+    const globalCallout = sc.leverage_callout;
+    if (globalCallout) setScalpCallout(globalCallout, "ready");
     const setups = sc.setups || [];
     if (!setups.length) {
       el.innerHTML = `<p class="scalp-empty">No scalp meeting criteria right now (${sc.criteria || "agents watching"}). Next scan in ~45s.</p>`;
@@ -468,6 +484,7 @@
           <div><label>@ ${s.leverage}x</label><span class="scalp-rr-pct">Win ${gain} / Lose ${loss}</span></div>
         </div>
         <p class="scalp-thesis">${esc(s.thesis)}</p>
+        ${s.callout ? `<p class="scalp-position-callout">${esc(s.callout)}</p>` : ""}
         <p class="war-muted scalp-votes">${s.agent_votes}/5 agents: ${esc((s.agents_aligned || []).join(", "))} · ${esc(s.timeframe)}</p>
       </article>`;
     }).join("");
@@ -620,10 +637,39 @@
     renderChart(data.chart);
     renderScalping(data.scalping);
     renderLiveScan(data.live_scan, data.updated_at);
+    if (data.leverage_callout) setScalpCallout(data.leverage_callout, "ready");
   }
 
   let warmPolls = 0;
-  let scalpLeverage = Number($("scalp-leverage")?.value) || 100;
+  let lastWarPayload = null;
+  const savedLev = localStorage.getItem("warScalpLeverage");
+  const levSelect = $("scalp-leverage");
+  if (levSelect && savedLev && [...levSelect.options].some((o) => o.value === savedLev)) {
+    levSelect.value = savedLev;
+  }
+  let scalpLeverage = Number(levSelect?.value) || 100;
+
+  async function updateScalpForLeverage() {
+    const lev = scalpLeverage;
+    localStorage.setItem("warScalpLeverage", String(lev));
+    setScalpCallout(`Updating scalp position for ${lev}x…`, "updating");
+    try {
+      const res = await fetch(`/api/gold-war-room/scalp?leverage=${lev}`, { cache: "no-store" });
+      const json = await res.json();
+      if (!json.ok) {
+        setScalpCallout(json.error || `Could not update scalp for ${lev}x`, "error");
+        return;
+      }
+      if (lastWarPayload) {
+        lastWarPayload.scalping = json.scalping;
+        lastWarPayload.leverage_callout = json.callout;
+      }
+      renderScalping(json.scalping);
+      setScalpCallout(json.callout || json.scalping?.leverage_callout || `Scalp desk set to ${lev}x`, "ready");
+    } catch (e) {
+      setScalpCallout(`Leverage update failed: ${e.message}`, "error");
+    }
+  }
 
   async function load(refresh = false, retries = 0) {
     const btn = $("btn-war-refresh");
@@ -667,7 +713,11 @@
         return;
       }
       warmPolls = 0;
+      lastWarPayload = json;
       apply(json);
+      if (json.scalping && (json.scalping.leverage || 0) !== scalpLeverage) {
+        updateScalpForLeverage();
+      }
     } catch (e) {
       renderMarketBias({
         headline: "Connection issue",
@@ -696,13 +746,17 @@
   });
 
   $("scalp-leverage")?.addEventListener("change", (e) => {
-    scalpLeverage = Number(e.target.value) || 30;
-    load(true);
+    scalpLeverage = Number(e.target.value) || 100;
+    updateScalpForLeverage();
   });
 
   const boot = readBootstrap();
   if (boot?.ok && boot.agents && Object.keys(boot.agents).length) {
+    lastWarPayload = boot;
     apply(boot);
+    if ((boot.scalping?.leverage || 0) !== scalpLeverage) {
+      updateScalpForLeverage();
+    }
   }
 
   async function refreshLiveSpot() {

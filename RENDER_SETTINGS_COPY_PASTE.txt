@@ -1,0 +1,21 @@
+Copy each line into Render → your Web Service → Settings → Build & Deploy
+
+Root Directory:
+(leave completely empty — delete anything in the box)
+
+Build Command:
+pip install --upgrade pip && pip install -r requirements.txt
+
+Start Command:
+gunicorn wsgi:application --bind 0.0.0.0:$PORT --workers 1 --threads 4 --timeout 180
+
+Health Check Path:
+/api/ping
+
+Environment → Add:
+PYTHON_VERSION = 3.12.3
+RENDER = true
+
+Branch: main
+
+After saving: Manual Deploy → Clear build cache & deploy

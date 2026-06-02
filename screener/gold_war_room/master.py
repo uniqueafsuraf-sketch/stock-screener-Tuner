@@ -114,6 +114,63 @@ def run_master(
     }
 
 
+def market_bias_display(
+    bias: str,
+    confidence: float,
+    bull_p: float,
+    bear_p: float,
+    *,
+    bullish_agents: int,
+    bearish_agents: int,
+) -> dict:
+    """Plain-English copy for the Market Bias panel."""
+    key = (bias or "Neutral").strip().lower()
+    if key == "bullish":
+        headline = "Gold is leaning BULLISH"
+        meaning = (
+            "Our desk sees more upward pressure than downward right now. "
+            "Traders often watch for buy-the-dip entries or long scalps — always use stops and size for your risk."
+        )
+        lean_agents = bullish_agents
+    elif key == "bearish":
+        headline = "Gold is leaning BEARISH"
+        meaning = (
+            "Our desk sees more downward pressure than upward right now. "
+            "Traders often stay cautious on longs and watch for sell rallies or short setups — always use stops."
+        )
+        lean_agents = bearish_agents
+    else:
+        headline = "Gold looks NEUTRAL"
+        meaning = (
+            "Bull and bear signals are roughly balanced. "
+            "Many traders wait for a clearer lean before adding size — range tactics and tight stops often fit best."
+        )
+        lean_agents = max(bullish_agents, bearish_agents)
+
+    if confidence >= 75:
+        confidence_label = "Fairly sure"
+    elif confidence >= 55:
+        confidence_label = "Somewhat sure"
+    elif confidence >= 35:
+        confidence_label = "Not very sure"
+    else:
+        confidence_label = "Low conviction"
+
+    agents_summary = (
+        f"{lean_agents} of 5 core agents lean {bias.lower()}"
+        if key in ("bullish", "bearish")
+        else f"{bullish_agents} bullish · {bearish_agents} bearish among core agents"
+    )
+
+    return {
+        "headline": headline,
+        "meaning": meaning,
+        "confidence_label": confidence_label,
+        "agents_summary": agents_summary,
+        "probability_detail": f"Model mix: {bull_p:.0f}% up · {bear_p:.0f}% down",
+    }
+
+
 def agent_consensus(agents: dict[str, dict], trap: dict, risk: dict) -> dict:
     rows = []
     mapping = [

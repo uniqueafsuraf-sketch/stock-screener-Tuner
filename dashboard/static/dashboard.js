@@ -10,11 +10,12 @@
     losers: "Losers",
     news: "News wire",
     all: "Full universe",
+    ourbit: "Ourbit stocks",
   };
 
   const DATA_LIST_KEYS = [
     "opportunities", "all_stocks", "edge_plays", "gainers", "losers",
-    "gaps", "high_rvol", "rel_strength", "unusual_activity",
+    "gaps", "high_rvol", "rel_strength", "unusual_activity", "ourbit_stocks",
   ];
 
   const COLS = 12;
@@ -120,6 +121,103 @@
     if (!r?.on_ourbit) return "";
     const pair = r.ourbit_symbol ? ` (${r.ourbit_symbol})` : "";
     return `<span class="ourbit-badge" title="Listed on Ourbit${esc(pair)}">OB</span>`;
+  }
+
+  function minimalOurbitRow(ticker, info) {
+    return {
+      symbol: ticker,
+      price: 0,
+      change_pct: 0,
+      volume_ratio: 0,
+      rsi: 50,
+      score: 0,
+      edge_score: 0,
+      edge_grade: "—",
+      signals: [],
+      unusual_activity: [],
+      unusual_score: 0,
+      thesis: "Ourbit-listed — refresh scan for full metrics",
+      news: [],
+      chart_links: defaultChartLinks(ticker),
+      on_ourbit: true,
+      ourbit_symbol: info.ourbit_symbol || "",
+    };
+  }
+
+  /** Ensure Ourbit tab + OB badges even if server cache predates ourbit_payload (e.g. Render v3.1). */
+  async function enrichOurbitPayload(payload) {
+    if (!payload) return payload;
+    const existing = (payload.ourbit_stocks || []).length;
+    if (existing >= 20 && (payload.stats?.ourbit_count || 0) >= 20) return payload;
+
+    let stocks = [];
+    const sources = [
+      "/api/ourbit-stocks",
+      "/static/ourbit_stocks.json",
+    ];
+    for (const url of sources) {
+      try {
+        const res = await fetch(url, { cache: "no-store" });
+        if (!res.ok) continue;
+        const raw = await res.json();
+        stocks = raw.stocks || raw.tickers?.map((t) => ({ ticker: t })) || [];
+        if (stocks.length) break;
+      } catch (_) { /* try next source */ }
+    }
+    if (!stocks.length) return payload;
+
+    const lookup = {};
+    stocks.forEach((s) => {
+      const t = (s.ticker || s).toUpperCase();
+      if (t) lookup[t] = s;
+    });
+
+    const bySym = {};
+    (payload.all_stocks || []).forEach((r) => {
+      const sym = (r.symbol || "").toUpperCase();
+      if (sym) bySym[sym] = r;
+    });
+
+    const ourbitStocks = Object.keys(lookup)
+      .sort()
+      .map((sym) => {
+        const info = lookup[sym];
+        const base = bySym[sym] ? { ...bySym[sym] } : minimalOurbitRow(sym, info);
+        base.on_ourbit = true;
+        base.ourbit_symbol = info.ourbit_symbol || "";
+        return base;
+      });
+
+    const taggedAll = (payload.all_stocks || []).map((r) => {
+      const info = lookup[(r.symbol || "").toUpperCase()];
+      if (!info) return r;
+      return {
+        ...r,
+        on_ourbit: true,
+        ourbit_symbol: info.ourbit_symbol || r.ourbit_symbol || "",
+      };
+    });
+
+    const lists = [
+      "opportunities", "gainers", "losers", "edge_plays",
+      "high_rvol", "rel_strength", "unusual_activity",
+    ];
+    const out = { ...payload, all_stocks: taggedAll, ourbit_stocks: ourbitStocks };
+    out.ourbit_listed = stocks.length;
+    out.stats = { ...(out.stats || {}), ourbit_count: ourbitStocks.length };
+    lists.forEach((key) => {
+      if (!Array.isArray(out[key])) return;
+      out[key] = out[key].map((r) => {
+        const info = lookup[(r.symbol || "").toUpperCase()];
+        if (!info) return r;
+        return {
+          ...r,
+          on_ourbit: true,
+          ourbit_symbol: info.ourbit_symbol || r.ourbit_symbol || "",
+        };
+      });
+    });
+    return out;
   }
 
   function buildTapeFromData() {
@@ -485,6 +583,12 @@
       case "gainers": rows = [...(data.gainers || [])]; break;
       case "losers": rows = [...(data.losers || [])]; break;
       case "all": rows = [...(data.all_stocks || [])]; break;
+      case "ourbit":
+        rows = [...(data.ourbit_stocks || [])];
+        if (!rows.length) {
+          rows = (data.all_stocks || []).filter((r) => r.on_ourbit);
+        }
+        break;
       case "opportunities":
       default: rows = [...(data.opportunities || [])]; break;
     }
@@ -601,6 +705,8 @@
     let t = data.scanned_at ? `Scan ${data.scanned_at}` : "Scan running…";
     if (data.scanning) t += " · updating";
     if (live.updated_at) t += ` · Live ${live.updated_at}`;
+    const ob = data.ourbit_listed ?? data.stats?.ourbit_count ?? (data.ourbit_stocks || []).length;
+    if (ob) t += ` · ${ob} Ourbit stocks`;
     $("meta").textContent = t;
     updateStatusBanner();
   }
@@ -608,6 +714,12 @@
   function updateNavCounts() {
     if ($("count-opps")) $("count-opps").textContent = data?.opportunities?.length ?? 0;
     if ($("count-all")) $("count-all").textContent = data?.all_stocks?.length ?? "—";
+    if ($("count-ourbit")) {
+      const n = (data?.ourbit_stocks || []).length
+        || data?.stats?.ourbit_count
+        || (data?.all_stocks || []).filter((r) => r.on_ourbit).length;
+      $("count-ourbit").textContent = n || "—";
+    }
   }
 
   function updateStats() {
@@ -619,6 +731,9 @@
     $("stat-gaps").textContent = s.gaps_today ?? "—";
     $("stat-earn").textContent = s.earnings_soon ?? "—";
     $("stat-unusual").textContent = s.unusual_active ?? data?.unusual_activity?.length ?? "—";
+    if ($("stat-ourbit")) {
+      $("stat-ourbit").textContent = data?.ourbit_listed ?? s.ourbit_count ?? (data?.ourbit_stocks || []).length ?? "—";
+    }
     updateNavCounts();
     updateMeta();
     renderMarketTape();
@@ -626,16 +741,26 @@
     renderTable();
   }
 
-  function onDataLoaded(json) {
+  async function onDataLoaded(json) {
     const live = data?.live;
-    data = json;
-    if (live && !json.live) data.live = live;
-    if (json.market_pulse?.length) renderMarketTape(json.market_pulse);
+    data = await enrichOurbitPayload(json);
+    if (live && !data.live) data.live = live;
+    if (data.market_pulse?.length) renderMarketTape(data.market_pulse);
     updateStats();
-    if (json.message && $("meta")) {
-      $("meta").textContent = json.message + (data.scanned_at ? ` · Scan ${data.scanned_at}` : "");
+    if (data.message && $("meta")) {
+      $("meta").textContent = data.message + (data.scanned_at ? ` · Scan ${data.scanned_at}` : "");
     }
-    if (json.scanning || !json.scanned_at) scheduleScanPoll();
+    if (data.scanning || !data.scanned_at) scheduleScanPoll();
+    const ob = (data.ourbit_stocks || []).length;
+    if (ob < 1) {
+      const banner = $("status-banner");
+      if (banner) {
+        banner.hidden = false;
+        banner.className = "status-banner warn";
+        banner.textContent =
+          "Ourbit list not loaded — push the latest code to GitHub and redeploy on Render (health should show version 3.4+ and ourbit_listed: 33).";
+      }
+    }
   }
 
   function showServerError(message) {
@@ -698,7 +823,7 @@
       try {
         const json = await fetchJsonWithFallback("/api/bootstrap", "/api/scan");
         if (json?.all_stocks?.length || json?.opportunities?.length) {
-          onDataLoaded(json);
+          await onDataLoaded(json);
           return;
         }
         if (json?.message && $("meta")) $("meta").textContent = json.message;
@@ -719,7 +844,7 @@
       try {
         const res = await fetch("/api/scan");
         const json = await res.json();
-        if (json.ok !== false) onDataLoaded(json);
+        if (json.ok !== false) await onDataLoaded(json);
       } catch (_) {}
     }, 5000);
   }
@@ -738,7 +863,7 @@
     try {
       const res = await fetch(`/api/scan${refresh ? "?refresh=1" : ""}`);
       const json = await res.json();
-      onDataLoaded(json);
+      await onDataLoaded(json);
     } catch (e) {
       const banner = $("status-banner");
       if (banner) {
@@ -770,20 +895,20 @@
         $("alert-value").value = "";
         await loadAlertsOnly();
         const res2 = await fetch("/api/scan");
-        onDataLoaded(await res2.json());
+        await onDataLoaded(await res2.json());
       }
     } catch (_) {}
   });
 
-  document.querySelectorAll(".nav-item").forEach((item) => {
+  document.querySelectorAll(".nav-item[data-tab]").forEach((item) => {
     item.addEventListener("click", () => {
-      document.querySelectorAll(".nav-item").forEach((n) => n.classList.remove("active"));
+      document.querySelectorAll(".nav-item[data-tab]").forEach((n) => n.classList.remove("active"));
       item.classList.add("active");
       activeTab = item.dataset.tab;
       sortKey = activeTab === "gainers" || activeTab === "losers" ? "change_pct"
-        : activeTab === "all" ? "symbol"
+        : activeTab === "all" || activeTab === "ourbit" ? "symbol"
         : "score";
-      sortDir = -1;
+      sortDir = activeTab === "ourbit" ? 1 : -1;
       renderTable();
     });
   });

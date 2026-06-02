@@ -67,6 +67,7 @@ def scan_full(
     from screener.ourbit_universe import get_ourbit_lookup  # noqa: PLC0415
 
     ourbit_lookup = get_ourbit_lookup()
+    ourbit_set = set(ourbit_lookup.keys())
 
     def _tag_ourbit(snap: StockSnapshot) -> None:
         info = ourbit_lookup.get(snap.symbol.upper())
@@ -90,7 +91,8 @@ def scan_full(
 
     for symbol, df in frames.items():
         adv = avg_dollar_volume(df)
-        if adv < min_dv:
+        floor = min_dv * 0.15 if symbol.upper() in ourbit_set else min_dv
+        if adv < floor:
             continue
         snap = evaluate(symbol, df, avg_dollar_volume_m=adv / 1_000_000, **eval_kw)
         snap = augment_snapshot(snap, df, spy_5d=spy_5d)

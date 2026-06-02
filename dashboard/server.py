@@ -43,6 +43,11 @@ _bg_scheduled = False
 _alert_history: list[dict] = []
 _alert_lock = threading.Lock()
 _pulse_cache: dict = {"data": [], "ts": 0.0}
+_OURBIT_PAYLOAD_VERSION = 1
+_ROW_LIST_KEYS = (
+    "opportunities", "all_stocks", "edge_plays", "gainers", "losers",
+    "gaps", "high_rvol", "rel_strength", "unusual_activity", "ourbit_stocks",
+)
 
 
 def _cfg() -> dict:
@@ -56,7 +61,7 @@ def _cfg() -> dict:
         news["workers"] = min(int(news.get("workers", 12)), 4)
         cfg = {
             **cfg,
-            "universe": cfg.get("universe", "both"),
+            "universe": cfg.get("universe", "both_ourbit"),
             "live": live,
             "news": news,
         }
@@ -106,10 +111,88 @@ def _default_chart_links(sym: str) -> dict:
     }
 
 
+def _tag_row_ourbit(row: dict, lookup: dict[str, dict]) -> dict:
+    out = dict(row)
+    sym = (out.get("symbol") or "").upper().strip()
+    info = lookup.get(sym)
+    if info:
+        out["on_ourbit"] = True
+        out["ourbit_symbol"] = info.get("ourbit_symbol", "")
+    else:
+        out.setdefault("on_ourbit", False)
+        out.setdefault("ourbit_symbol", "")
+    return out
+
+
+def _minimal_ourbit_row(ticker: str, info: dict) -> dict:
+    return {
+        "symbol": ticker,
+        "price": 0.0,
+        "change_pct": 0.0,
+        "volume_ratio": 0.0,
+        "rsi": 50.0,
+        "score": 0,
+        "edge_score": 0.0,
+        "edge_grade": "—",
+        "signals": [],
+        "notes": [],
+        "news": [],
+        "thesis": "Ourbit-listed — full scan loading…",
+        "unusual_activity": [],
+        "unusual_score": 0.0,
+        "dollar_volume_m": 0,
+        "chart_links": _default_chart_links(ticker),
+        "live": False,
+        "has_opportunity": False,
+        "on_ourbit": True,
+        "ourbit_symbol": info.get("ourbit_symbol", ""),
+    }
+
+
+def _apply_ourbit_payload(data: dict, *, live_quotes: dict | None = None) -> dict:
+    """Tag rows with Ourbit metadata and build a dedicated ourbit_stocks list."""
+    from screener.ourbit_universe import get_ourbit_lookup  # noqa: PLC0415
+
+    lookup = get_ourbit_lookup()
+    if not lookup:
+        return data
+
+    out = dict(data)
+    for key in _ROW_LIST_KEYS:
+        if key in out and isinstance(out[key], list):
+            out[key] = [_tag_row_ourbit(r, lookup) for r in out[key] if isinstance(r, dict)]
+
+    by_sym: dict[str, dict] = {}
+    for row in out.get("all_stocks") or []:
+        sym = (row.get("symbol") or "").upper().strip()
+        if sym:
+            by_sym[sym] = row
+
+    quotes = live_quotes or {}
+    ourbit_stocks: list[dict] = []
+    for ticker, info in sorted(lookup.items()):
+        row = by_sym.get(ticker)
+        if row:
+            row = _tag_row_ourbit(row, lookup)
+        elif quotes.get(ticker):
+            row = _tag_row_ourbit(_stock_from_quote(ticker, quotes[ticker]), lookup)
+        else:
+            row = _minimal_ourbit_row(ticker, info)
+        ourbit_stocks.append(row)
+
+    out["ourbit_stocks"] = ourbit_stocks
+    out["ourbit_listed"] = len(lookup)
+    stats = dict(out.get("stats") or {})
+    stats["ourbit_count"] = len(ourbit_stocks)
+    out["stats"] = stats
+    out["ourbit_payload_version"] = _OURBIT_PAYLOAD_VERSION
+    return out
+
+
 def _stock_from_quote(sym: str, q: dict) -> dict:
     chg = float(q.get("change_pct") or 0)
     vol = float(q.get("volume_ratio") or 0)
-    return {
+    row = {
         "symbol": sym,
         "price": float(q.get("price") or 0),
         "change_pct": chg,
@@ -128,7 +211,16 @@ def _stock_from_quote(sym: str, q: dict) -> dict:
         "chart_links": _default_chart_links(sym),
         "live": True,
         "has_opportunity": False,
+        "on_ourbit": False,
+        "ourbit_symbol": "",
     }
+    from screener.ourbit_universe import get_ourbit_lookup  # noqa: PLC0415
+
+    info = get_ourbit_lookup().get(sym.upper())
+    if info:
+        row["on_ourbit"] = True
+        row["ourbit_symbol"] = info.get("ourbit_symbol", "")
+    return row
 
 
 def _bootstrap_from_live() -> dict:
@@ -227,11 +319,23 @@ def _load_disk_cache_into_memory() -> None:
         disk = load_seed_bootstrap()
         src = "seed"
     if disk:
+        stale_ourbit = (
+            disk.get("ourbit_payload_version") != _OURBIT_PAYLOAD_VERSION
+            or "ourbit_stocks" not in disk
+        )
+        disk = _apply_ourbit_payload(disk)
         with _scan_lock:
             if _scan_cache["data"] is None:
                 _scan_cache["data"] = disk
                 _scan_cache["ts"] = time.time()
-                print(f"Loaded {len(disk.get('all_stocks', []))} stocks from {src}")
+                n_ob = len(disk.get("ourbit_stocks") or [])
+                print(f"Loaded {len(disk.get('all_stocks', []))} stocks from {src} ({n_ob} Ourbit)")
+                if stale_ourbit:
+                    threading.Thread(
+                        target=lambda: _run_scan(force=True),
+                        daemon=True,
+                        name="ourbit-cache-refresh",
+                    ).start()
 
 
 def _ensure_background() -> LiveEngine:
@@ -319,7 +423,7 @@ def _merge_scan_with_live(scan_data: dict, *, start_bg: bool = True) -> dict:
     if _scan_cache.get("last_error"):
         data["last_error"] = _scan_cache["last_error"]
     data["scanning"] = _scan_cache.get("scanning", False)
-    return data
+    return _apply_ourbit_payload(data, live_quotes=quotes)
 
 
 def _run_scan(force: bool = False) -> None:
@@ -394,11 +498,20 @@ def _scan_response(force: bool = False) -> dict:
 
 @app.route("/")
 def index():
+    from dashboard.launch import APP_VERSION  # noqa: PLC0415
+
     _schedule_background_start()
-    return render_template("index.html")
+    return render_template("index.html", app_version=APP_VERSION)
 
 
-_war_room_cache: dict = {"data": None, "ts": 0.0, "computing": False, "computing_since": 0.0}
+_war_room_cache: dict = {
+    "data": None,
+    "ts": 0.0,
+    "computing": False,
+    "computing_since": 0.0,
+    "ctx": None,
+    "leverage": 100,
+}
 _war_room_lock = threading.Lock()
 WAR_ROOM_TTL = 45
 WAR_ROOM_SCAN_INTERVAL = 45
@@ -483,14 +596,19 @@ def _refresh_war_room_async(*, force: bool = False) -> None:
         from screener.gold_war_room import run_war_room_analysis  # noqa: PLC0415
 
         try:
+            ctx_holder: dict = {}
             with _war_room_lock:
-                lev = int(_war_room_cache.get("leverage") or 30)
-            payload = run_war_room_analysis(leverage=max(10, min(200, lev)))
+                lev = int(_war_room_cache.get("leverage") or 100)
+            payload = run_war_room_analysis(
+                leverage=max(10, min(200, lev)),
+                ctx_out=ctx_holder,
+            )
             if payload.get("ok"):
                 save_war_room_seed(payload)
             with _war_room_lock:
                 _war_room_cache["data"] = payload
                 _war_room_cache["ts"] = time.time()
+                _war_room_cache["ctx"] = ctx_holder if ctx_holder else None
         except Exception as e:
             traceback.print_exc()
             with _war_room_lock:
@@ -526,9 +644,66 @@ def gold_war_room_page():
     )
 
 
+def _war_room_leverage() -> int:
+    with _war_room_lock:
+        return max(10, min(200, int(_war_room_cache.get("leverage") or 100)))
+
+
+def _patch_cached_scalping_for_leverage(cached: dict, leverage: int) -> dict:
+    from screener.gold_war_room.orchestrator import patch_payload_scalping  # noqa: PLC0415
+
+    with _war_room_lock:
+        ctx = _war_room_cache.get("ctx")
+    return patch_payload_scalping(cached, leverage, ctx)
+
+
+@app.route("/api/gold-war-room/scalp")
+def api_gold_war_room_scalp():
+    """Fast scalp desk update when leverage changes (no full agent re-run)."""
+    from screener.gold_war_room.orchestrator import patch_payload_scalping  # noqa: PLC0415
+
+    lev_arg = request.args.get("leverage", type=int)
+    if lev_arg is None:
+        lev_arg = _war_room_leverage()
+    lev = max(10, min(200, int(lev_arg)))
+    with _war_room_lock:
+        _war_room_cache["leverage"] = lev
+        cached = _war_room_cache.get("data")
+        ctx = _war_room_cache.get("ctx")
+
+    if not _war_room_ready(cached):
+        return jsonify({
+            "ok": False,
+            "error": "War room still loading — wait a few seconds",
+            "scalping": {"setups": [], "scanning": True},
+        })
+
+    try:
+        patched = patch_payload_scalping(dict(cached), lev, ctx)
+        scalping = patched.get("scalping") or {}
+        callout = patched.get("leverage_callout") or scalping.get("leverage_callout") or ""
+        with _war_room_lock:
+            if _war_room_cache.get("data"):
+                data = dict(_war_room_cache["data"])
+                data["scalping"] = scalping
+                data["leverage_callout"] = callout
+                _war_room_cache["data"] = data
+        return jsonify(_json_safe({
+            "ok": True,
+            "leverage": lev,
+            "scalping": scalping,
+            "callout": callout,
+            "updated_at": time.strftime("%Y-%m-%d %H:%M:%S UTC", time.gmtime()),
+        }))
+    except Exception as e:
+        traceback.print_exc()
+        return jsonify({"ok": False, "error": str(e), "scalping": cached.get("scalping", {})})
+
+
 @app.route("/api/gold-war-room")
 def api_gold_war_room():
     force = request.args.get("refresh") == "1"
+    lev_only = request.args.get("leverage_only") == "1"
     lev_arg = request.args.get("leverage", type=int)
     if lev_arg is not None:
         with _war_room_lock:
@@ -539,10 +714,23 @@ def api_gold_war_room():
         age = now - (_war_room_cache.get("ts") or 0)
         computing = _war_room_cache.get("computing", False)
         started = _war_room_cache.get("computing_since") or 0.0
+        requested_lev = _war_room_leverage()
 
     if computing and started and (now - started) > WAR_ROOM_COMPUTE_MAX:
         _reset_war_room_compute_lock()
         computing = False
+
+    # Leverage change: return updated scalp immediately (no stale 100x data while recomputing)
+    if _war_room_ready(cached) and lev_arg is not None:
+        cached_lev = (cached.get("scalping") or {}).get("leverage")
+        if lev_only or cached_lev != requested_lev:
+            try:
+                patched = _patch_cached_scalping_for_leverage(cached, requested_lev)
+                with _war_room_lock:
+                    _war_room_cache["data"] = patched
+                return jsonify(_json_safe(patched))
+            except Exception:
+                traceback.print_exc()
 
     if _war_room_ready(cached) and age < WAR_ROOM_TTL and not force:
         return jsonify(_json_safe(cached))
@@ -555,6 +743,11 @@ def api_gold_war_room():
 
     if _war_room_ready(cached):
         out = dict(cached)
+        if lev_arg is not None and (out.get("scalping") or {}).get("leverage") != requested_lev:
+            try:
+                out = _patch_cached_scalping_for_leverage(out, requested_lev)
+            except Exception:
+                traceback.print_exc()
         if force or age >= WAR_ROOM_TTL:
             out["stale"] = True
         return jsonify(_json_safe(out))
@@ -598,10 +791,19 @@ def api_health():
         except Exception:
             pass
 
+    ourbit_n = 0
+    try:
+        from screener.ourbit_universe import get_ourbit_lookup  # noqa: PLC0415
+
+        ourbit_n = len(get_ourbit_lookup())
+    except Exception:
+        pass
+
     return jsonify({
         "ok": True,
         "site": SITE_NAME,
         "version": APP_VERSION,
+        "ourbit_listed": ourbit_n,
         "stocks_cached": n,
         "live_quotes": live_n,
         "scanning": scanning,
@@ -808,7 +1010,7 @@ def init_production() -> None:
             print(f"Loaded {len(seed.get('all_stocks', []))} stocks from seed_bootstrap.json")
     _load_war_room_seed_into_cache()
     with _war_room_lock:
-        _war_room_cache.setdefault("leverage", 30)
+        _war_room_cache.setdefault("leverage", 100)
     _schedule_background_start()
     _schedule_war_room_loop()
     if not _war_room_ready(_war_room_cache.get("data")):
