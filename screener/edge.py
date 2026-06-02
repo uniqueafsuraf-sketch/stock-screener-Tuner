@@ -88,6 +88,9 @@ def compute_edge_score(snap: StockSnapshot) -> float:
         elif snap.earnings_within_days <= 14:
             score += 2
 
+    if "CONGRESS_BUY" in snap.signals:
+        score += 14
+
     return round(min(100, max(0, score)), 1)
 
 
@@ -130,6 +133,9 @@ def build_thesis(snap: StockSnapshot) -> str:
     if snap.unusual_activity:
         flags = ", ".join(a.replace("_", " ") for a in snap.unusual_activity[:3])
         parts.append(f"Unusual flow: {flags} (score {snap.unusual_score:.0f}).")
+
+    if "CONGRESS_BUY" in snap.signals:
+        parts.append("Recent STOCK Act purchase filing — politicians often trade with information edge; verify timing vs disclosure lag.")
 
     if not parts:
         parts.append("Monitor for volume and trendline confirmation before sizing a position.")

@@ -76,6 +76,29 @@ def _ourbit_sync_interval() -> int:
     return int(_cfg().get("ourbit", {}).get("sync_interval_sec", 900))
 
 
+def _congress_sync_interval() -> int:
+    return int(_cfg().get("congress", {}).get("sync_interval_sec", 3600))
+
+
+def _congress_sync_loop() -> None:
+    """Refresh STOCK Act disclosure cache in the background."""
+    time.sleep(90)
+    while True:
+        try:
+            from screener.congress_trades import build_congress_payload, save_congress_cache  # noqa: PLC0415
+
+            payload = build_congress_payload(lookback_days=180)
+            if payload.get("ok"):
+                save_congress_cache(payload)
+                print(
+                    f"Congress trades refreshed: {payload.get('total_trades')} filings, "
+                    f"{(payload.get('stats') or {}).get('recent_buy_count', 0)} recent buys"
+                )
+        except Exception as e:
+            print(f"Congress sync failed: {e}")
+        time.sleep(_congress_sync_interval())
+
+
 def _ourbit_sync_loop() -> None:
     """Poll Ourbit for new tokenized stock listings; rescan when new tickers appear."""
     time.sleep(60)
@@ -198,6 +221,51 @@ def _apply_ourbit_payload(data: dict, *, live_quotes: dict | None = None) -> dic
     merged_all.sort(key=lambda r: (r.get("symbol") or ""))
     out["all_stocks"] = merged_all
     return out
+
+
+def _apply_congress_payload(data: dict) -> dict:
+    """Tag scan rows with STOCK Act politician purchase data and attach congress feed."""
+    try:
+        from screener.congress_trades import (  # noqa: PLC0415
+            get_congress_payload,
+            get_congress_lookup,
+            tag_row_with_congress,
+        )
+    except Exception:
+        traceback.print_exc()
+        return data
+
+    lookup = get_congress_lookup(refresh=False)
+    if not lookup:
+        return data
+
+    out = dict(data)
+    for key in _ROW_LIST_KEYS:
+        if key in out and isinstance(out[key], list):
+            out[key] = [
+                tag_row_with_congress(r, lookup) for r in out[key] if isinstance(r, dict)
+            ]
+
+    payload = get_congress_payload(refresh=False)
+    out["congress_trades"] = {
+        "recent_buys": (payload.get("recent_buys") or [])[:60],
+        "edge_leaders": (payload.get("edge_leaders") or [])[:30],
+        "stats": payload.get("stats") or {},
+        "fetched_at": payload.get("fetched_at"),
+        "source": payload.get("source"),
+        "stale": payload.get("stale", False),
+    }
+    stats = dict(out.get("stats") or {})
+    cstats = payload.get("stats") or {}
+    stats["congress_buys"] = cstats.get("recent_buy_count", 0)
+    stats["congress_symbols"] = cstats.get("symbols_with_buys", 0)
+    out["stats"] = stats
+    return out
+
+
+def _enrich_hub_payload(data: dict, *, live_quotes: dict | None = None) -> dict:
+    data = _apply_ourbit_payload(data, live_quotes=live_quotes)
+    return _apply_congress_payload(data)
 
 
 def _stock_from_quote(sym: str, q: dict) -> dict:
@@ -334,7 +402,7 @@ def _load_disk_cache_into_memory() -> None:
             disk.get("ourbit_payload_version") != _OURBIT_PAYLOAD_VERSION
             or "ourbit_stocks" not in disk
         )
-        disk = _apply_ourbit_payload(disk)
+        disk = _enrich_hub_payload(disk)
         with _scan_lock:
             cur = _scan_cache.get("data")
             empty = not (cur and cur.get("all_stocks"))
@@ -374,6 +442,7 @@ def _ensure_background() -> LiveEngine:
             _live_engine.start()
         threading.Thread(target=_scan_loop, daemon=True, name="scan-loop").start()
         threading.Thread(target=_ourbit_sync_loop, daemon=True, name="ourbit-sync").start()
+        threading.Thread(target=_congress_sync_loop, daemon=True, name="congress-sync").start()
         def _initial_scan() -> None:
             if is_cloud_host():
                 time.sleep(25)
@@ -436,7 +505,7 @@ def _merge_scan_with_live(scan_data: dict, *, start_bg: bool = True) -> dict:
     if _scan_cache.get("last_error"):
         data["last_error"] = _scan_cache["last_error"]
     data["scanning"] = _scan_cache.get("scanning", False)
-    return _apply_ourbit_payload(data, live_quotes=quotes)
+    return _enrich_hub_payload(data, live_quotes=quotes)
 
 
 def _run_scan(force: bool = False) -> None:
@@ -973,10 +1042,19 @@ def api_health():
             pass
 
     ourbit_n = 0
+    congress_buys = 0
     try:
         from screener.ourbit_universe import get_ourbit_lookup  # noqa: PLC0415
 
         ourbit_n = len(get_ourbit_lookup())
+    except Exception:
+        pass
+
+    try:
+        from screener.congress_trades import get_congress_payload  # noqa: PLC0415
+
+        cstats = (get_congress_payload(refresh=False).get("stats") or {})
+        congress_buys = cstats.get("recent_buy_count", 0)
     except Exception:
         pass
 
@@ -990,6 +1068,7 @@ def api_health():
         "site": SITE_NAME,
         "version": APP_VERSION,
         "ourbit_listed": ourbit_n,
+        "congress_buys": congress_buys,
         "stocks_cached": n,
         "live_quotes": live_n,
         "scanning": scanning,
@@ -1024,6 +1103,20 @@ def api_ourbit_stocks():
     })
 
 
+@app.route("/api/congress-trades")
+def api_congress_trades():
+    """STOCK Act politician stock purchases — recent buys and edge-ranked tickers."""
+    refresh = request.args.get("refresh") == "1"
+    try:
+        from screener.congress_trades import get_congress_payload  # noqa: PLC0415
+
+        payload = get_congress_payload(refresh=refresh, lookback_days=180)
+        return jsonify(_json_safe(payload))
+    except Exception as e:
+        traceback.print_exc()
+        return jsonify({"ok": False, "error": str(e), "recent_buys": [], "edge_leaders": []})
+
+
 @app.route("/api/bootstrap")
 def api_bootstrap():
     """Fast first paint: return seed/disk cache immediately; live quotes patch in via /api/live."""
@@ -1039,7 +1132,7 @@ def api_bootstrap():
             data["scanning"] = scanning
             data["message"] = data.get("message") or "Data loaded — live quotes updating…"
             try:
-                data = _apply_ourbit_payload(data)
+                data = _enrich_hub_payload(data)
             except Exception:
                 traceback.print_exc()
             return jsonify(_json_safe(_slim_hub_payload(data)))
@@ -1256,7 +1349,7 @@ def init_production() -> None:
         seed = load_seed_bootstrap()
         if seed:
             try:
-                seed = _apply_ourbit_payload(seed)
+                seed = _enrich_hub_payload(seed)
             except Exception:
                 traceback.print_exc()
             with _scan_lock:

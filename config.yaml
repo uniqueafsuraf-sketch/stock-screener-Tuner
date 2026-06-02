@@ -40,6 +40,11 @@ watchlist:
 ourbit:
   sync_interval_sec: 900
 
+# STOCK Act politician disclosures (Senate + House)
+congress:
+  sync_interval_sec: 3600
+  lookback_days: 180
+
 # How many trading days of history to pull
 lookback_days: 120
 

@@ -12,6 +12,7 @@
   <link rel="stylesheet" href="/static/dashboard.css?v={{ app_version | default('3.4') }}">
   <link rel="prefetch" href="/api/bootstrap">
   <link rel="prefetch" href="/static/seed_bootstrap.json">
+  <link rel="prefetch" href="/static/congress_trades.json">
 </head>
 <body>
   <div class="app">
@@ -44,6 +45,10 @@
         <button type="button" class="nav-item" data-tab="ourbit">
           <span>Ourbit stocks</span>
           <span class="nav-count" id="count-ourbit">—</span>
+        </button>
+        <button type="button" class="nav-item" data-tab="congress">
+          <span>Politician trades</span>
+          <span class="nav-count" id="count-congress">—</span>
         </button>
         <p class="nav-section-label">Premium</p>
         <a href="/gold-war-room" class="nav-item nav-link nav-premium">
@@ -116,6 +121,10 @@
             <article class="kpi">
               <span class="kpi-label">Ourbit listed</span>
               <span class="kpi-value" id="stat-ourbit">—</span>
+            </article>
+            <article class="kpi kpi-accent">
+              <span class="kpi-label">Congress buys</span>
+              <span class="kpi-value" id="stat-congress">—</span>
             </article>
           </section>
 

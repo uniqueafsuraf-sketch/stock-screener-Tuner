@@ -641,6 +641,11 @@ a.nav-item.nav-link { text-decoration: none; color: inherit; }
   color: #1a1000;
   box-shadow: 0 0 12px rgba(255, 204, 0, 0.5);
 }
+.tag-CONGRESS_BUY {
+  background: #2563eb;
+  color: #eff6ff;
+  box-shadow: 0 0 12px rgba(37, 99, 235, 0.45);
+}
 
 .score-badge {
   display: inline-flex;
