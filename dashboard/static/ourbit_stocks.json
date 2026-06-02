@@ -1,241 +1,956 @@
 {
-  "source": "api.ourbit.com/api/v3/exchangeInfo",
-  "fetched_at": "2026-06-02 02:26:15 UTC",
-  "fetched_at_epoch": 1780367175.7498665,
-  "count": 33,
+  "source": "api.ourbit.com + futures.ourbit.com (spot *ON + stock futures)",
+  "fetched_at": "2026-06-02 21:43:31 UTC",
+  "fetched_at_epoch": 1780436611.0181007,
+  "count": 97,
   "stocks": [
     {
       "ourbit_base": "AAPLON",
       "ourbit_symbol": "AAPLONUSDT",
       "ticker": "AAPL",
-      "spot_allowed": false
+      "spot_allowed": false,
+      "market": "spot",
+      "ourbit_futures_symbol": "AAPL_USDT",
+      "markets": [
+        "futures",
+        "spot"
+      ]
     },
     {
       "ourbit_base": "ABTON",
       "ourbit_symbol": "ABTONUSDT",
       "ticker": "ABT",
-      "spot_allowed": false
+      "spot_allowed": false,
+      "market": "spot"
     },
     {
       "ourbit_base": "ACNON",
       "ourbit_symbol": "ACNONUSDT",
       "ticker": "ACN",
-      "spot_allowed": false
+      "spot_allowed": false,
+      "market": "spot"
+    },
+    {
+      "ourbit_base": "AKESO",
+      "ourbit_symbol": "AKESO_USDT",
+      "ticker": "AKESO",
+      "spot_allowed": false,
+      "market": "futures",
+      "is_new": false
+    },
+    {
+      "ourbit_base": "AMD",
+      "ourbit_symbol": "AMD_USDT",
+      "ticker": "AMD",
+      "spot_allowed": false,
+      "market": "futures",
+      "is_new": false
     },
     {
       "ourbit_base": "AMZNON",
       "ourbit_symbol": "AMZNONUSDT",
       "ticker": "AMZN",
-      "spot_allowed": false
+      "spot_allowed": false,
+      "market": "spot",
+      "ourbit_futures_symbol": "AMZN_USDT",
+      "markets": [
+        "futures",
+        "spot"
+      ]
+    },
+    {
+      "ourbit_base": "ANTA",
+      "ourbit_symbol": "ANTA_USDT",
+      "ticker": "ANTA",
+      "spot_allowed": false,
+      "market": "futures",
+      "is_new": false
+    },
+    {
+      "ourbit_base": "ANTHROPIC",
+      "ourbit_symbol": "ANTHROPIC_USDT",
+      "ticker": "ANTHROPIC",
+      "spot_allowed": false,
+      "market": "futures",
+      "is_new": false
+    },
+    {
+      "ourbit_base": "ARM",
+      "ourbit_symbol": "ARM_USDT",
+      "ticker": "ARM",
+      "spot_allowed": false,
+      "market": "futures",
+      "is_new": false
+    },
+    {
+      "ourbit_base": "ASML",
+      "ourbit_symbol": "ASML_USDT",
+      "ticker": "ASML",
+      "spot_allowed": false,
+      "market": "futures",
+      "is_new": false
+    },
+    {
+      "ourbit_base": "ASTS",
+      "ourbit_symbol": "ASTS_USDT",
+      "ticker": "ASTS",
+      "spot_allowed": false,
+      "market": "futures",
+      "is_new": true
     },
     {
       "ourbit_base": "AVGOON",
       "ourbit_symbol": "AVGOONUSDT",
       "ticker": "AVGO",
-      "spot_allowed": false
+      "spot_allowed": false,
+      "market": "spot",
+      "ourbit_futures_symbol": "AVGO_USDT",
+      "markets": [
+        "futures",
+        "spot"
+      ]
     },
     {
       "ourbit_base": "BABAON",
       "ourbit_symbol": "BABAONUSDT",
       "ticker": "BABA",
-      "spot_allowed": false
+      "spot_allowed": false,
+      "market": "spot",
+      "ourbit_futures_symbol": "BABA_USDT",
+      "markets": [
+        "futures",
+        "spot"
+      ]
+    },
+    {
+      "ourbit_base": "BE",
+      "ourbit_symbol": "BE_USDT",
+      "ticker": "BE",
+      "spot_allowed": false,
+      "market": "futures",
+      "is_new": true
+    },
+    {
+      "ourbit_base": "BLACKBERRY",
+      "ourbit_symbol": "BLACKBERRY_USDT",
+      "ticker": "BLACKBERRY",
+      "spot_allowed": false,
+      "market": "futures",
+      "is_new": true
+    },
+    {
+      "ourbit_base": "BMNR",
+      "ourbit_symbol": "BMNR_USDT",
+      "ticker": "BMNR",
+      "spot_allowed": false,
+      "market": "futures",
+      "is_new": false
+    },
+    {
+      "ourbit_base": "BRKB",
+      "ourbit_symbol": "BRKB_USDT",
+      "ticker": "BRK-B",
+      "spot_allowed": false,
+      "market": "futures",
+      "is_new": false
+    },
+    {
+      "ourbit_base": "CBRS",
+      "ourbit_symbol": "CBRS_USDT",
+      "ticker": "CBRS",
+      "spot_allowed": false,
+      "market": "futures",
+      "is_new": false
+    },
+    {
+      "ourbit_base": "CITIC",
+      "ourbit_symbol": "CITIC_USDT",
+      "ticker": "CITIC",
+      "spot_allowed": false,
+      "market": "futures",
+      "is_new": false
+    },
+    {
+      "ourbit_base": "COHR",
+      "ourbit_symbol": "COHR_USDT",
+      "ticker": "COHR",
+      "spot_allowed": false,
+      "market": "futures",
+      "is_new": true
     },
     {
       "ourbit_base": "COINON",
       "ourbit_symbol": "COINONUSDT",
       "ticker": "COIN",
-      "spot_allowed": false
+      "spot_allowed": false,
+      "market": "spot",
+      "ourbit_futures_symbol": "COIN_USDT",
+      "markets": [
+        "futures",
+        "spot"
+      ]
+    },
+    {
+      "ourbit_base": "COP",
+      "ourbit_symbol": "COP_USDT",
+      "ticker": "COP",
+      "spot_allowed": false,
+      "market": "futures",
+      "is_new": false
+    },
+    {
+      "ourbit_base": "COST",
+      "ourbit_symbol": "COST_USDT",
+      "ticker": "COST",
+      "spot_allowed": false,
+      "market": "futures",
+      "is_new": false
     },
     {
       "ourbit_base": "CRCLON",
       "ourbit_symbol": "CRCLONUSDT",
       "ticker": "CRCL",
-      "spot_allowed": false
+      "spot_allowed": false,
+      "market": "spot",
+      "ourbit_futures_symbol": "CRCL_USDT",
+      "markets": [
+        "futures",
+        "spot"
+      ]
+    },
+    {
+      "ourbit_base": "CRWV",
+      "ourbit_symbol": "CRWV_USDT",
+      "ticker": "CRWV",
+      "spot_allowed": false,
+      "market": "futures",
+      "is_new": false
+    },
+    {
+      "ourbit_base": "CSCO",
+      "ourbit_symbol": "CSCO_USDT",
+      "ticker": "CSCO",
+      "spot_allowed": false,
+      "market": "futures",
+      "is_new": false
+    },
+    {
+      "ourbit_base": "DELL",
+      "ourbit_symbol": "DELL_USDT",
+      "ticker": "DELL",
+      "spot_allowed": false,
+      "market": "futures",
+      "is_new": true
+    },
+    {
+      "ourbit_base": "DIS",
+      "ourbit_symbol": "DIS_USDT",
+      "ticker": "DIS",
+      "spot_allowed": false,
+      "market": "futures",
+      "is_new": false
+    },
+    {
+      "ourbit_base": "DRAM",
+      "ourbit_symbol": "DRAM_USDT",
+      "ticker": "DRAM",
+      "spot_allowed": false,
+      "market": "futures",
+      "is_new": false
+    },
+    {
+      "ourbit_base": "FLNC",
+      "ourbit_symbol": "FLNC_USDT",
+      "ticker": "FLNC",
+      "spot_allowed": false,
+      "market": "futures",
+      "is_new": false
+    },
+    {
+      "ourbit_base": "FUTU",
+      "ourbit_symbol": "FUTU_USDT",
+      "ticker": "FUTU",
+      "spot_allowed": false,
+      "market": "futures",
+      "is_new": false
+    },
+    {
+      "ourbit_base": "GE",
+      "ourbit_symbol": "GE_USDT",
+      "ticker": "GE",
+      "spot_allowed": false,
+      "market": "futures",
+      "is_new": false
+    },
+    {
+      "ourbit_base": "GEELY",
+      "ourbit_symbol": "GEELY_USDT",
+      "ticker": "GEELY",
+      "spot_allowed": false,
+      "market": "futures",
+      "is_new": false
     },
     {
       "ourbit_base": "GOOGLON",
       "ourbit_symbol": "GOOGLONUSDT",
       "ticker": "GOOGL",
-      "spot_allowed": false
+      "spot_allowed": false,
+      "market": "spot",
+      "ourbit_futures_symbol": "GOOGL_USDT",
+      "markets": [
+        "futures",
+        "spot"
+      ]
+    },
+    {
+      "ourbit_base": "HD",
+      "ourbit_symbol": "HD_USDT",
+      "ticker": "HD",
+      "spot_allowed": false,
+      "market": "futures",
+      "is_new": false
     },
     {
       "ourbit_base": "HOODON",
       "ourbit_symbol": "HOODONUSDT",
       "ticker": "HOOD",
-      "spot_allowed": false
+      "spot_allowed": false,
+      "market": "spot",
+      "ourbit_futures_symbol": "HOOD_USDT",
+      "markets": [
+        "futures",
+        "spot"
+      ]
+    },
+    {
+      "ourbit_base": "HYUNDAI",
+      "ourbit_symbol": "HYUNDAI_USDT",
+      "ticker": "HYUNDAI",
+      "spot_allowed": false,
+      "market": "futures",
+      "is_new": true
     },
     {
       "ourbit_base": "IAUON",
       "ourbit_symbol": "IAUONUSDT",
       "ticker": "IAU",
-      "spot_allowed": false
+      "spot_allowed": false,
+      "market": "spot"
+    },
+    {
+      "ourbit_base": "IBM",
+      "ourbit_symbol": "IBM_USDT",
+      "ticker": "IBM",
+      "spot_allowed": false,
+      "market": "futures",
+      "is_new": true
+    },
+    {
+      "ourbit_base": "INTC",
+      "ourbit_symbol": "INTC_USDT",
+      "ticker": "INTC",
+      "spot_allowed": false,
+      "market": "futures",
+      "is_new": false
     },
     {
       "ourbit_base": "ITOTON",
       "ourbit_symbol": "ITOTONUSDT",
       "ticker": "ITOT",
-      "spot_allowed": false
+      "spot_allowed": false,
+      "market": "spot"
     },
     {
       "ourbit_base": "IVVON",
       "ourbit_symbol": "IVVONUSDT",
       "ticker": "IVV",
-      "spot_allowed": false
+      "spot_allowed": false,
+      "market": "spot"
     },
     {
       "ourbit_base": "IWMON",
       "ourbit_symbol": "IWMONUSDT",
       "ticker": "IWM",
-      "spot_allowed": false
+      "spot_allowed": false,
+      "market": "spot"
     },
     {
       "ourbit_base": "JDON",
       "ourbit_symbol": "JDONUSDT",
       "ticker": "JD",
-      "spot_allowed": false
+      "spot_allowed": false,
+      "market": "spot",
+      "ourbit_futures_symbol": "JD_USDT",
+      "markets": [
+        "futures",
+        "spot"
+      ]
+    },
+    {
+      "ourbit_base": "KUAISHOU",
+      "ourbit_symbol": "KUAISHOU_USDT",
+      "ticker": "KUAISHOU",
+      "spot_allowed": false,
+      "market": "futures",
+      "is_new": false
+    },
+    {
+      "ourbit_base": "LENOVO",
+      "ourbit_symbol": "LENOVO_USDT",
+      "ticker": "LENOVO",
+      "spot_allowed": false,
+      "market": "futures",
+      "is_new": false
+    },
+    {
+      "ourbit_base": "LITE",
+      "ourbit_symbol": "LITE_USDT",
+      "ticker": "LITE",
+      "spot_allowed": false,
+      "market": "futures",
+      "is_new": false
     },
     {
       "ourbit_base": "LLYON",
       "ourbit_symbol": "LLYONUSDT",
       "ticker": "LLY",
-      "spot_allowed": false
+      "spot_allowed": false,
+      "market": "spot",
+      "ourbit_futures_symbol": "LLY_USDT",
+      "markets": [
+        "futures",
+        "spot"
+      ]
     },
     {
       "ourbit_base": "MAON",
       "ourbit_symbol": "MAONUSDT",
       "ticker": "MA",
-      "spot_allowed": false
+      "spot_allowed": false,
+      "market": "spot"
     },
     {
       "ourbit_base": "MCDON",
       "ourbit_symbol": "MCDONUSDT",
       "ticker": "MCD",
-      "spot_allowed": false
+      "spot_allowed": false,
+      "market": "spot",
+      "ourbit_futures_symbol": "MCD_USDT",
+      "markets": [
+        "futures",
+        "spot"
+      ]
+    },
+    {
+      "ourbit_base": "MEITUAN",
+      "ourbit_symbol": "MEITUAN_USDT",
+      "ticker": "MEITUAN",
+      "spot_allowed": false,
+      "market": "futures",
+      "is_new": false
     },
     {
       "ourbit_base": "METAON",
       "ourbit_symbol": "METAONUSDT",
       "ticker": "META",
-      "spot_allowed": false
+      "spot_allowed": false,
+      "market": "spot",
+      "ourbit_futures_symbol": "META_USDT",
+      "markets": [
+        "futures",
+        "spot"
+      ]
+    },
+    {
+      "ourbit_base": "MINIMAX",
+      "ourbit_symbol": "MINIMAX_USDT",
+      "ticker": "MINIMAX",
+      "spot_allowed": false,
+      "market": "futures",
+      "is_new": false
+    },
+    {
+      "ourbit_base": "MRVL",
+      "ourbit_symbol": "MRVL_USDT",
+      "ticker": "MRVL",
+      "spot_allowed": false,
+      "market": "futures",
+      "is_new": false
     },
     {
       "ourbit_base": "MSFTON",
       "ourbit_symbol": "MSFTONUSDT",
       "ticker": "MSFT",
-      "spot_allowed": false
+      "spot_allowed": false,
+      "market": "spot",
+      "ourbit_futures_symbol": "MSFT_USDT",
+      "markets": [
+        "futures",
+        "spot"
+      ]
     },
     {
       "ourbit_base": "MSTRON",
       "ourbit_symbol": "MSTRONUSDT",
       "ticker": "MSTR",
-      "spot_allowed": false
+      "spot_allowed": false,
+      "market": "spot",
+      "ourbit_futures_symbol": "MSTR_USDT",
+      "markets": [
+        "futures",
+        "spot"
+      ]
+    },
+    {
+      "ourbit_base": "MU",
+      "ourbit_symbol": "MU_USDT",
+      "ticker": "MU",
+      "spot_allowed": false,
+      "market": "futures",
+      "is_new": false
+    },
+    {
+      "ourbit_base": "NBIS",
+      "ourbit_symbol": "NBIS_USDT",
+      "ticker": "NBIS",
+      "spot_allowed": false,
+      "market": "futures",
+      "is_new": true
     },
     {
       "ourbit_base": "NFLXON",
       "ourbit_symbol": "NFLXONUSDT",
       "ticker": "NFLX",
-      "spot_allowed": false
+      "spot_allowed": false,
+      "market": "spot",
+      "ourbit_futures_symbol": "NFLX_USDT",
+      "markets": [
+        "futures",
+        "spot"
+      ],
+      "is_new": true
+    },
+    {
+      "ourbit_base": "NOK",
+      "ourbit_symbol": "NOK_USDT",
+      "ticker": "NOK",
+      "spot_allowed": false,
+      "market": "futures",
+      "is_new": true
     },
     {
       "ourbit_base": "NVDAON",
       "ourbit_symbol": "NVDAONUSDT",
       "ticker": "NVDA",
-      "spot_allowed": false
+      "spot_allowed": false,
+      "market": "spot",
+      "ourbit_futures_symbol": "NVDA_USDT",
+      "markets": [
+        "futures",
+        "spot"
+      ]
+    },
+    {
+      "ourbit_base": "NVO",
+      "ourbit_symbol": "NVO_USDT",
+      "ticker": "NVO",
+      "spot_allowed": false,
+      "market": "futures",
+      "is_new": true
+    },
+    {
+      "ourbit_base": "OPENAI",
+      "ourbit_symbol": "OPENAI_USDT",
+      "ticker": "OPENAI",
+      "spot_allowed": false,
+      "market": "futures",
+      "is_new": false
+    },
+    {
+      "ourbit_base": "ORCL",
+      "ourbit_symbol": "ORCL_USDT",
+      "ticker": "ORCL",
+      "spot_allowed": false,
+      "market": "futures",
+      "is_new": false
+    },
+    {
+      "ourbit_base": "OXY",
+      "ourbit_symbol": "OXY_USDT",
+      "ticker": "OXY",
+      "spot_allowed": false,
+      "market": "futures",
+      "is_new": false
     },
     {
       "ourbit_base": "PALLON",
       "ourbit_symbol": "PALLONUSDT",
       "ticker": "PALL",
-      "spot_allowed": false
+      "spot_allowed": false,
+      "market": "spot"
+    },
+    {
+      "ourbit_base": "PAYP",
+      "ourbit_symbol": "PAYP_USDT",
+      "ticker": "PAYP",
+      "spot_allowed": false,
+      "market": "futures",
+      "is_new": false
     },
     {
       "ourbit_base": "PEPON",
       "ourbit_symbol": "PEPONUSDT",
       "ticker": "PEP",
-      "spot_allowed": false
+      "spot_allowed": false,
+      "market": "spot"
     },
     {
       "ourbit_base": "PLTRON",
       "ourbit_symbol": "PLTRONUSDT",
       "ticker": "PLTR",
-      "spot_allowed": false
+      "spot_allowed": false,
+      "market": "spot",
+      "ourbit_futures_symbol": "PLTR_USDT",
+      "markets": [
+        "futures",
+        "spot"
+      ]
+    },
+    {
+      "ourbit_base": "QNTX",
+      "ourbit_symbol": "QNTX_USDT",
+      "ticker": "QNTX",
+      "spot_allowed": false,
+      "market": "futures",
+      "is_new": true
     },
     {
       "ourbit_base": "QQQON",
       "ourbit_symbol": "QQQONUSDT",
       "ticker": "QQQ",
-      "spot_allowed": false
+      "spot_allowed": false,
+      "market": "spot",
+      "ourbit_futures_symbol": "QQQ_USDT",
+      "markets": [
+        "futures",
+        "spot"
+      ]
+    },
+    {
+      "ourbit_base": "RDDT",
+      "ourbit_symbol": "RDDT_USDT",
+      "ticker": "RDDT",
+      "spot_allowed": false,
+      "market": "futures",
+      "is_new": false
+    },
+    {
+      "ourbit_base": "RIVN",
+      "ourbit_symbol": "RIVN_USDT",
+      "ticker": "RIVN",
+      "spot_allowed": false,
+      "market": "futures",
+      "is_new": false
     },
     {
       "ourbit_base": "RKLBON",
       "ourbit_symbol": "RKLBONUSDT",
       "ticker": "RKLB",
-      "spot_allowed": false
+      "spot_allowed": false,
+      "market": "spot",
+      "ourbit_futures_symbol": "RKLB_USDT",
+      "markets": [
+        "futures",
+        "spot"
+      ]
+    },
+    {
+      "ourbit_base": "SBP",
+      "ourbit_symbol": "SBP_USDT",
+      "ticker": "SBP",
+      "spot_allowed": false,
+      "market": "futures",
+      "is_new": false
+    },
+    {
+      "ourbit_base": "SKHYNIX",
+      "ourbit_symbol": "SKHYNIX_USDT",
+      "ticker": "SKHYNIX",
+      "spot_allowed": false,
+      "market": "futures",
+      "is_new": true
     },
     {
       "ourbit_base": "SLVON",
       "ourbit_symbol": "SLVONUSDT",
       "ticker": "SLV",
-      "spot_allowed": false
+      "spot_allowed": false,
+      "market": "spot"
+    },
+    {
+      "ourbit_base": "SMSN",
+      "ourbit_symbol": "SMSN_USDT",
+      "ticker": "SMSN",
+      "spot_allowed": false,
+      "market": "futures",
+      "is_new": false
+    },
+    {
+      "ourbit_base": "SNDK",
+      "ourbit_symbol": "SNDK_USDT",
+      "ticker": "SNDK",
+      "spot_allowed": false,
+      "market": "futures",
+      "is_new": false
+    },
+    {
+      "ourbit_base": "SOXL",
+      "ourbit_symbol": "SOXL_USDT",
+      "ticker": "SOXL",
+      "spot_allowed": false,
+      "market": "futures",
+      "is_new": false
+    },
+    {
+      "ourbit_base": "SPCX",
+      "ourbit_symbol": "SPCX_USDT",
+      "ticker": "SPCX",
+      "spot_allowed": false,
+      "market": "futures",
+      "is_new": false
     },
     {
       "ourbit_base": "SPYON",
       "ourbit_symbol": "SPYONUSDT",
       "ticker": "SPY",
-      "spot_allowed": false
+      "spot_allowed": false,
+      "market": "spot"
+    },
+    {
+      "ourbit_base": "SUNAC",
+      "ourbit_symbol": "SUNAC_USDT",
+      "ticker": "SUNAC",
+      "spot_allowed": false,
+      "market": "futures",
+      "is_new": false
+    },
+    {
+      "ourbit_base": "TENCENT",
+      "ourbit_symbol": "TENCENT_USDT",
+      "ticker": "TENCENT",
+      "spot_allowed": false,
+      "market": "futures",
+      "is_new": false
     },
     {
       "ourbit_base": "TSLAON",
       "ourbit_symbol": "TSLAONUSDT",
       "ticker": "TSLA",
-      "spot_allowed": false
+      "spot_allowed": false,
+      "market": "spot",
+      "ourbit_futures_symbol": "TSLA_USDT",
+      "markets": [
+        "futures",
+        "spot"
+      ]
+    },
+    {
+      "ourbit_base": "TSM",
+      "ourbit_symbol": "TSM_USDT",
+      "ticker": "TSM",
+      "spot_allowed": false,
+      "market": "futures",
+      "is_new": false
+    },
+    {
+      "ourbit_base": "UBER",
+      "ourbit_symbol": "UBER_USDT",
+      "ticker": "UBER",
+      "spot_allowed": false,
+      "market": "futures",
+      "is_new": false
     },
     {
       "ourbit_base": "UNHON",
       "ourbit_symbol": "UNHONUSDT",
       "ticker": "UNH",
-      "spot_allowed": false
+      "spot_allowed": false,
+      "market": "spot",
+      "ourbit_futures_symbol": "UNH_USDT",
+      "markets": [
+        "futures",
+        "spot"
+      ]
     },
     {
       "ourbit_base": "USOON",
       "ourbit_symbol": "USOONUSDT",
       "ticker": "USO",
-      "spot_allowed": false
+      "spot_allowed": false,
+      "market": "spot"
+    },
+    {
+      "ourbit_base": "V",
+      "ourbit_symbol": "V_USDT",
+      "ticker": "V",
+      "spot_allowed": false,
+      "market": "futures",
+      "is_new": false
+    },
+    {
+      "ourbit_base": "VRT",
+      "ourbit_symbol": "VRT_USDT",
+      "ticker": "VRT",
+      "spot_allowed": false,
+      "market": "futures",
+      "is_new": false
+    },
+    {
+      "ourbit_base": "WDC",
+      "ourbit_symbol": "WDC_USDT",
+      "ticker": "WDC",
+      "spot_allowed": false,
+      "market": "futures",
+      "is_new": true
+    },
+    {
+      "ourbit_base": "WMT",
+      "ourbit_symbol": "WMT_USDT",
+      "ticker": "WMT",
+      "spot_allowed": false,
+      "market": "futures",
+      "is_new": false
+    },
+    {
+      "ourbit_base": "XIAOMI",
+      "ourbit_symbol": "XIAOMI_USDT",
+      "ticker": "XIAOMI",
+      "spot_allowed": false,
+      "market": "futures",
+      "is_new": false
+    },
+    {
+      "ourbit_base": "XOM",
+      "ourbit_symbol": "XOM_USDT",
+      "ticker": "XOM",
+      "spot_allowed": false,
+      "market": "futures",
+      "is_new": false
+    },
+    {
+      "ourbit_base": "XUNCE",
+      "ourbit_symbol": "XUNCE_USDT",
+      "ticker": "XUNCE",
+      "spot_allowed": false,
+      "market": "futures",
+      "is_new": false
+    },
+    {
+      "ourbit_base": "ZHIPU",
+      "ourbit_symbol": "ZHIPU_USDT",
+      "ticker": "ZHIPU",
+      "spot_allowed": false,
+      "market": "futures",
+      "is_new": false
     }
   ],
   "tickers": [
     "AAPL",
     "ABT",
     "ACN",
+    "AKESO",
+    "AMD",
     "AMZN",
+    "ANTA",
+    "ANTHROPIC",
+    "ARM",
+    "ASML",
+    "ASTS",
     "AVGO",
     "BABA",
+    "BE",
+    "BLACKBERRY",
+    "BMNR",
+    "BRK-B",
+    "CBRS",
+    "CITIC",
+    "COHR",
     "COIN",
+    "COP",
+    "COST",
     "CRCL",
+    "CRWV",
+    "CSCO",
+    "DELL",
+    "DIS",
+    "DRAM",
+    "FLNC",
+    "FUTU",
+    "GE",
+    "GEELY",
     "GOOGL",
+    "HD",
     "HOOD",
+    "HYUNDAI",
     "IAU",
+    "IBM",
+    "INTC",
     "ITOT",
     "IVV",
     "IWM",
     "JD",
+    "KUAISHOU",
+    "LENOVO",
+    "LITE",
     "LLY",
     "MA",
     "MCD",
+    "MEITUAN",
     "META",
+    "MINIMAX",
+    "MRVL",
     "MSFT",
     "MSTR",
+    "MU",
+    "NBIS",
     "NFLX",
+    "NOK",
     "NVDA",
+    "NVO",
+    "OPENAI",
+    "ORCL",
+    "OXY",
     "PALL",
+    "PAYP",
     "PEP",
     "PLTR",
+    "QNTX",
     "QQQ",
+    "RDDT",
+    "RIVN",
     "RKLB",
+    "SBP",
+    "SKHYNIX",
     "SLV",
+    "SMSN",
+    "SNDK",
+    "SOXL",
+    "SPCX",
     "SPY",
+    "SUNAC",
+    "TENCENT",
     "TSLA",
+    "TSM",
+    "UBER",
     "UNH",
-    "USO"
+    "USO",
+    "V",
+    "VRT",
+    "WDC",
+    "WMT",
+    "XIAOMI",
+    "XOM",
+    "XUNCE",
+    "ZHIPU"
   ]
 }

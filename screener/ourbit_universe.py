@@ -9,11 +9,13 @@ import urllib.request
 from pathlib import Path
 
 OURBIT_EXCHANGE_INFO = "https://api.ourbit.com/api/v3/exchangeInfo"
+OURBIT_FUTURES_DETAIL = "https://futures.ourbit.com/api/v1/contract/detail"
 CACHE_PATH = Path(__file__).resolve().parent.parent / "data" / "ourbit_stocks.json"
 STATIC_CACHE_PATH = (
     Path(__file__).resolve().parent.parent / "dashboard" / "static" / "ourbit_stocks.json"
 )
 CACHE_TTL_SEC = 3600
+_STOCK_FUTURES_PLATE = "ob_trade_zone_stock"
 
 # Base assets that end in ON but are not Ourbit tokenized equities
 _EXCLUDE_BASE = frozenset({
@@ -24,6 +26,11 @@ _TICKER_OVERRIDES = {
     "GOOGLON": "GOOGL",
 }
 
+# Ourbit futures baseCoin → Yahoo / screener symbol
+_YAHOO_TICKER_OVERRIDES = {
+    "BRKB": "BRK-B",
+}
+
 
 def ourbit_base_to_ticker(base_asset: str) -> str:
     ba = (base_asset or "").upper().strip()
@@ -32,6 +39,11 @@ def ourbit_base_to_ticker(base_asset: str) -> str:
     if ba.endswith("ON") and len(ba) > 2:
         return ba[:-2]
     return ba
+
+
+def ourbit_futures_to_ticker(base_coin: str) -> str:
+    bc = (base_coin or "").upper().strip()
+    return _YAHOO_TICKER_OVERRIDES.get(bc, bc)
 
 
 def _is_ourbit_tokenized_stock(symbol_row: dict) -> bool:
@@ -50,11 +62,11 @@ def _is_ourbit_tokenized_stock(symbol_row: dict) -> bool:
     return True
 
 
-def fetch_ourbit_stocks(*, timeout: int = 45) -> list[dict]:
-    """Live pull from Ourbit — all enabled tokenized stock/ETF USDT pairs."""
+def _fetch_spot_tokenized_stocks(*, timeout: int = 45) -> list[dict]:
+    """Live pull from Ourbit spot API — enabled tokenized stock/ETF USDT pairs (*ON)."""
     req = urllib.request.Request(
         OURBIT_EXCHANGE_INFO,
-        headers={"User-Agent": "StocksTunerStation/1.0"},
+        headers={"User-Agent": "StocksTunerStation/4.2 (+ourbit-spot)"},
     )
     with urllib.request.urlopen(req, timeout=timeout) as resp:
         payload = json.loads(resp.read())
@@ -69,25 +81,82 @@ def fetch_ourbit_stocks(*, timeout: int = 45) -> list[dict]:
             "ourbit_symbol": row["symbol"],
             "ticker": ourbit_base_to_ticker(base),
             "spot_allowed": bool(row.get("isSpotTradingAllowed")),
+            "market": "spot",
         })
+    return rows
 
-    rows.sort(key=lambda r: r["ticker"])
-    # Deduplicate by ticker (keep first Ourbit pair)
-    seen: set[str] = set()
-    out: list[dict] = []
-    for r in rows:
-        t = r["ticker"]
-        if t in seen:
+
+def _fetch_futures_stock_contracts(*, timeout: int = 45) -> list[dict]:
+    """Ourbit US stock perpetuals (NOK_USDT, AAPL_USDT, …) from futures API."""
+    req = urllib.request.Request(
+        OURBIT_FUTURES_DETAIL,
+        headers={"User-Agent": "StocksTunerStation/4.2 (+ourbit-futures)"},
+    )
+    with urllib.request.urlopen(req, timeout=timeout) as resp:
+        payload = json.loads(resp.read())
+
+    rows: list[dict] = []
+    for row in payload.get("data") or []:
+        if _STOCK_FUTURES_PLATE not in (row.get("conceptPlate") or []):
             continue
-        seen.add(t)
-        out.append(r)
+        if row.get("state") not in (0, "0", None):
+            continue
+        base = (row.get("baseCoin") or "").upper().strip()
+        sym = row.get("symbol") or ""
+        if not base or not sym.endswith("_USDT"):
+            continue
+        rows.append({
+            "ourbit_base": base,
+            "ourbit_symbol": sym,
+            "ticker": ourbit_futures_to_ticker(base),
+            "spot_allowed": False,
+            "market": "futures",
+            "is_new": bool(row.get("isNew")),
+        })
+    return rows
+
+
+def _merge_ourbit_rows(spot_rows: list[dict], futures_rows: list[dict]) -> list[dict]:
+    merged: dict[str, dict] = {}
+    for row in spot_rows:
+        t = row["ticker"].upper()
+        merged[t] = dict(row)
+    for row in futures_rows:
+        t = row["ticker"].upper()
+        if t in merged:
+            cur = merged[t]
+            cur["ourbit_futures_symbol"] = row["ourbit_symbol"]
+            cur["markets"] = sorted({cur.get("market", "spot"), "futures"})
+            if row.get("is_new"):
+                cur["is_new"] = True
+        else:
+            merged[t] = dict(row)
+    out = list(merged.values())
+    out.sort(key=lambda r: r["ticker"])
     return out
+
+
+def fetch_ourbit_stocks(*, timeout: int = 45) -> list[dict]:
+    """All Ourbit-listed US stocks/ETFs: spot *ON pairs + futures stock zone."""
+    spot_rows: list[dict] = []
+    futures_rows: list[dict] = []
+    try:
+        spot_rows = _fetch_spot_tokenized_stocks(timeout=timeout)
+    except (urllib.error.URLError, TimeoutError, json.JSONDecodeError, OSError):
+        pass
+    try:
+        futures_rows = _fetch_futures_stock_contracts(timeout=timeout)
+    except (urllib.error.URLError, TimeoutError, json.JSONDecodeError, OSError):
+        pass
+    if not spot_rows and not futures_rows:
+        raise RuntimeError("Ourbit fetch failed: no spot or futures stock data")
+    return _merge_ourbit_rows(spot_rows, futures_rows)
 
 
 def save_ourbit_cache(rows: list[dict]) -> Path:
     CACHE_PATH.parent.mkdir(parents=True, exist_ok=True)
     data = {
-        "source": "api.ourbit.com/api/v3/exchangeInfo",
+        "source": "api.ourbit.com + futures.ourbit.com (spot *ON + stock futures)",
         "fetched_at": time.strftime("%Y-%m-%d %H:%M:%S UTC", time.gmtime()),
         "fetched_at_epoch": time.time(),
         "count": len(rows),

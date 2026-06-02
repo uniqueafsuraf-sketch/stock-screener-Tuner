@@ -43,7 +43,7 @@ _bg_scheduled = False
 _alert_history: list[dict] = []
 _alert_lock = threading.Lock()
 _pulse_cache: dict = {"data": [], "ts": 0.0}
-_OURBIT_PAYLOAD_VERSION = 1
+_OURBIT_PAYLOAD_VERSION = 2
 _ROW_LIST_KEYS = (
     "opportunities", "all_stocks", "edge_plays", "gainers", "losers",
     "gaps", "high_rvol", "rel_strength", "unusual_activity", "ourbit_stocks",
