@@ -25,6 +25,8 @@ def resolve_symbols(cfg: dict) -> list[str]:
     extra = cfg.get("watchlist", [])
     if source == "watchlist":
         return get_universe("watchlist", extra=extra or [])
+    if source == "both_ourbit":
+        return get_universe("both_ourbit", extra=extra)
     if source in ("both", "all"):
         return get_universe("all", extra=extra)
     if source == "ourbit":
@@ -62,6 +64,16 @@ def scan_full(
     min_dv = cfg["min_avg_dollar_volume"]
     lookback = cfg["lookback_days"]
 
+    from screener.ourbit_universe import get_ourbit_lookup  # noqa: PLC0415
+
+    ourbit_lookup = get_ourbit_lookup()
+
+    def _tag_ourbit(snap: StockSnapshot) -> None:
+        info = ourbit_lookup.get(snap.symbol.upper())
+        if info:
+            snap.on_ourbit = True
+            snap.ourbit_symbol = info.get("ourbit_symbol", "")
+
     spy_df = fetch_history("SPY", min(lookback, 60))
     spy_5d = spy_benchmark_change(spy_df, 5)
 
@@ -82,6 +94,7 @@ def scan_full(
             continue
         snap = evaluate(symbol, df, avg_dollar_volume_m=adv / 1_000_000, **eval_kw)
         snap = augment_snapshot(snap, df, spy_5d=spy_5d)
+        _tag_ourbit(snap)
         all_stocks.append(snap)
 
     # Earnings — non-fatal if slow/fails
@@ -139,6 +152,7 @@ def scan_full(
         "earnings_soon": len(earn_list),
         "gainers": sum(1 for s in all_stocks if s.change_pct > 0),
         "losers": sum(1 for s in all_stocks if s.change_pct < 0),
+        "ourbit_count": sum(1 for s in all_stocks if s.on_ourbit),
     }
 
     return ScanResult(

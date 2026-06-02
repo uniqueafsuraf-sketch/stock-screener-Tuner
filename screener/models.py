@@ -33,6 +33,8 @@ class StockSnapshot:
     unusual_activity: list[str] = field(default_factory=list)
     unusual_score: float = 0.0
     dollar_volume_m: float = 0.0
+    on_ourbit: bool = False
+    ourbit_symbol: str = ""
 
     def to_dict(self) -> dict:
         d = asdict(self)

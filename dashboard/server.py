@@ -67,6 +67,27 @@ def _live_cfg() -> dict:
     return _cfg().get("live", {})
 
 
+def _ourbit_sync_interval() -> int:
+    return int(_cfg().get("ourbit", {}).get("sync_interval_sec", 900))
+
+
+def _ourbit_sync_loop() -> None:
+    """Poll Ourbit for new tokenized stock listings; rescan when new tickers appear."""
+    time.sleep(60)
+    while True:
+        try:
+            from screener.ourbit_universe import sync_ourbit_stocks  # noqa: PLC0415
+
+            result = sync_ourbit_stocks(refresh=True)
+            new = result.get("new_tickers") or []
+            if new:
+                print(f"Ourbit: {len(new)} new stock listing(s): {', '.join(new)}")
+                _run_scan(force=True)
+        except Exception as e:
+            print(f"Ourbit sync failed: {e}")
+        time.sleep(_ourbit_sync_interval())
+
+
 def _scan_interval() -> int:
     return int(_live_cfg().get("full_scan_interval_sec", 300))
 
@@ -235,6 +256,7 @@ def _ensure_background() -> LiveEngine:
         if _live_cfg().get("enabled", True):
             _live_engine.start()
         threading.Thread(target=_scan_loop, daemon=True, name="scan-loop").start()
+        threading.Thread(target=_ourbit_sync_loop, daemon=True, name="ourbit-sync").start()
         def _initial_scan() -> None:
             if is_cloud_host():
                 time.sleep(25)
@@ -309,6 +331,8 @@ def _run_scan(force: bool = False) -> None:
 
     print("Starting full market scan…")
     try:
+        from screener.ourbit_universe import get_ourbit_lookup  # noqa: PLC0415
+
         cfg = _cfg()
         result = scan_full(config=cfg, use_batch=True)
         payload = {
@@ -316,6 +340,7 @@ def _run_scan(force: bool = False) -> None:
             "ok": True,
             "scanning": False,
             "universe_size": len(resolve_symbols(cfg)),
+            "ourbit_listed": len(get_ourbit_lookup()),
         }
         save_scan_cache(payload)
         with _scan_lock:

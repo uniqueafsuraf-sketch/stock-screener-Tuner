@@ -133,6 +133,46 @@ def get_ourbit_tickers(*, refresh: bool = False) -> list[str]:
         raise RuntimeError(f"Ourbit symbol fetch failed: {e}") from e
 
 
+def get_ourbit_lookup(*, refresh: bool = False) -> dict[str, dict]:
+    """Map Yahoo ticker → Ourbit pair metadata."""
+    if refresh:
+        rows = fetch_ourbit_stocks()
+        save_ourbit_cache(rows)
+    else:
+        cached = load_ourbit_cache()
+        if cached and cached.get("stocks"):
+            rows = cached["stocks"]
+        else:
+            rows = fetch_ourbit_stocks()
+            save_ourbit_cache(rows)
+    return {r["ticker"].upper(): r for r in rows}
+
+
+def sync_ourbit_stocks(*, refresh: bool = True) -> dict:
+    """Refresh Ourbit stock list; return newly discovered tickers."""
+    old_tickers: set[str] = set()
+    if CACHE_PATH.exists():
+        try:
+            prev = json.loads(CACHE_PATH.read_text(encoding="utf-8"))
+            old_tickers = {t.upper() for t in (prev.get("tickers") or [])}
+        except (json.JSONDecodeError, OSError):
+            pass
+
+    rows = fetch_ourbit_stocks() if refresh else []
+    if not rows:
+        cached = load_ourbit_cache(max_age_sec=86400 * 7)
+        rows = (cached or {}).get("stocks") or []
+    save_ourbit_cache(rows)
+
+    current = {r["ticker"].upper() for r in rows}
+    new_tickers = sorted(current - old_tickers)
+    return {
+        "new_tickers": new_tickers,
+        "total": len(rows),
+        "tickers": sorted(current),
+    }
+
+
 def get_ourbit_universe_meta() -> dict:
     """Full metadata for dashboard / API."""
     try:

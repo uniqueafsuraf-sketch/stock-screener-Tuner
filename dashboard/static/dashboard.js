@@ -116,6 +116,12 @@
     }, 550);
   }
 
+  function ourbitBadgeHtml(r) {
+    if (!r?.on_ourbit) return "";
+    const pair = r.ourbit_symbol ? ` (${r.ourbit_symbol})` : "";
+    return `<span class="ourbit-badge" title="Listed on Ourbit${esc(pair)}">OB</span>`;
+  }
+
   function buildTapeFromData() {
     const stocks = data?.all_stocks || [];
     if (!stocks.length) return [];
@@ -130,6 +136,8 @@
         price: r.price,
         change_pct: r.change_pct,
         role: "gainer",
+        on_ourbit: r.on_ourbit,
+        ourbit_symbol: r.ourbit_symbol,
       }));
 
     const losers = stocks
@@ -142,6 +150,8 @@
         price: r.price,
         change_pct: r.change_pct,
         role: "loser",
+        on_ourbit: r.on_ourbit,
+        ourbit_symbol: r.ourbit_symbol,
       }));
 
     return [...gainers, ...losers];
@@ -157,7 +167,7 @@
     const role = m.role || (up ? "gainer" : "loser");
     const roleText = role === "gainer" ? "TOP GAINER" : "TOP LOSER";
     return `<div class="tape-item tape-${role}" data-tape-symbol="${esc(sym)}">
-      <span class="tape-ticker">${esc(sym)}</span>
+      <span class="tape-ticker">${esc(sym)}${ourbitBadgeHtml(m)}</span>
       <span class="tape-role">${roleText}</span>
       <span class="tape-price live-tape-price">$${fmtPrice(m.price)}</span>
       <span class="tape-chg live-tape-chg ${up ? "up" : "down"}">${up ? "+" : ""}${Number(m.change_pct).toFixed(2)}%</span>
@@ -448,6 +458,7 @@
         <div class="sym-cell-inner">
           <div class="sym-row">
             <span class="sym-ticker">${esc(sym)}</span>
+            ${ourbitBadgeHtml(r)}
             ${r.live ? '<span class="live-indicator"></span>' : ""}
           </div>
           <div class="chart-links">${chartLinksHtml(r.chart_links, sym)}</div>
