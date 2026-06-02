@@ -1,9 +1,11 @@
 from __future__ import annotations
 
 import re
+import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass
 from datetime import datetime, timezone
+from functools import lru_cache
 
 import yfinance as yf
 
@@ -30,6 +32,25 @@ INFORMATIVE = re.compile(
     re.I,
 )
 
+_NAME_STRIP = re.compile(r"\b(inc\.?|corp\.?|corporation|company|co\.?|ltd\.?|plc|group)\b", re.I)
+
+
+def _news_cfg() -> dict:
+    try:
+        from screener.scan import load_config  # noqa: PLC0415
+
+        return load_config().get("news") or {}
+    except Exception:
+        return {}
+
+
+def max_news_age_hours() -> int:
+    return int(_news_cfg().get("max_age_hours", 48))
+
+
+def require_symbol_mention() -> bool:
+    return bool(_news_cfg().get("require_symbol_mention", True))
+
 
 @dataclass
 class NewsHeadline:
@@ -41,6 +62,7 @@ class NewsHeadline:
     score: float
     summary: str = ""
     published_ts: float = 0.0
+    mentions_symbol: bool = True
 
     def to_dict(self) -> dict:
         return {
@@ -52,6 +74,7 @@ class NewsHeadline:
             "score": self.score,
             "summary": self.summary,
             "published_ts": self.published_ts,
+            "mentions_symbol": self.mentions_symbol,
         }
 
 
@@ -80,9 +103,56 @@ def score_headline(title: str) -> tuple[float, str]:
     else:
         sentiment = "neutral"
 
-    # Prefer actionable / market-moving headlines
     score = raw + (0.5 if info else 0)
     return score, sentiment
+
+
+@lru_cache(maxsize=512)
+def _company_aliases(symbol: str) -> tuple[str, ...]:
+    sym = symbol.upper().strip()
+    aliases: set[str] = {sym}
+    try:
+        info = yf.Ticker(sym).info or {}
+        for key in ("shortName", "longName", "displayName"):
+            name = (info.get(key) or "").strip()
+            if len(name) >= 3:
+                aliases.add(name)
+                cleaned = _NAME_STRIP.sub("", name).strip(" ,.-")
+                if len(cleaned) >= 4:
+                    aliases.add(cleaned)
+    except Exception:
+        pass
+    return tuple(sorted(aliases, key=len, reverse=True))
+
+
+def headline_mentions_symbol(symbol: str, title: str, summary: str = "") -> bool:
+    """True when headline text clearly references the ticker or company name."""
+    sym = symbol.upper().strip()
+    if not sym:
+        return False
+    blob_u = f"{title or ''} {summary or ''}".upper()
+
+    for alias in _company_aliases(sym):
+        alias_u = alias.upper()
+        if len(alias_u) >= 4 and alias_u in blob_u:
+            return True
+
+    if len(sym) >= 3:
+        if re.search(rf"\b{re.escape(sym)}\b", blob_u):
+            return True
+        if re.search(rf"\({re.escape(sym)}\)", blob_u):
+            return True
+        if re.search(rf"\${re.escape(sym)}\b", blob_u):
+            return True
+        return False
+
+    if re.search(rf"\({re.escape(sym)}\)", blob_u):
+        return True
+    if re.search(rf"\${re.escape(sym)}\b", blob_u):
+        return True
+    if re.search(rf"\b{re.escape(sym)}\s+(stock|shares|earnings)\b", blob_u):
+        return True
+    return False
 
 
 def _parse_news_item(item: dict, symbol: str = "") -> NewsHeadline | None:
@@ -121,6 +191,7 @@ def _parse_news_item(item: dict, symbol: str = "") -> NewsHeadline | None:
     published = _format_date(pub_ts)
     ts = _parse_timestamp(pub_ts)
     score, sentiment = score_headline(title)
+    mentions = headline_mentions_symbol(symbol, title, summary) if symbol else True
     return NewsHeadline(
         title=title.strip(),
         url=url,
@@ -130,6 +201,7 @@ def _parse_news_item(item: dict, symbol: str = "") -> NewsHeadline | None:
         score=score,
         summary=(summary or "").strip()[:500],
         published_ts=ts,
+        mentions_symbol=mentions,
     )
 
 
@@ -175,9 +247,21 @@ def _fetch_raw_news(symbol: str, pull_count: int = 15) -> list[dict]:
     return raw[:pull_count]
 
 
+def _passes_news_filters(symbol: str, headline: NewsHeadline) -> bool:
+    max_age = max_news_age_hours() * 3600
+    now = time.time()
+    if headline.published_ts > 0 and headline.published_ts < now - max_age:
+        return False
+    if require_symbol_mention() and not headline_mentions_symbol(
+        symbol, headline.title, headline.summary
+    ):
+        return False
+    return True
+
+
 def fetch_news(symbol: str, max_items: int = 3, *, latest_first: bool = True) -> list[NewsHeadline]:
     try:
-        raw = _fetch_raw_news(symbol, pull_count=max(12, max_items * 2))
+        raw = _fetch_raw_news(symbol, pull_count=max(16, max_items * 4))
     except Exception:
         return []
 
@@ -185,12 +269,13 @@ def fetch_news(symbol: str, max_items: int = 3, *, latest_first: bool = True) ->
     seen_titles: set[str] = set()
     for item in raw:
         parsed = _parse_news_item(item, symbol)
-        if not parsed:
+        if not parsed or not _passes_news_filters(symbol, parsed):
             continue
         key = parsed.title.lower()[:80]
         if key in seen_titles:
             continue
         seen_titles.add(key)
+        parsed.mentions_symbol = True
         headlines.append(parsed)
 
     if latest_first:
@@ -205,12 +290,19 @@ def build_news_wire(
     *,
     max_total: int = 200,
 ) -> list[dict]:
-    """Merge per-symbol headlines into one chronological raw news feed."""
+    """Merge per-symbol headlines into one chronological verified news feed."""
     items: list[dict] = []
     seen: set[str] = set()
+    max_age = max_news_age_hours() * 3600
+    now = time.time()
 
     for snap in snapshots:
         for n in snap.news or []:
+            ts = float(n.get("published_ts") or 0)
+            if ts > 0 and ts < now - max_age:
+                continue
+            if require_symbol_mention() and not n.get("mentions_symbol", True):
+                continue
             url = (n.get("url") or "").strip()
             key = url or f"{snap.symbol}:{(n.get('title') or '')[:60]}"
             if key in seen:
@@ -222,12 +314,57 @@ def build_news_wire(
                 "url": url,
                 "publisher": n.get("publisher", ""),
                 "published": n.get("published", ""),
-                "published_ts": float(n.get("published_ts") or 0),
+                "published_ts": ts,
                 "sentiment": n.get("sentiment", "neutral"),
                 "summary": n.get("summary", ""),
+                "mentions_symbol": True,
             })
 
     items.sort(key=lambda x: x["published_ts"], reverse=True)
+    return items[:max_total]
+
+
+def build_live_news_wire(
+    symbols: list[str],
+    *,
+    max_total: int | None = None,
+    max_headlines: int | None = None,
+    workers: int | None = None,
+) -> list[dict]:
+    """Fetch fresh verified headlines for many symbols (live news poll)."""
+    cfg = _news_cfg()
+    max_total = max_total or int(cfg.get("wire_max_total", 150))
+    max_headlines = max_headlines or int(cfg.get("max_headlines", 4))
+    workers = workers or int(cfg.get("workers", 12))
+
+    items: list[dict] = []
+    seen: set[str] = set()
+
+    def _pull(sym: str) -> list[dict]:
+        headlines = fetch_news(sym, max_items=max_headlines, latest_first=True)
+        out: list[dict] = []
+        for h in headlines:
+            d = h.to_dict()
+            d["symbol"] = sym.upper()
+            out.append(d)
+        return out
+
+    with ThreadPoolExecutor(max_workers=workers) as pool:
+        futures = {pool.submit(_pull, sym): sym for sym in symbols if sym}
+        for fut in as_completed(futures):
+            try:
+                batch = fut.result()
+            except Exception:
+                continue
+            for n in batch:
+                url = (n.get("url") or "").strip()
+                key = url or f"{n.get('symbol')}:{(n.get('title') or '')[:60]}"
+                if key in seen:
+                    continue
+                seen.add(key)
+                items.append(n)
+
+    items.sort(key=lambda x: float(x.get("published_ts") or 0), reverse=True)
     return items[:max_total]
 
 
@@ -247,7 +384,6 @@ def enrich_all(
 ) -> None:
     targets = [s for s in snapshots if s.has_opportunity] if only_opportunities else snapshots
 
-    # Chart links are free — set on everyone immediately
     for snap in snapshots:
         snap.chart_links = chart_links(snap.symbol)
         if snap not in targets:

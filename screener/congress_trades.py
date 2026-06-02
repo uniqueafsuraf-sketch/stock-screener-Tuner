@@ -327,6 +327,33 @@ def _merge_trade_lists(*groups: list[dict]) -> list[dict]:
     return sorted(merged.values(), key=lambda x: x.get("when", ""), reverse=True)
 
 
+def _build_buy_clusters(trades: list[dict]) -> list[dict]:
+    by_sym: dict[str, list[dict]] = {}
+    for t in trades:
+        by_sym.setdefault(t["symbol"], []).append(t)
+
+    clusters: list[dict] = []
+    for sym, txs in by_sym.items():
+        pols = sorted({t["politician"] for t in txs})
+        chambers = sorted({t.get("chamber") or "Congress" for t in txs})
+        clusters.append({
+            "symbol": sym,
+            "politician_count": len(pols),
+            "politicians": pols,
+            "chambers": chambers,
+            "multi_buy": len(pols) >= 2,
+            "buy_count": len(txs),
+            "latest_when": max(t["when"] for t in txs),
+            "max_amount_usd": max(int(t.get("amount_min_usd") or 0) for t in txs),
+            "trades": sorted(txs, key=lambda x: x["when"], reverse=True)[:8],
+        })
+
+    clusters.sort(
+        key=lambda c: (-c["politician_count"], -c["buy_count"], c["latest_when"]),
+    )
+    return clusters
+
+
 def fetch_congress_trades(*, lookback_days: int | None = None) -> tuple[list[dict], dict]:
     """Pull qualifying politician stock buys from all live sources."""
     days = lookback_days or lookback_days_default()
@@ -398,6 +425,7 @@ def build_congress_payload(*, lookback_days: int | None = None) -> dict:
         ticker_edges[sym] = _score_ticker(sym_trades, lookback_days=90)
 
     buy_recent = trades[:100]
+    buy_clusters = _build_buy_clusters(trades)[:60]
     edge_leaders = sorted(
         (
             {"symbol": sym, **meta}
@@ -428,10 +456,12 @@ def build_congress_payload(*, lookback_days: int | None = None) -> dict:
         "lookback_days": days,
         "total_trades": len(trades),
         "recent_buys": buy_recent,
+        "buy_clusters": buy_clusters,
         "edge_leaders": edge_leaders,
         "by_symbol": ticker_edges,
         "stats": {
             "symbols_with_buys": sum(1 for m in ticker_edges.values() if m["congress_buys"] > 0),
+            "multi_buy_symbols": sum(1 for c in buy_clusters if c.get("multi_buy")),
             "recent_buy_count": len(buy_recent),
             "senate_trades": sum(1 for t in trades if t.get("chamber") == "Senate"),
             "house_trades": sum(1 for t in trades if t.get("chamber") == "House"),
@@ -507,9 +537,15 @@ def tag_row_with_congress(row: dict, lookup: dict[str, dict]) -> dict:
     signals = list(out.get("signals") or [])
     if "CONGRESS_BUY" not in signals and meta.get("congress_buys", 0) > 0:
         signals.append("CONGRESS_BUY")
-    out["signals"] = signals
     pols = ", ".join(meta.get("congress_politicians", [])[:2])
-    note = f"Congress buy ≥${min_buy_usd():,}: {meta['congress_buys']} filing(s) · {pols}"
+    n_pols = len(meta.get("congress_politicians", []))
+    if n_pols >= 2:
+        note = f"Congress cluster: {n_pols} politicians bought ≥${min_buy_usd():,} · {pols}"
+        if "CONGRESS_CLUSTER" not in signals:
+            signals.append("CONGRESS_CLUSTER")
+    else:
+        note = f"Congress buy ≥${min_buy_usd():,}: {meta['congress_buys']} filing(s) · {pols}"
+    out["signals"] = signals
     notes = list(out.get("notes") or [])
     if note not in notes:
         notes.insert(0, note)

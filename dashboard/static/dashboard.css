@@ -646,6 +646,11 @@ a.nav-item.nav-link { text-decoration: none; color: inherit; }
   color: #eff6ff;
   box-shadow: 0 0 12px rgba(37, 99, 235, 0.45);
 }
+.tag-CONGRESS_CLUSTER {
+  background: #7c3aed;
+  color: #f5f3ff;
+  box-shadow: 0 0 12px rgba(124, 58, 237, 0.45);
+}
 
 .score-badge {
   display: inline-flex;
@@ -1320,4 +1325,129 @@ td.flash-down { animation: flashDown 0.6s ease; }
 @media (max-width: 600px) {
   .kpi-grid { grid-template-columns: 1fr 1fr; }
   .kpi-value { font-size: 1.75rem; }
+}
+
+.wire-verified {
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #34d399;
+  background: rgba(52, 211, 153, 0.12);
+  padding: 0.12rem 0.4rem;
+  border-radius: 999px;
+}
+
+.congress-panel-cell {
+  padding: 0 !important;
+  background: transparent !important;
+}
+
+.congress-panel {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 0.85rem;
+  padding: 0.75rem;
+}
+
+.congress-card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 0.85rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.congress-card-multi {
+  border-color: rgba(37, 99, 235, 0.55);
+  box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.15), 0 8px 24px rgba(37, 99, 235, 0.08);
+}
+
+.congress-card-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+
+.congress-card-sym {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+}
+
+.congress-multi-badge {
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  color: #dbeafe;
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+  padding: 0.18rem 0.45rem;
+  border-radius: 999px;
+}
+
+.congress-multi-hint {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #93c5fd;
+  background: rgba(37, 99, 235, 0.2);
+  padding: 0.1rem 0.35rem;
+  border-radius: 6px;
+}
+
+.congress-card-amt {
+  font-family: var(--mono);
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  text-align: right;
+}
+
+.congress-pol-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.congress-pol-tag {
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 0.15rem 0.45rem;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text-primary);
+}
+
+.congress-pol-more {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  align-self: center;
+}
+
+.congress-card-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+.congress-card-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.65rem;
+  font-size: 0.82rem;
+  border-top: 1px solid var(--border);
+  padding-top: 0.55rem;
+}
+
+.congress-table-title {
+  text-align: left;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  padding: 0.65rem 0.75rem !important;
 }

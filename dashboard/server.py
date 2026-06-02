@@ -43,6 +43,8 @@ _bg_scheduled = False
 _alert_history: list[dict] = []
 _alert_lock = threading.Lock()
 _pulse_cache: dict = {"data": [], "ts": 0.0}
+_news_wire_cache: dict = {"news_wire": [], "ts": 0.0, "fetched_at": ""}
+_news_wire_lock = threading.Lock()
 _OURBIT_PAYLOAD_VERSION = 2
 _ROW_LIST_KEYS = (
     "opportunities", "all_stocks", "edge_plays", "gainers", "losers",
@@ -70,6 +72,59 @@ def _cfg() -> dict:
 
 def _live_cfg() -> dict:
     return _cfg().get("live", {})
+
+
+def _news_wire_symbols() -> list[str]:
+    with _scan_lock:
+        cached = _scan_cache.get("data") or {}
+    rows = cached.get("all_stocks") or []
+    opps = {r.get("symbol") for r in (cached.get("opportunities") or []) if r.get("symbol")}
+    syms = [r.get("symbol", "").upper() for r in rows if r.get("symbol")]
+    if len(syms) < 25:
+        syms = [s.upper() for s in resolve_symbols(_cfg())]
+    seen: set[str] = set()
+    ordered: list[str] = []
+    for sym in sorted(set(syms), key=lambda s: (s not in opps, s)):
+        if sym and sym not in seen:
+            seen.add(sym)
+            ordered.append(sym)
+        if len(ordered) >= 120:
+            break
+    return ordered
+
+
+def _refresh_news_wire(*, force: bool = False) -> dict:
+    cfg = _cfg().get("news") or {}
+    ttl = max(60, int(cfg.get("wire_poll_sec", 90)))
+    with _news_wire_lock:
+        age = time.time() - float(_news_wire_cache.get("ts") or 0)
+        if not force and _news_wire_cache.get("news_wire") and age < ttl:
+            return dict(_news_wire_cache)
+
+    from screener.enrich import build_live_news_wire  # noqa: PLC0415
+
+    wire = build_live_news_wire(_news_wire_symbols())
+    payload = {
+        "news_wire": wire,
+        "ts": time.time(),
+        "fetched_at": time.strftime("%Y-%m-%d %H:%M:%S UTC", time.gmtime()),
+        "count": len(wire),
+    }
+    with _news_wire_lock:
+        _news_wire_cache.clear()
+        _news_wire_cache.update(payload)
+    return payload
+
+
+def _news_wire_loop() -> None:
+    time.sleep(45)
+    while True:
+        try:
+            wire = _refresh_news_wire(force=True)
+            print(f"News wire refreshed: {wire.get('count', 0)} verified headlines")
+        except Exception as e:
+            print(f"News wire refresh failed: {e}")
+        time.sleep(max(60, int(_cfg().get("news", {}).get("wire_poll_sec", 90))))
 
 
 def _ourbit_sync_interval() -> int:
@@ -249,6 +304,7 @@ def _apply_congress_payload(data: dict) -> dict:
     payload = get_congress_payload(refresh=False)
     out["congress_trades"] = {
         "recent_buys": (payload.get("recent_buys") or [])[:60],
+        "buy_clusters": (payload.get("buy_clusters") or [])[:40],
         "edge_leaders": (payload.get("edge_leaders") or [])[:30],
         "stats": payload.get("stats") or {},
         "fetched_at": payload.get("fetched_at"),
@@ -445,6 +501,7 @@ def _ensure_background() -> LiveEngine:
         threading.Thread(target=_scan_loop, daemon=True, name="scan-loop").start()
         threading.Thread(target=_ourbit_sync_loop, daemon=True, name="ourbit-sync").start()
         threading.Thread(target=_congress_sync_loop, daemon=True, name="congress-sync").start()
+        threading.Thread(target=_news_wire_loop, daemon=True, name="news-wire").start()
         def _initial_scan() -> None:
             if is_cloud_host():
                 time.sleep(25)
@@ -1103,6 +1160,25 @@ def api_ourbit_stocks():
         "tickers": meta.get("tickers", []),
         "stocks": meta.get("stocks", []),
     })
+
+
+@app.route("/api/news-wire")
+def api_news_wire():
+    """Live verified headlines — symbol must appear in title/summary, max age enforced."""
+    refresh = request.args.get("refresh") == "1"
+    try:
+        payload = _refresh_news_wire(force=refresh)
+        return jsonify({"ok": True, **_json_safe(payload)})
+    except Exception as e:
+        traceback.print_exc()
+        with _news_wire_lock:
+            cached = dict(_news_wire_cache)
+        if cached.get("news_wire"):
+            cached["ok"] = True
+            cached["stale"] = True
+            cached["error"] = str(e)
+            return jsonify(_json_safe(cached))
+        return jsonify({"ok": False, "error": str(e), "news_wire": []})
 
 
 @app.route("/api/congress-trades")

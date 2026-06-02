@@ -3,6 +3,7 @@
     "VOLUME_SPIKE", "SELLOFF", "OVERSOLD", "AT_SUPPORT",
     "AT_RESISTANCE", "SELLOFF_AT_SUPPORT", "BREAKOUT_SETUP",
     "CONGRESS_BUY",
+    "CONGRESS_CLUSTER",
   ];
 
   const TAB_TITLES = {
@@ -35,6 +36,7 @@
   let scanPollTimer = null;
   const LIVE_POLL_MS = 400;
   const MARKET_POLL_MS = 4000;
+  const NEWS_POLL_MS = 90000;
   const TAPE_TOP_N = 15;
 
   const $ = (id) => document.getElementById(id);
@@ -237,6 +239,7 @@
           ...payload,
           congress_trades: {
             recent_buys: raw.recent_buys || [],
+            buy_clusters: raw.buy_clusters || [],
             edge_leaders: raw.edge_leaders || [],
             stats: raw.stats || {},
             fetched_at: raw.fetched_at,
@@ -499,6 +502,41 @@
     poll();
     window._livePollTimer = setInterval(poll, LIVE_POLL_MS);
     startMarketPolling();
+    startNewsPolling();
+  }
+
+  async function pollNewsWire() {
+    try {
+      const res = await fetch("/api/news-wire", { cache: "no-store" });
+      const json = await res.json();
+      if (!json?.ok || !json.news_wire) return;
+      if (!data) data = {};
+      data.news_wire = json.news_wire;
+      data.news_fetched_at = json.fetched_at;
+      const bySym = {};
+      for (const n of json.news_wire) {
+        if (!bySym[n.symbol]) bySym[n.symbol] = [];
+        if (bySym[n.symbol].length < 4) bySym[n.symbol].push(n);
+      }
+      for (const key of DATA_LIST_KEYS) {
+        if (!Array.isArray(data[key])) continue;
+        data[key] = data[key].map((r) => ({
+          ...r,
+          news: bySym[r.symbol] || r.news || [],
+        }));
+      }
+      renderNewsWire();
+      if (activeTab === "news") renderTable();
+      if ($("meta") && data.news_fetched_at) {
+        updateMeta();
+      }
+    } catch (_) {}
+  }
+
+  function startNewsPolling() {
+    if (window._newsPollTimer) clearInterval(window._newsPollTimer);
+    pollNewsWire();
+    window._newsPollTimer = setInterval(pollNewsWire, NEWS_POLL_MS);
   }
 
   function renderFilters() {
@@ -545,11 +583,15 @@
     const href = (n.url || "#").replace(/"/g, "%22");
     const sent = n.sentiment || "neutral";
     const summary = n.summary
-      ? `<p class="wire-summary">${esc(n.summary)}</p>`
+      ? `<p class="wire-summary">${esc(n.summary.slice(0, 160))}${n.summary.length > 160 ? "…" : ""}</p>`
+      : "";
+    const verified = n.mentions_symbol !== false
+      ? '<span class="wire-verified">✓ stock match</span>'
       : "";
     return `<div class="wire-item wire-${sent}">
       <div class="wire-head">
         <span class="wire-sym">${esc(n.symbol)}</span>
+        ${verified}
         <span class="wire-sent wire-sent-${sent}">${esc(sent)}</span>
         <span class="wire-time">${esc(n.published || "")}</span>
       </div>
@@ -559,14 +601,47 @@
     </div>`;
   }
 
-  function collectNewsWire() {
-    if (data?.news_wire?.length) return data.news_wire;
-    const items = [];
-    for (const r of data?.all_stocks || []) {
-      for (const n of r.news || []) items.push({ symbol: r.symbol, ...n });
+  function groupCongressClusters(recent) {
+    const map = {};
+    for (const t of recent) {
+      const sym = t.symbol;
+      if (!sym) continue;
+      if (!map[sym]) {
+        map[sym] = { symbol: sym, trades: [], politicians: new Set(), chambers: new Set() };
+      }
+      map[sym].trades.push(t);
+      map[sym].politicians.add(t.politician);
+      if (t.chamber) map[sym].chambers.add(t.chamber);
     }
-    items.sort((a, b) => (b.published_ts || 0) - (a.published_ts || 0));
-    return items;
+    return Object.values(map)
+      .map((g) => ({
+        symbol: g.symbol,
+        politician_count: g.politicians.size,
+        politicians: [...g.politicians],
+        chambers: [...g.chambers],
+        multi_buy: g.politicians.size >= 2,
+        buy_count: g.trades.length,
+        latest_when: g.trades.map((x) => x.when).sort().reverse()[0] || "",
+        trades: g.trades.sort((a, b) => (b.when || "").localeCompare(a.when || "")),
+      }))
+      .sort((a, b) => b.politician_count - a.politician_count
+        || b.buy_count - a.buy_count
+        || (b.latest_when || "").localeCompare(a.latest_when || ""));
+  }
+
+  function collectNewsWire() {
+    const raw = data?.news_wire?.length
+      ? data.news_wire
+      : (() => {
+          const items = [];
+          for (const r of data?.all_stocks || []) {
+            for (const n of r.news || []) items.push({ symbol: r.symbol, ...n });
+          }
+          return items;
+        })();
+    return raw
+      .filter((n) => n.mentions_symbol !== false)
+      .sort((a, b) => (b.published_ts || 0) - (a.published_ts || 0));
   }
 
   function renderNewsWire() {
@@ -656,7 +731,7 @@
       return;
     }
     if (activeTab === "congress") {
-      thead.innerHTML = `<th>Symbol</th><th>Date</th><th>Politician</th><th>Trade</th><th>Disclosed</th><th>Sources</th><th>Price</th><th>Chg</th><th>Edge</th><th>Setups</th>`;
+      thead.innerHTML = `<th colspan="11" class="congress-table-title">Grouped by ticker · <span class="congress-multi-hint">3 POLS</span> = multiple politicians buying same stock</th>`;
       return;
     }
     const cols = [
@@ -694,49 +769,68 @@
   }
 
   function renderCongressTab(tbody) {
-    const recent = data?.congress_trades?.recent_buys || [];
+    const clusters = data?.congress_trades?.buy_clusters?.length
+      ? data.congress_trades.buy_clusters
+      : groupCongressClusters(data?.congress_trades?.recent_buys || []);
     const q = $("search")?.value.trim().toUpperCase();
     const priceMap = {};
     (data?.all_stocks || []).forEach((r) => { priceMap[r.symbol] = r; });
+    const multiCount = clusters.filter((c) => c.multi_buy).length;
 
-    $("row-count").textContent = recent.length
-      ? `${recent.length} buys ≥ $${(data?.congress_trades?.min_buy_usd || 5000).toLocaleString()}`
+    $("row-count").textContent = clusters.length
+      ? `${clusters.length} stocks · ${multiCount} multi-politician`
       : "";
 
-    if (!recent.length) {
-      tbody.innerHTML = `<tr><td colspan="11" class="state-cell"><div class="state-box"><p>No politician buys ≥ $5,000 — try Refresh or check /api/congress-trades?refresh=1</p></div></td></tr>`;
+    if (!clusters.length) {
+      tbody.innerHTML = `<tr><td colspan="11" class="state-cell"><div class="state-box"><p>No politician buys ≥ $5,000 — try Refresh or /api/congress-trades?refresh=1</p></div></td></tr>`;
       return;
     }
 
     const filtered = q
-      ? recent.filter((t) =>
-          (t.symbol || "").includes(q)
-          || (t.politician || "").toUpperCase().includes(q)
+      ? clusters.filter((c) =>
+          (c.symbol || "").includes(q)
+          || (c.politicians || []).some((p) => p.toUpperCase().includes(q))
         )
-      : recent;
+      : clusters;
 
-    tbody.innerHTML = filtered.map((t) => {
-      const row = priceMap[t.symbol] || {};
-      const pols = esc((t.politician || "—").slice(0, 40));
-      const amt = esc(t.amount || "—");
-      const side = t.side === "buy" ? "Purchase" : esc(t.type || "—");
-      const link = t.ptr_link
-        ? `<a href="${esc(t.ptr_link)}" target="_blank" rel="noopener" class="chart-link">PTR</a>`
+    const cards = filtered.map((c) => {
+      const row = priceMap[c.symbol] || {};
+      const multi = c.multi_buy || (c.politician_count || 0) >= 2;
+      const pols = (c.politicians || []).slice(0, 5);
+      const polTags = pols.map((p) => `<span class="congress-pol-tag">${esc(p.split(" ").slice(-1)[0] || p)}</span>`).join("");
+      const extra = (c.politicians || []).length > 5
+        ? `<span class="congress-pol-more">+${c.politicians.length - 5}</span>`
         : "";
-      const src = (t.sources || []).join(", ") || "—";
-      return `<tr>
-        <td class="col-symbol"><span class="sym-ticker">${esc(t.symbol)}</span> ${link}</td>
-        <td class="muted">${esc(t.when || t.transaction_date || "—")}</td>
-        <td>${pols} <span class="muted">(${esc(t.chamber || "—")})</span></td>
-        <td>${side} · ${amt}</td>
-        <td class="muted">${t.days_ago != null ? `${t.days_ago}d ago` : "—"}</td>
-        <td class="muted" style="font-size:0.75rem">${esc(src)}</td>
-        <td class="col-num">${row.price != null ? fmtPrice(row.price) : "—"}</td>
-        <td class="col-num ${(row.change_pct || 0) >= 0 ? "pos" : "neg"}">${row.change_pct != null ? `${row.change_pct.toFixed(2)}%` : "—"}</td>
-        <td class="col-num">${row.edge_score != null ? row.edge_score : "—"}</td>
-        <td class="col-signals">${tagHtml(row.signals)}</td>
-      </tr>`;
+      const latest = c.trades?.[0] || {};
+      const ptr = latest.ptr_link
+        ? `<a href="${esc(latest.ptr_link)}" target="_blank" rel="noopener" class="chart-link">PTR</a>`
+        : "";
+      const chg = row.change_pct != null ? `${row.change_pct >= 0 ? "+" : ""}${row.change_pct.toFixed(2)}%` : "—";
+      return `<article class="congress-card${multi ? " congress-card-multi" : ""}">
+        <header class="congress-card-head">
+          <div class="congress-card-sym">
+            <span class="sym-ticker">${esc(c.symbol)}</span>
+            ${multi ? `<span class="congress-multi-badge">${c.politician_count} POLS</span>` : ""}
+            ${ptr}
+          </div>
+          <div class="congress-card-amt">${esc(latest.amount || "—")}</div>
+        </header>
+        <div class="congress-pol-tags">${polTags}${extra}</div>
+        <div class="congress-card-meta">
+          <span>${c.buy_count} buy(s)</span>
+          <span>Latest ${esc(c.latest_when || latest.when || "—")}</span>
+          <span>${esc((c.chambers || [latest.chamber]).filter(Boolean).join(" · ") || "—")}</span>
+        </div>
+        <footer class="congress-card-foot">
+          <span class="mono">${row.price != null ? `$${fmtPrice(row.price)}` : "—"}</span>
+          <span class="${(row.change_pct || 0) >= 0 ? "pos" : "neg"}">${chg}</span>
+          <span class="edge-meter">${row.edge_score ?? "—"}</span>
+          ${tagHtml(row.signals)}
+        </footer>
+      </article>`;
     }).join("");
+
+    tbody.innerHTML = `<tr><td colspan="11" class="congress-panel-cell"><div class="congress-panel">${cards}</div></td></tr>`;
   }
 
   function renderTable() {
@@ -771,7 +865,7 @@
             ${n.summary ? `<div class="wire-summary-inline">${esc(n.summary.slice(0, 180))}${n.summary.length > 180 ? "…" : ""}</div>` : ""}
           </td>
           <td class="muted">${esc(n.publisher || "")}</td>
-          <td><span class="wire-sent wire-sent-${sent}">${esc(sent)}</span></td>
+          <td><span class="wire-verified">verified</span> <span class="wire-sent wire-sent-${sent}">${esc(sent)}</span></td>
         </tr>`;
       }).join("");
       return;
@@ -807,6 +901,7 @@
       const src = (data.congress_trades?.sources_active || []).length || 2;
       t += ` · ${cb} Congress buys ≥$${Number(min).toLocaleString()} (${src} sources)`;
     }
+    if (data.news_fetched_at) t += ` · News ${data.news_fetched_at}`;
     $("meta").textContent = t;
     updateStatusBanner();
   }

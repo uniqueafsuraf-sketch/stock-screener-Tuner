@@ -70,9 +70,12 @@ rsi_oversold: 35
 
 # News & chart links (fetched after scan)
 news:
-  max_headlines: 6        # latest raw headlines per stock (newest first)
+  max_headlines: 4        # verified headlines per stock (newest first)
+  max_age_hours: 48       # drop older headlines from wire + stock rows
+  require_symbol_mention: true
   wire_fetch_for: all     # all scanned symbols | opportunities (faster)
-  wire_max_total: 200     # max items in News wire panel
+  wire_max_total: 150     # max items in News wire panel
+  wire_poll_sec: 90       # browser live news refresh
   workers: 12
 
 # Unusual activity scanner
